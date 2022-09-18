@@ -1,0 +1,20 @@
+Package: Statial
+Type: Package
+Title: A package to identify changes in cell state relative to spatial associations.
+Version: 0.0.1
+Date: 2022-09-19
+Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
+    role = c("aut")),
+    person("Sourish", "Iyengar", email = "sourish.iyengark@sydney.edu.au",
+    role = c("aut")),
+    person("Ellis", "Patrick", email = "ellis.patrick@sydney.edu.au",
+    role = c("aut", "cre")))
+VignetteBuilder: knitr
+Encoding: UTF-8
+biocViews: SingleCell, Spatial
+Depends: R (>= 4.1.0)
+Imports: BiocParallel, spatstat.geom
+Suggests: BiocStyle, knitr
+Description: Statial provides functionality to bla bla bla......
+License: GPL-3
+RoxygenNote: 7.2.1

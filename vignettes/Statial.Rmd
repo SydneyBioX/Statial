@@ -1,0 +1,69 @@
+---
+title: "Spatial Mixed-Effects Modelling with spicy"
+date: "`r BiocStyle::doc_date()`"
+params:
+  test: FALSE
+author:
+- name: Alexander Nicholls
+  affiliation:  
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Ellis Patrick
+  affiliation:
+  - &WIMR Westmead Institute for Medical Research, University of Sydney, Australia
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Nicolas Canete
+  affiliation:  
+  - &WIMR Westmead Institute for Medical Research, University of Sydney, Australia
+vignette: >
+  %\VignetteIndexEntry{"Introduction to simpleSeg"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output: 
+  BiocStyle::html_document
+---
+  
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(BiocStyle)
+```
+
+
+```{r warning=FALSE, message=FALSE}
+# load required packages
+library(Statial)
+library(ggplot2)
+```
+
+# Installation
+
+```{r, eval = FALSE}
+# Install the development version from GitHub:
+# install.packages("devtools")
+devtools::install_github("SydneyBioX/Statial")
+```
+
+# Overview
+
+The `Statial` package provides functionality to.... 
+
+
+# Load example data
+
+In the following we will reanalyse......
+
+```{r}
+1+1
+
+```
+
+
+
+## Session Info
+```{r}
+sessionInfo()
+```
+
+
