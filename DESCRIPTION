@@ -5,7 +5,9 @@ Version: 0.0.1
 Date: 2022-09-19
 Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
     role = c("aut")),
-    person("Sourish", "Iyengar", email = "sourish.iyengark@sydney.edu.au",
+    person("Sourish", "Iyengar", email = "sourish.iyengar@sydney.edu.au",
+    role = c("aut")),
+    person("Shila", "Ghazanfar", email = "shila.ghazanfar@sydney.edu.au",
     role = c("aut")),
     person("Ellis", "Patrick", email = "ellis.patrick@sydney.edu.au",
     role = c("aut", "cre")))
