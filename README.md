@@ -30,4 +30,5 @@ all feedback related to the package.
 
 * **Farhan Ameen**
 * **Sourish Iyengar**
+* **Shila Ghazanfar** - [@shazanfar](https://twitter.com/shazanfar)
 * **Ellis Patrick**  - [@TheEllisPatrick](https://twitter.com/TheEllisPatrick)
