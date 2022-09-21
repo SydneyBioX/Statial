@@ -56,10 +56,10 @@ distanceCalculator = function(singleCellData, maxRS = 200){
     dplyr::relocate(imageID)
   
   
-  processedDistanceData = processedDistanceData %>% 
+  processedDistanceData = processedDistanceData %>%
     # XYZ - Not sure if this should be a full join
     dplyr::full_join(singleCellData, by = c("imageID", "cellID", "cellType"))
-  
+
 }
 
 
@@ -81,17 +81,37 @@ distanceCalculator = function(singleCellData, maxRS = 200){
 #' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom purrr reduce
 #' @importFrom stringr str_replace
-calculateCellDistances = function(singleCellData, splitBy = "imageID", nCores = 1, Rs = c(200)){
+#' @importFrom SummarizedExperiment colData assayNames
+#' @importFrom tibble column_to_rownames
+#' @importFrom dplyr select contains mutate
+#' @importFrom janitor %>% 
+calculateCellDistances = function(singleCellData, nCores = 1, Rs = c(200)){
+    
+  if ( "SingleCellExperiment" %in% class(singleCellData)){
+      singleCellDataNew = data.frame(SummarizedExperiment::colData(singleCellData)) %>% 
+          dplyr::mutate(imageID = as.character(imageID), cellType = as.character(cellType))
+      
+      if ("intensities" %in% assayNames(singleCellData)){
+          singleCellDataNew = singleCellDataNew %>% 
+              cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
+      }
+      
+      singleCellData = singleCellDataNew 
+  }
+
   singleCellDataDistances = singleCellData %>%
     split(~ imageID) %>% 
-    BiocParallel::bplapply(distanceCalculator, rmax = max(Rs), BPPARAM  = BiocParallel::MulticoreParam(workers = nCores)) %>%
+    BiocParallel::bplapply(distanceCalculator, maxRS = max(Rs), BPPARAM  = BiocParallel::MulticoreParam(workers = nCores)) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate_if(is.numeric,function(x) ifelse(is.infinite(x), NA, x)) %>% 
-    lapply(Rs, function(x) x %>% 
+    lapply(Rs, function(x, rmax) x %>% 
                              dplyr::mutate_at(dplyr::vars(dplyr::contains('dist_')), function(x) ifelse(x <= rmax, x, NA )) %>% 
                              dplyr::rename_with(function(x) stringr::str_replace(x, "dist_", paste0("dist", rmax, "_")), dplyr::starts_with("dist_"))
       , x = .) %>% 
-    purrr::reduce(full_join)
+    purrr::reduce(full_join) 
+
+  
+  
 }
 
 
@@ -109,14 +129,34 @@ calculateCellDistances = function(singleCellData, splitBy = "imageID", nCores = 
 #' @export
 #' @rdname calculateK
 #' @importFrom tibble rownames_to_column
-#' @importFrom dplyr mutate_if bind_rows inner_join relocate 
+#' @importFrom dplyr mutate_if bind_rows inner_join relocate contains mutate
 #' @importFrom stringr word
+#' @importFrom SummarizedExperiment colData assayNames
+#' @importFrom lisaClust inhomLocalK
 #' @importFrom BiocParallel bplapply MulticoreParam
-calculateK = function(singleCellData, nCores = 1, Rs = c(5,10, 20, 50, 100, 200, 400)){
+#' @importFrom janitor %>% 
+calculateK = function(singleCellData, nCores = 1, Rs = c(200)){
+    
+
+   if ( "SingleCellExperiment" %in% class(singleCellData)){
+        singleCellDataNew = data.frame(SummarizedExperiment::colData(singleCellData)) %>% 
+            dplyr::mutate(imageID = as.character(imageID), cellType = as.character(cellType))
+        
+        if ("intensities" %in% assayNames(singleCellData)){
+            singleCellDataNew = singleCellDataNew %>% 
+                cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
+        }
+        
+        singleCellData = singleCellDataNew 
+   }
+    
+   # XYZ Make sure to have check for if rownames are not numbers
+    
   singleCellDataK = singleCellData %>%
     split(~ imageID) %>%
-    BiocParallel::bplapply(lisaClust:::inhomLocalK,Rs = Rs, BPPARAM = BiocParallel::MulticoreParam(workers = nCores)) %>%
+    BiocParallel::bplapply(lisaClust:::inhomLocalK, Rs = Rs, BPPARAM = BiocParallel::MulticoreParam(workers = nCores)) %>% 
     lapply(as.data.frame) 
+
   
   # Correcting column names when Rs greater than max Rs of image
   correctedRadius = singleCellDataK %>% 
@@ -152,6 +192,7 @@ calculateK = function(singleCellData, nCores = 1, Rs = c(5,10, 20, 50, 100, 200,
 #' @param seed
 #' @param num.trees
 #' @param verbose
+#' @param missingReplacement
 #'
 #' @examples
 #' XYZ
@@ -160,17 +201,41 @@ calculateK = function(singleCellData, nCores = 1, Rs = c(5,10, 20, 50, 100, 200,
 #' @rdname randomForestContaminationCalculator
 #' @importFrom tibble rownames_to_column
 #' @importFrom dplyr mutate select bind_rows inner_join  
+#' @importFrom SummarizedExperiment colData assayNames
 #' @importFrom ranger ranger
 #' @importFrom tibble column_to_rownames rownames_to_column
+#' @importFrom stringr str_replace
 randomForestContaminationCalculator = function(singleCellData, 
+                                               markers,
                                                seed = 2022, 
                                                num.trees = 100,
-                                               verbose = FALSE){
+                                               verbose = FALSE,
+                                               missingReplacement = 0){
+    
+     
+    if ( "SingleCellExperiment" %in% class(singleCellData)){
+        singleCellDataNew = data.frame(SummarizedExperiment::colData(singleCellData)) %>% 
+            dplyr::mutate(imageID = as.character(imageID), cellType = as.character(cellType))
+        
+        if ("intensities" %in% assayNames(singleCellData)){
+            singleCellDataNew = singleCellDataNew %>% 
+                cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
+            if (is.null(markers)){
+                markers = rownames(SummarizedExperiment::assay(singleCellData, "intensities"))
+            }
+        }
+        
+        
+        singleCellData = singleCellDataNew 
+        
+    }
+    
   rfData = singleCellData %>% 
-    dplyr::mutate(cellID = paste0("cellID", cellID)) %>% 
-    tibble::column_to_rownames("cellID") %>% 
-    dplyr::select(cellType, markers) 
-  
+    # dplyr::mutate(cellID = paste0("cellID", cellID)) %>% 
+    # tibble::column_to_rownames("cellID") %>% 
+    dplyr::select(cellType, markers) %>% 
+    dplyr::mutate_at(markers, function(x) ifelse(is.nan(x)|is.na(x), 0, x))
+
   set.seed(seed)
   rfModel <- ranger::ranger(as.factor(cellType) ~ ., data = rfData, num.trees = num.trees, probability = TRUE)
   
@@ -189,9 +254,10 @@ randomForestContaminationCalculator = function(singleCellData,
     dplyr::mutate(rfMainCellProb = apply(.[c("cellType", colnames(predictions))], 1, function(x) as.numeric(x[x["cellType"]]))) %>% 
     dplyr::select(-colnames(predictions)) %>% 
     tibble::rownames_to_column("cellID") %>% 
-    dplyr::mutate(cellID = str_replace(cellID, "cellID", "")) 
+    dplyr::mutate(cellID = stringr::str_replace(cellID, "cellID", "")) 
   
   singleCellData = singleCellData %>% 
+      # XYZ - should this be left join?
     dplyr::inner_join(rfData)
   
   singleCellData
@@ -236,8 +302,8 @@ calculateModelsAllInteractions = function(singleCellData,
                                      typeAll = c("dist"), 
                                      covariates = NULL, 
                                      method = "lm", 
-                                     isMixed = TRUE, 
-                                     verbose = TRUE,
+                                     isMixed = FALSE, 
+                                     verbose = FALSE,
                                      timeout = 10,
                                      nCores = 1){
   
@@ -254,12 +320,12 @@ calculateModelsAllInteractions = function(singleCellData,
     mapply(calculateInteractionModels, type = ., MoreArgs = list(singleCellData = singleCellData,
                                                     markers = markers,
                                                     covariates = covariates, 
-                                                    nCores = nCores,
                                                     method = method,
                                                     isMixed = isMixed, 
                                                     verbose = verbose,
                                                     timeout = timeout,
-                                                    modelType), SIMPLIFY = FALSE) %>% 
+                                                    nCores = nCores
+                                                    ), SIMPLIFY = FALSE) %>% 
     dplyr::bind_rows()
   
 }
@@ -337,7 +403,13 @@ calculateInteractionModels = function(singleCellData,
   
   singleCellDataCellInteractionModels = singleCellDataCellInteractionModels %>% 
     dplyr::mutate(interactingCell = str_replace(independent, type, "")) %>% 
-    dplyr::left_join(relativeExpressionData)
+    dplyr::left_join(relativeExpressionData) %>% 
+      relocate(cellType, independent, dependent)
+  
+  if (isMixed == FALSE){
+      singleCellDataCellInteractionModels = singleCellDataCellInteractionModels %>% 
+          relocate(imageID)
+  }
   
   singleCellDataCellInteractionModels
 }
@@ -484,9 +556,9 @@ fitInteractionModels = function(x, f, covariates, method, isMixed, timeout = tim
   outputs = try({
     
     if (isMixed == TRUE){
-      if (modelType == "rlm"){
+      if (method == "rlm"){
         
-        model = R.utils::withTimeout({robustlmm::rlmer(formula(paste(f, "+ (1|patient/imageID)")), 
+        model = R.utils::withTimeout({robustlmm::rlmer(formula(paste(f, "+ (1|imageID)")), 
                                                        method = "DASvar",
                                                        data = x)},
                                      timeout = timeout, onTimeout = "silent")
@@ -496,7 +568,7 @@ fitInteractionModels = function(x, f, covariates, method, isMixed, timeout = tim
         modelSummary = summary(model)
         modelSummary$r.squared = NA
       }else{
-        model = R.utils::withTimeout({lmerTest::lmer(formula(paste(f, "+ (1|patient/imageID)")), data = x)},
+        model = R.utils::withTimeout({lmerTest::lmer(formula(paste(f, "+ (1|imageID)")), data = x)},
                                      timeout = timeout, onTimeout = "silent")
         coefs = coef(summary(model))
         coefs = coefs[,colnames(coefs) != "df"]
@@ -536,11 +608,11 @@ fitInteractionModels = function(x, f, covariates, method, isMixed, timeout = tim
                          formula = f, 
                          isSingular = performance::check_singularity(model)
                          ) 
-    
     if (isMixed == FALSE){
       outputs = outputs %>% 
         mutate(imageID = unique(x$imageID))
     }
+    outputs
     
   }, silent = TRUE)
   
@@ -580,7 +652,7 @@ fitInteractionModels = function(x, f, covariates, method, isMixed, timeout = tim
 #' @importFrom stringr str_detect str_replace str_split
 #' @importFrom tidyr pivot_wider
 #' @importFrom janitor %>% 
-imageModelsCVFormat = function(imageModels, values_from = "tValue",  removeColsThresh = 0.2, replacementValue = 0){
+imageModelsCVFormat = function(imageModels, values_from = "tValue",  removeColsThresh = 0.2, missingReplacement = 0){
   cvData = imageModels %>% 
     dplyr::mutate_if(is.numeric, function(x) ifelse(is.finite(x), x, NA)) %>% 
     dplyr::mutate(relationship = paste0(cellType, "_", dependent, "_", independent)) %>% 
@@ -589,8 +661,97 @@ imageModelsCVFormat = function(imageModels, values_from = "tValue",  removeColsT
     tidyr::pivot_wider(names_from = relationship, values_from = values_from)
   
   cvData = cvData[,colSums(is.na(cvData)) < nrow(cvData)*removeColsThresh]
-  cvData[is.na(cvData)] = replacementValue
+  cvData[is.na(cvData)] = missingReplacement
   
   cvData
   
+}
+
+
+
+
+#' Visualise Cell-Cell Marker Relationships
+#'
+#' Visualise Cell-Cell Marker Relationships.
+#'
+#' @param singleCellData
+#' @param imageID
+#' @param mainCellType
+#' @param interactingCellType 
+#' @param depedentMarker
+#' @param sizeVariable
+#' @param shape
+#' @param interactive
+#' @param plotModelFit
+#' @param method
+#' @param modelType
+#'
+#' @examples
+#' XYZ
+#' 
+#' @export
+#' @rdname imageModelsCVFormat
+#' @importFrom dplyr filter
+#' @importFrom ggplot2 ggplot scale_fill_distiller stat_density_2d geom_point theme_classic aes_string ggtitle facet_wrap aes xlab ylab ggtitle autoplot
+#' @importFrom plotly ggplotly
+#' @importFrom ggfortify autoplot
+#' @importFrom janitor %>% 
+visualiseImageRelationship = function(singleCellData, 
+                                      imageID, 
+                                      mainCellType,
+                                      interactingCellType,
+                                      depedentMarker, 
+                                      sizeVariable = NULL, 
+                                      shape = NULL, 
+                                      interactive = TRUE, 
+                                      plotModelFit = TRUE,
+                                      method = "lm",
+                                      modelType = "dist200_"){
+    
+    singleCellData = singleCellData[singleCellData$imageID == imageID, ]
+    singleCellData$OriginalMarker = singleCellData[, depedentMarker]
+    singleCellData$fittedValues = NA
+    
+    relationshipFormula = paste0(depedentMarker, "~", paste0(modelType, interactingCellType))
+    modelData = singleCellData[singleCellData$cellType == mainCellType, ]
+    model = lm(formula(relationshipFormula), modelData)
+    
+    
+    singleCellData[names(model$fitted.values), "fittedValues"] = model$fitted.values
+    
+    if (plotModelFit == TRUE){
+        singleCellData[names(model$fitted.values), depedentMarker] = model$fitted.values
+    }
+    
+    
+    
+    g1 = ggplot2::ggplot()  +
+        ggplot2::stat_density_2d(data = singleCellData[singleCellData$cellType == interactingCellType,],
+                             ggplot2::aes(x = x, y = y, fill = ..density..), geom = "raster", contour = FALSE) +
+        ggplot2::scale_fill_distiller(palette = "Reds", direction = 1) +
+        ggplot2::geom_point(data = singleCellData[singleCellData$cellType == mainCellType,], 
+                   ggplot2::aes_string(x = "x", y = "y", colour = depedentMarker, size = sizeVariable, shape = shape)) +
+        ggplot2::theme_classic() +
+        ggplot2::ggtitle(paste("Cell Points:", mainCellType, ",",
+                      "Cell Density:", interactingCellType, ",",
+                      "Model Fit:", plotModelFit)) +
+        ggplot2::facet_wrap(~imageID, scales = "free")
+    
+    g2 = singleCellData %>% 
+        dplyr::filter(cellType == mainCellType) %>% 
+        ggplot2::ggplot(ggplot2::aes_string(x = "OriginalMarker", y = "fittedValues")) +
+        ggplot2::geom_point() +
+        ggplot2::theme_classic() +
+        ggplot2::xlab("True Values") +
+        ggplot2::ylab("Fitted Values") +
+        ggplot2::ggtitle("Predicted vs Real Values")
+    
+    g1 = plotly::ggplotly(g1)
+    g2 = plotly::ggplotly(g2)
+    # g3 = ggfortify::autoplot(model) +
+    #     ggplot2::theme_classic()
+    
+    # list(g1,g2, g3)
+    list(g1,g2)
+    
 }
