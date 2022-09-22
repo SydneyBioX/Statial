@@ -2,21 +2,58 @@
 % Please edit documentation in R/Konditional.R
 \name{Konditional}
 \alias{Konditional}
+\alias{KonditionalCore}
+\alias{parentCombinations}
 \title{Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.}
 \usage{
 Konditional(sce)
+
+KonditionalCore(
+  image,
+  r,
+  from,
+  to,
+  parent,
+  inhom = TRUE,
+  edge = FALSE,
+  includeOriginal = TRUE,
+  ...
+)
+
+parentCombinations(all, ...)
 }
 \arguments{
-\item{sce}{A SingleCellExperiment}
+\item{sce}{A SingleCellExperiment or SpatialExperiment}
+
+\item{...}{Vectors of each parent population}
+
+\item{all}{A list of all cell types}
 }
 \value{
 A Statial result object
+
+A single data frame row containing the konditional and orignal L values
+
+A data frame containing all pairwise cell relationships and their corresponding parent
 }
 \description{
 Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
+
+Core function used by Konditional
+
+Create all combinations of cell type relationships from a list of parents
 }
 \examples{
 
 1+1
+
+XYZ
+
+tcells = c("CD4", "CD8")
+tissue = c("epithelial", "stromal")
+allCells = c("tumour", tissue, tcells)
+
+parentCombinations(all = allCells, tcells, tissue)
+
 
 }
