@@ -2,58 +2,58 @@
 % Please edit documentation in R/Konditional.R
 \name{Konditional}
 \alias{Konditional}
-\alias{KonditionalCore}
-\alias{parentCombinations}
 \title{Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.}
 \usage{
-Konditional(sce)
-
-KonditionalCore(
-  image,
+Konditional(
+  imageData,
+  parentDf,
   r,
-  from,
-  to,
-  parent,
+  from = NULL,
+  to = NULL,
+  parent = NULL,
   inhom = TRUE,
-  edge = FALSE,
+  edgeCorrect = FALSE,
+  window = "convex",
+  window.length = NA,
+  weightQuantile = 0.8,
+  includeZeroCells = TRUE,
   includeOriginal = TRUE,
-  ...
+  cores = 1
 )
-
-parentCombinations(all, ...)
 }
 \arguments{
-\item{sce}{A SingleCellExperiment or SpatialExperiment}
+\item{imageData}{A SingleCellExperiment or SpatialExperiment or a list of single images.}
 
-\item{...}{Vectors of each parent population}
+\item{r}{The radius or radii which pairwise cell relationships are evaluated at.}
 
-\item{all}{A list of all cell types}
+\item{from}{= NULL,}
+
+\item{to}{= NULL,}
+
+\item{parent}{= NULL,}
+
+\item{inhom}{A logical value indicating whether to perform an inhomogeneous L function.}
+
+\item{edgeCorrect}{A logical value indicating whether to perform edge correction.}
+
+\item{window}{= "convex",}
+
+\item{window.length}{= NA,}
+
+\item{weightQuantile}{= .80,}
+
+\item{includeOriginal}{A logical value to return the original L function values along with the konditional values.}
+
+\item{cores}{Number of cores for parallel processing.}
 }
 \value{
-A Statial result object
-
-A single data frame row containing the konditional and orignal L values
-
-A data frame containing all pairwise cell relationships and their corresponding parent
+A Koditional result object
 }
 \description{
 Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
-
-Core function used by Konditional
-
-Create all combinations of cell type relationships from a list of parents
 }
 \examples{
 
 1+1
-
-XYZ
-
-tcells = c("CD4", "CD8")
-tissue = c("epithelial", "stromal")
-allCells = c("tumour", tissue, tcells)
-
-parentCombinations(all = allCells, tcells, tissue)
-
 
 }
