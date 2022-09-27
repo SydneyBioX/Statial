@@ -27,16 +27,19 @@ inhomLParent <- function (data,
                           weightQuantile = .80,
                           from = NULL,
                           to = NULL,
-                          edgeCorrect = TRUE,
-                          includeZeroCells = TRUE,
                           parent = NULL,
                           inhom = TRUE,
+                          edgeCorrect = TRUE,
+                          includeZeroCells = TRUE,
                           closePairs = NULL) {
     
     if (class(data) == "ppp") {
         data = PPPdf(data)
     }
     
+    if(!("cellID" %in% names(data))){
+        data$cellID = factor(seq_len(nrow(data)))
+    }
     #if class is data frame it show make window etc.
     ow <- makeWindow(data, window, window.length)
     

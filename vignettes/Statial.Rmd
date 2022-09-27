@@ -23,32 +23,32 @@ output:
 ---
   
 ```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-library(BiocStyle)
+# knitr::opts_chunk$set(
+#   collapse = TRUE,
+#   comment = "#>"
+# )
+# library(BiocStyle)
 ```
 
 
 ```{r warning=FALSE, message=FALSE}
-# load required packages
-library(Statial)
-
-# .libPaths("/dora/nobackup/biostat/Rpackages/v4")
-
-library(ggplot2)
-library(spicyR)
-library(tidyverse)
-library(SingleCellExperiment)
+# # load required packages
+# library(Statial)
+# 
+# # .libPaths("/dora/nobackup/biostat/Rpackages/v4")
+# 
+# library(ggplot2)
+# library(spicyR)
+# library(tidyverse)
+# library(SingleCellExperiment)
 ```
 
 # Installation
 
 ```{r, eval = FALSE}
-# Install the development version from GitHub:
-# install.packages("devtools")
-devtools::install_github("SydneyBioX/Statial")
+# # Install the development version from GitHub:
+# # install.packages("devtools")
+# devtools::install_github("SydneyBioX/Statial")
 ```
 
 # Overview
@@ -80,38 +80,38 @@ In the following we will reanalyse......
 
 
 ```{r}
-sce = readRDS("../data/sce.RDS")
+# sce = readRDS("../data/sce.RDS")
 ```
 
 
 
 ```{r}
-intensitiesData = data.frame(t(assay(sce, "intensities")))
-spatialData = data.frame(colData(sce))
-markersToUse = colnames(intensitiesData)
-
-singleCellData = cbind(spatialData[rownames(intensitiesData),], intensitiesData)
-singleCellData = singleCellData %>% 
-    mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>% 
-    mutate_if(is.factor, as.character)
+# intensitiesData = data.frame(t(assay(sce, "intensities")))
+# spatialData = data.frame(colData(sce))
+# markersToUse = colnames(intensitiesData)
+# 
+# singleCellData = cbind(spatialData[rownames(intensitiesData),], intensitiesData)
+# singleCellData = singleCellData %>% 
+#     mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>% 
+#     mutate_if(is.factor, as.character)
 ```
 
 
 ```{r}
-singleCellDataDistances = calculateCellDistances(singleCellData, nCores = 50, Rs = c(200))
+# singleCellDataDistances = calculateCellDistances(singleCellData, nCores = 50, Rs = c(200))
 ```
 
 
 ```{r}
-singleCellDataDistancesCounts = calculateK(singleCellDataDistances, nCores = 50, Rs = c(200))
+# singleCellDataDistancesCounts = calculateK(singleCellDataDistances, nCores = 50, Rs = c(200))
 ```
 
 
 ```{r}
-imageModels = calculateModelsAllInteractions(singleCellData = singleCellDataDistancesCounts, 
-                               markers = markersToUse, 
-                               typeAll = c("dist"),
-                               nCores = 50)
+# imageModels = calculateModelsAllInteractions(singleCellData = singleCellDataDistancesCounts, 
+#                                markers = markersToUse, 
+#                                typeAll = c("dist"),
+#                                nCores = 50)
 ```
 
 ```{r}
@@ -175,54 +175,54 @@ imageModels = calculateModelsAllInteractions(singleCellData = singleCellDataDist
 
 
 ```{r}
-mixedModels = calculateModelsAllInteractions(singleCellData = singleCellDataDistancesCounts, 
-                               markers = markersToUse, 
-                               typeAll = c("dist"),
-                               isMixed = TRUE,
-                               nCores = 50)
-
-mixedModels %>% 
-    filter(pValue*nrow(.) < 0.05) %>% 
-    filter(relativeExpression < 1, relativeExpression > 0) %>% 
-    filter(cellType != "Undefined", interactingCell != "Undefined") 
-
+# mixedModels = calculateModelsAllInteractions(singleCellData = singleCellDataDistancesCounts, 
+#                                markers = markersToUse, 
+#                                typeAll = c("dist"),
+#                                isMixed = TRUE,
+#                                nCores = 50)
+# 
+# mixedModels %>% 
+#     filter(pValue*nrow(.) < 0.05) %>% 
+#     filter(relativeExpression < 1, relativeExpression > 0) %>% 
+#     filter(cellType != "Undefined", interactingCell != "Undefined") 
+# 
 
 ```
 
 
 ```{r}
-imageModels %>% 
-    filter(cellType == "MC2", independent == "dist200_SC7", dependent == "Podoplanin") 
+# imageModels %>% 
+#     filter(cellType == "MC2", independent == "dist200_SC7", dependent == "Podoplanin") 
 
 ```
 
 
 
 ```{r}
-visualiseImageRelationship(singleCellData, 
-                          imageID = "36", 
-                          mainCellType = "MC2",
-                          interactingCellType = "SC7",
-                          depedentMarker = "Podoplanin", 
-                          interactive = TRUE, 
-                          plotModelFit = FALSE,
-                          method = "lm",
-                          modelType = "dist200_")
+# visualiseImageRelationship(singleCellData, 
+#                           imageID = "36", 
+#                           mainCellType = "MC2",
+#                           interactingCellType = "SC7",
+#                           depedentMarker = "Podoplanin", 
+#                           interactive = TRUE, 
+#                           plotModelFit = FALSE,
+#                           method = "lm",
+#                           modelType = "dist200_")
 ```
 
 
 ## Cross Validation
 ```{r}
-crossValidationData = imageModelsCVFormat(imageModels, 
-                                          values_from = "tValue",  
-                                          removeColsThresh = 0.2, 
-                                          missingReplacement = 0)
+# crossValidationData = imageModelsCVFormat(imageModels, 
+#                                           values_from = "tValue",  
+#                                           removeColsThresh = 0.2, 
+#                                           missingReplacement = 0)
 ```
 
 
 ## Session Info
 ```{r}
-sessionInfo()
+# sessionInfo()
 ```
 
 

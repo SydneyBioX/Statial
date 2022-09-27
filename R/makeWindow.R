@@ -10,15 +10,16 @@
 #' 
 #' @export
 #' @rdname makeWindow
-#' @import spatstat.geom
+#' @import spatstat
 #' @import concaveman
 
 makeWindow <- function(data,
                        window = "square",
                        window.length = NULL) {
-    data = data.frame(data)
+    
     ow <-
         spatstat.geom::owin(xrange = range(data$x), yrange = range(data$y))
+    
     
     if (window == "convex") {
         p <- spatstat.geom::ppp(data$x, data$y, ow)
