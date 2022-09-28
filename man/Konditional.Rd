@@ -6,7 +6,7 @@
 \usage{
 Konditional(
   imageData,
-  parentDf,
+  parentDf = NULL,
   r,
   from = NULL,
   to = NULL,
@@ -24,23 +24,29 @@ Konditional(
 \arguments{
 \item{imageData}{A SingleCellExperiment or SpatialExperiment or a list of single images.}
 
-\item{r}{The radius or radii which pairwise cell relationships are evaluated at.}
+\item{parentDf}{A data frame from \code{\link[Statial]{parentCombinations}}}
 
-\item{from}{= NULL,}
+\item{r}{Radius to evaluated pairwise relationships between from and to cells.}
 
-\item{to}{= NULL,}
+\item{from}{The first cell type to be evaluated in the pairwise relationship.}
 
-\item{parent}{= NULL,}
+\item{to}{The second cell type to be evaluated in the pairwise relationship.}
 
-\item{inhom}{A logical value indicating whether to perform an inhomogeneous L function.}
+\item{parent}{The parent population of the from cell type (must include from cell type).}
+
+\item{inhom}{A logical value indicating whether to account for inhomogeneity.}
 
 \item{edgeCorrect}{A logical value indicating whether to perform edge correction.}
 
-\item{window}{= "convex",}
+\item{window}{Type of window for data, either `square`, `convex` or `concave`, passed into \code{\link[Statial]{makeWindow}}}
 
-\item{window.length}{= NA,}
+\item{window.length}{A tuning parameter for controlling the level of concavity when estimating concave windows.
+Passed into \code{\link[Statial]{makeWindow}}}
 
 \item{weightQuantile}{= .80,}
+
+\item{includeZeroCells}{A logical value indicating whether to include cells with 
+zero counts in the pairwise association calculation.}
 
 \item{includeOriginal}{A logical value to return the original L function values along with the konditional values.}
 
@@ -53,7 +59,6 @@ A Koditional result object
 Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
 }
 \examples{
-
 1+1
 
 }

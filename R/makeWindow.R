@@ -1,12 +1,15 @@
 #' Creates a window for PPP object
 #'
 #'
-#' @param data
-#' @param window
-#' @param window.length
+#' @param data A single image from a Single Cell Experiment or PPP object.
+#' @param window The shape of window around the regions, can be `square`, `convex` or `concave`
+#' @param window.length A tuning parameter for controlling the level of concavity when estimating concave windows.
 #'
 #' @examples
-#' XYZ
+#' data = data.frame(x = rnorm(10), y = rnorm(10))
+#' ow = makeWindow(data, window = "square")
+#' 
+#' spatstat.geom::ppp(x = data$x, y = data$y, window = ow)
 #' 
 #' @export
 #' @rdname makeWindow

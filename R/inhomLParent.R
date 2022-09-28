@@ -1,17 +1,18 @@
 #' Calculates conditional L value
 #'
 #'
-#' @param data
-#' @param Rs
-#' @param window
-#' @param window.length
+#' @param data A single image from a Single Cell Experiment or point pattern object.
+#' @param Rs The radius which pairwise cell relationships are evaluated at.
+#' @param window Type of window for data, either `square`, `convex` or `concave`, passed into \code{\link[Statial]{makeWindow}}
+#' @param window.length A tuning parameter for controlling the level of concavity when estimating concave windows.
+#' Passed into \code{\link[Statial]{makeWindow}}
 #' @param weightQuantile
-#' @param from
-#' @param to
-#' @param edgeCorrect
-#' @param includeZeroCells
-#' @param parent
-#' @param inhom
+#' @param from The first cell type to be evaluated in the pairwise relationship.
+#' @param to The second cell type to be evaluated in the pairwise relationship.
+#' @param parent The parent population of the from cell type (must include from cell type).
+#' @param edgeCorrect A logical value indicating whether to perform edge correction.
+#' @param includeZeroCells A logical value indicating whether to include cells with 
+#' @param inhom A logical value indicating whether to account for inhomogeneity.
 #' @param closePairs
 #'
 #' @examples
@@ -188,20 +189,7 @@ inhomLParent <- function (data,
 
 
 #' Calculates L value from weights and lambda values
-#'
-#'
-#' @param p
-#' @param lam
-#' @param X
-#' @param Rs
-#' @param num
-#' @param Area
-#'
-#' @examples
-#' XYZ
-#' 
-#'
-#' @rdname inhomLParent
+#' @noRd
 #' @import data.table
 
 inhomL <-
@@ -228,15 +216,7 @@ inhomL <-
     }
 
 #' Converts a PPP object to a data frame for inhomLParent function
-#'
-#'
-#' @param ppp a PPP object
-#'
-#' @examples
-#' XYZ
-#' 
-#' 
-#' @rdname inhomLParent
+#' @noRd
 #' @import spatstat.geom
 #' 
 PPPdf = function(ppp) {
@@ -250,16 +230,7 @@ PPPdf = function(ppp) {
 
 
 #' Edge correction for L values
-#'
-#'
-#' @param X
-#' @param maxD
-#'
-#' @examples
-#' XYZ
-#' 
-#' 
-#' @rdname inhomLParent
+#' @noRd
 #' @import spatstat.geom
 
 borderEdge <- function(X, maxD){

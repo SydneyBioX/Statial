@@ -1,23 +1,24 @@
 #' Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
 #'
 #' @param imageData A SingleCellExperiment or SpatialExperiment or a list of single images. 
-#' @param parentDf,
-#' @param r The radius or radii which pairwise cell relationships are evaluated at.
-#' @param from = NULL,
-#' @param to = NULL,
-#' @param parent = NULL,
-#' @param inhom A logical value indicating whether to perform an inhomogeneous L function.
+#' @param parentDf A data frame from \code{\link[Statial]{parentCombinations}}
+#' @param r Radius to evaluated pairwise relationships between from and to cells.
+#' @param from The first cell type to be evaluated in the pairwise relationship.
+#' @param to The second cell type to be evaluated in the pairwise relationship.
+#' @param parent The parent population of the from cell type (must include from cell type).
+#' @param inhom  A logical value indicating whether to account for inhomogeneity.
 #' @param edgeCorrect A logical value indicating whether to perform edge correction.
-#' @param window = "convex",
-#' @param window.length = NA,
+#' @param window Type of window for data, either `square`, `convex` or `concave`, passed into \code{\link[Statial]{makeWindow}}
+#' @param window.length A tuning parameter for controlling the level of concavity when estimating concave windows.
+#' Passed into \code{\link[Statial]{makeWindow}}
 #' @param weightQuantile = .80,
-#' @param includeZeroCells
+#' @param includeZeroCells A logical value indicating whether to include cells with 
+#' zero counts in the pairwise association calculation.
 #' @param includeOriginal A logical value to return the original L function values along with the konditional values.
 #' @param cores Number of cores for parallel processing.
 #' @return A Koditional result object
 #'
 #' @examples
-#' 
 #' 1+1
 #' 
 #' @export Konditional
@@ -27,7 +28,7 @@
 #' @import BiocParallel
 
 Konditional = function(imageData,
-                       parentDf,
+                       parentDf = NULL,
                        r,
                        from = NULL,
                        to = NULL,
@@ -42,6 +43,19 @@ Konditional = function(imageData,
                        cores = 1)
 {
     
+    if(is.null(c(parentDf, from, to, parent))){
+        stop("Please specificy a parentDf (obtained from parentCombinations, or from, to, and parent cellTypes")
+    } else if(!is.null(from) &
+              !is.null(to) &
+              !is.null(parent)) {
+        
+        parentDf = data.frame(from = from,
+                              to = to,
+                              parent = I(list(parent)))
+        
+    }
+    
+    
     # Creating a vector for images
     if(class(imageData) == "SingleCellExperiment") {
         imageData = imageData %>%
@@ -50,6 +64,11 @@ Konditional = function(imageData,
         
         imageData = mutate(imageData, imageID = as.character(imageID))
         images = split(imageData, imageData$imageID)
+    }
+    
+    if(class(imageData) != "list") {
+        imageData = list(imageData)
+        names(imageData) = as.character(seq_along(imageData))
     }
     
     images = imageData
@@ -130,9 +149,9 @@ Konditional = function(imageData,
 #' @param inhom A logical value indicating whether to perform an inhomogeneous L function.
 #' @param edge A logical value indicating whether to perform edge correction.
 #' @param includeOriginal A logical value to return the original L function values along with the konditional values.
-#' @param ... Any arguments passed into InhomLParent
+#' @param ... Any arguments passed into \code{\link[Statial]{inhomLParent}}.
 #'
-#' @return A single data frame row containing the konditional and orignal L values
+#' @return A single row of a data frame containing the konditional and orignal L values.
 #'
 #' @examples
 #' XYZ

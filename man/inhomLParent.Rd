@@ -2,9 +2,6 @@
 % Please edit documentation in R/inhomLParent.R
 \name{inhomLParent}
 \alias{inhomLParent}
-\alias{inhomL}
-\alias{PPPdf}
-\alias{borderEdge}
 \title{Calculates conditional L value}
 \usage{
 inhomLParent(
@@ -21,41 +18,35 @@ inhomLParent(
   includeZeroCells = TRUE,
   closePairs = NULL
 )
-
-inhomL(p, lam, X, Rs, num, Area)
-
-PPPdf(ppp)
-
-borderEdge(X, maxD)
 }
 \arguments{
+\item{data}{A single image from a Single Cell Experiment or point pattern object.}
+
+\item{Rs}{The radius which pairwise cell relationships are evaluated at.}
+
+\item{window}{Type of window for data, either `square`, `convex` or `concave`, passed into \code{\link[Statial]{makeWindow}}}
+
+\item{window.length}{A tuning parameter for controlling the level of concavity when estimating concave windows.
+Passed into \code{\link[Statial]{makeWindow}}}
+
+\item{from}{The first cell type to be evaluated in the pairwise relationship.}
+
+\item{to}{The second cell type to be evaluated in the pairwise relationship.}
+
+\item{parent}{The parent population of the from cell type (must include from cell type).}
+
+\item{inhom}{A logical value indicating whether to account for inhomogeneity.}
+
+\item{edgeCorrect}{A logical value indicating whether to perform edge correction.}
+
+\item{includeZeroCells}{A logical value indicating whether to include cells with}
+
 \item{closePairs}{}
-
-\item{Area}{}
-
-\item{ppp}{a PPP object}
-
-\item{maxD}{}
 }
 \description{
 Calculates conditional L value
-
-Calculates L value from weights and lambda values
-
-Converts a PPP object to a data frame for inhomLParent function
-
-Edge correction for L values
 }
 \examples{
 XYZ
-
-XYZ
-
-
-XYZ
-
-
-XYZ
-
 
 }
