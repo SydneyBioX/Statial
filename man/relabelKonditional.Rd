@@ -12,6 +12,7 @@ relabelKonditional(
   from,
   to,
   parent,
+  returnImages = FALSE,
   inhom = TRUE,
   edge = FALSE,
   cores = 1,
@@ -33,18 +34,20 @@ relabel(image, labels = NULL)
 
 \item{parent}{The parent population of the from cell type (must include from cell type).}
 
-\item{inhom}{A logical value indicating whether to perform an inhomogeneous L function.}
+\item{returnImages}{A logical value to indicate whether the function should return the randomised images along with the Konditional values.}
+
+\item{inhom}{A logical value indicating whether to account for inhomogeneity.}
 
 \item{edge}{A logical value indicating whether to perform edge correction.}
 
 \item{cores}{Number of cores for parallel processing.}
 
-\item{...}{Any arguments passed into Konditional}
+\item{...}{Any arguments passed into \code{\link[Statial]{Konditional}}}
 
 \item{labels}{A vector of CellTypes to be randomised. If NULL all cells labels will be radomised.}
 }
 \value{
-A data frame containing all images
+A data frame containing Konditional value for each randomised image. If `returnImages = TRUE` function will return a list with Konditional values and the randomised images.
 
 A data frame containing all pairwise cell relationships and their corresponding parent
 }

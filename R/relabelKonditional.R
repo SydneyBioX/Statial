@@ -8,11 +8,12 @@
 #' @param from The first cell type to be evaluated in the pairwise relationship.
 #' @param to The second cell type to be evaluated in the pairwise relationship.
 #' @param parent The parent population of the from cell type (must include from cell type).
-#' @param inhom A logical value indicating whether to perform an inhomogeneous L function.
+#' @param returnImages A logical value to indicate whether the function should return the randomised images along with the Konditional values. 
+#' @param inhom A logical value indicating whether to account for inhomogeneity.
 #' @param edge A logical value indicating whether to perform edge correction.
 #' @param cores Number of cores for parallel processing.
-#' @param ... Any arguments passed into Konditional
-#' @return A data frame containing all images 
+#' @param ... Any arguments passed into \code{\link[Statial]{Konditional}}
+#' @return A data frame containing Konditional value for each randomised image. If `returnImages = TRUE` function will return a list with Konditional values and the randomised images.
 #'
 #' @examples
 #`
@@ -30,6 +31,7 @@ relabelKonditional = function(image,
                               from,
                               to,
                               parent,
+                              returnImages = FALSE,
                               inhom = TRUE,
                               edge = FALSE,
                               cores = 1,
@@ -46,7 +48,7 @@ relabelKonditional = function(image,
                          BPPARAM = MulticoreParam(workers = cores))
     
     relabeled = c(list(image), relabeled)
-    names(relabeled) = seq_len(length(relabeled))
+    names(relabeled) = as.character(seq_along(relabeled))
     
     parentDf = data.frame(from = from,
                           to = to, 
@@ -54,7 +56,7 @@ relabelKonditional = function(image,
     
     #Calculated the child and parent values for the relabeled images
     relabeledDf = Konditional(
-        relabeled,
+        imageData = relabeled,
         r = r,
         parentDf = parentDf,
         inhom = inhom,
@@ -64,9 +66,12 @@ relabelKonditional = function(image,
     )
     
     relabeledDf = relabeledDf %>% 
-        select(imageID, original, konditional) %>% 
-        mutate(images = relabeled,
-               type = ifelse(imageID == 1, "original", "randomised"))
+        select(imageID, original, konditional, r) %>% 
+        mutate(type = ifelse(imageID == 1, "original", "randomised"))
+    
+    if(returnImages) {
+        return(list(relabeledDf, relabeled))
+    }
     
     return(relabeledDf)
 }
