@@ -27,7 +27,7 @@ distanceCalculator = function(singleCellData, maxRS = 200){
     x = singleCellData$x ,
     y = singleCellData$y,
     window = ow,
-    marks = singleCellData$cellType
+    marks = singleCellData$cellTypea
   )
   
   closePairData = spatstat.geom::closepairs(pppData, rmax = maxRS)
