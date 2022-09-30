@@ -11,8 +11,8 @@
 #' @param window Type of window for data, either `square`, `convex` or `concave`, passed into \code{\link[Statial]{makeWindow}}
 #' @param window.length A tuning parameter for controlling the level of concavity when estimating concave windows.
 #' Passed into \code{\link[Statial]{makeWindow}}
-#' @param weightQuantile = .80,
-#' @param includeZeroCells A logical value indicating whether to include cells with 
+#' @param weightQuantile A decimal value indicating what quantile of parent density used to weight the `from` cells.
+#' @param includeZeroCells A logical value indicating whether to include cells with
 #' zero counts in the pairwise association calculation.
 #' @param includeOriginal A logical value to return the original L function values along with the konditional values.
 #' @param cores Number of cores for parallel processing.
