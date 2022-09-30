@@ -1,0 +1,50 @@
+---
+title: "Konditional"
+date: "`r BiocStyle::doc_date()`"
+params:
+  test: FALSE
+author:
+- name: Farhan Ameen
+  affiliation:  
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Ellis Patrick
+  affiliation:
+  - &WIMR Westmead Institute for Medical Research, University of Sydney, Australia
+  - School of Mathematics and Statistics, University of Sydney, Australia
+vignette: >
+  %\VignetteIndexEntry{"Introduction to Konditional"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output: 
+  BiocStyle::html_document
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(BiocStyle)
+```
+
+
+```{r warning = FALSE, message = FALSE}
+#Loading required packages
+library(Statial)
+library(tidyverse)
+```
+
+
+# Installation
+```{r eval = FALSE}
+# Install the development version from GitHub:
+# install.packages("devtools")
+devtools::install_github("SydneyBioX/Statial")
+```
+
+
+
+## Session Info
+```{r}
+sessionInfo()
+```
