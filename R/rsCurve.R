@@ -92,7 +92,7 @@ rsCurve = function(image,
 #' @export
 #' @rdname ggplotRs
 #' @import tidyverse
-#' @import ggplotly
+#' @import plotly
 
 ggplotRs = function(rsDf, plot = TRUE) {
     
