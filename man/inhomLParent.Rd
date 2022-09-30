@@ -29,6 +29,8 @@ inhomLParent(
 \item{window.length}{A tuning parameter for controlling the level of concavity when estimating concave windows.
 Passed into \code{\link[Statial]{makeWindow}}}
 
+\item{weightQuantile}{A decimal value indicating what quantile of parent density used to weight the `from` cells.}
+
 \item{from}{The first cell type to be evaluated in the pairwise relationship.}
 
 \item{to}{The second cell type to be evaluated in the pairwise relationship.}
@@ -41,7 +43,7 @@ Passed into \code{\link[Statial]{makeWindow}}}
 
 \item{includeZeroCells}{A logical value indicating whether to include cells with}
 
-\item{closePairs}{}
+\item{closePairs}{Optional spatstat.geom::closepairs object, if `NULL` closepairs will be calculated in the function.}
 }
 \description{
 Calculates conditional L value

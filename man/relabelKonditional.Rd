@@ -56,3 +56,11 @@ Function which randomises specific cells in an image and cacluates the Kondition
 
 Function to randomise all specified cells labels in an image
 }
+\examples{
+XYZ
+
+
+XyZ
+
+
+}

@@ -15,7 +15,21 @@ simulateCompartment(
 )
 }
 \arguments{
-\item{includeTissue}{}
+\item{removal}{A decimal value indicating how much of the density map to discard to make a mask.}
+
+\item{r}{Radius of the clusters passed to \code{\link[spatstat]{rMatClust}}.}
+
+\item{sigma}{A numerical variable to indicated the standard deviation of the isotropic smoothing kernel for density calculation,
+passed into \code{\link[spatstat]{density}}.}
+
+\item{k}{Intensity of the cluster centers passed to \code{\link[spatstat]{rMatClust}}.}
+
+\item{mu}{Average number of cells per cluster, passed to \code{\link[spatstat]{rMatClust}}}
+
+\item{childSigma}{A numerical variable to indicated the standard deviation of the isotropic smoothing kernel for density calculation,
+used to create the cd8 population of cells. Passed into \code{\link[EBImage]{fblur}}.}
+
+\item{includeTissue}{A logical to include a uniformly distributed tissue cell type.}
 }
 \value{
 A list containing two images, insig: where there is no conditional relationship, and sig: where there is a conditional relationship
@@ -25,6 +39,8 @@ Creates simulated image of tumour immune compartmentalisation
 }
 \examples{
 images = simulateCompartment()
-plot(images$sig)
+simSig = images$simSig
+
+plot(x = simSig$x, y = simSig$y, col = simSig$cellType)
 
 }

@@ -16,7 +16,7 @@
 #' @return A data frame containing Konditional value for each randomised image. If `returnImages = TRUE` function will return a list with Konditional values and the randomised images.
 #'
 #' @examples
-#`
+#' XYZ
 #' 
 #' 
 #' @export
@@ -87,7 +87,7 @@ relabelKonditional = function(image,
 #' @return A data frame containing all pairwise cell relationships and their corresponding parent
 #'
 #' @examples
-#`
+#' XyZ
 #' 
 #' 
 #' @export
