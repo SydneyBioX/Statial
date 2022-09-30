@@ -1,13 +1,15 @@
 #' Creates simulated image of tumour immune compartmentalisation
 #'
 #'
-#' @param removal
-#' @param r
-#' @param sigma
-#' @param k
-#' @param mu
-#' @param childSigma
-#' @param includeTissue
+#' @param removal A decimal value indicating how much of the density map to discard to make a mask.
+#' @param r Radius of the clusters passed to \code{\link[spatstat]{rMatClust}}.
+#' @param sigma A numerical variable to indicated the standard deviation of the isotropic smoothing kernel for density calculation,
+#' passed into \code{\link[spatstat]{density}}.
+#' @param k Intensity of the cluster centers passed to \code{\link[spatstat]{rMatClust}}.
+#' @param mu Average number of cells per cluster, passed to \code{\link[spatstat]{rMatClust}}
+#' @param childSigma A numerical variable to indicated the standard deviation of the isotropic smoothing kernel for density calculation,
+#' used to create the cd8 population of cells. Passed into \code{\link[EBImage]{fblur}}.
+#' @param includeTissue A logical to include a uniformly distributed tissue cell type.
 #'
 #'
 #' @return A list containing two images, insig: where there is no conditional relationship, and sig: where there is a conditional relationship
@@ -15,7 +17,9 @@
 #'
 #' @examples
 #' images = simulateCompartment()
-#' plot(images$sig)
+#' simSig = images$simSig
+#' 
+#' plot(x = simSig$x, y = simSig$y, col = simSig$cellType)
 #' 
 #' @export
 #' @rdname simulateCompart
@@ -30,7 +34,7 @@ simulateCompartment = function (removal = 0.25,
                                 includeTissue = TRUE) {
     
     #constructing compartment densities (cDen) which other densities will be based off
-    compartment = rMatClust(kappa = k, r = r, mu = mu)
+    compartment = rMatClust(kappa = k, scale = r, mu = mu)
     cDen = density(compartment, sigma = sigma)
     
     #Defining tumour den
@@ -74,10 +78,12 @@ simulateCompartment = function (removal = 0.25,
     if (includeTissue == TRUE) {
         tissueCells = rpoispp(mean(intensity(tumourCells), intensity(tCells)))
         marks(tissueCells) = factor("tissue_cells")
-        simInsig = superimpose(simInsig, tissueCells)
+        simInsig = superimpose(simInsig, tissueCells) 
         simSig = superimpose(simSig, tissueCells)
     }
     
+    simInsig = simInsig %>% PPPdf()
+    simSig = simSig %>% PPPdf()
+    
     return(list("insig" = simInsig, "sig" = simSig))
 }
-

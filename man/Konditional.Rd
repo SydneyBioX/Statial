@@ -2,58 +2,63 @@
 % Please edit documentation in R/Konditional.R
 \name{Konditional}
 \alias{Konditional}
-\alias{KonditionalCore}
-\alias{parentCombinations}
 \title{Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.}
 \usage{
-Konditional(sce)
-
-KonditionalCore(
-  image,
+Konditional(
+  imageData,
+  parentDf = NULL,
   r,
-  from,
-  to,
-  parent,
+  from = NULL,
+  to = NULL,
+  parent = NULL,
   inhom = TRUE,
-  edge = FALSE,
+  edgeCorrect = FALSE,
+  window = "convex",
+  window.length = NA,
+  weightQuantile = 0.8,
+  includeZeroCells = TRUE,
   includeOriginal = TRUE,
-  ...
+  cores = 1
 )
-
-parentCombinations(all, ...)
 }
 \arguments{
-\item{sce}{A SingleCellExperiment or SpatialExperiment}
+\item{imageData}{A SingleCellExperiment or SpatialExperiment or a list of single images.}
 
-\item{...}{Vectors of each parent population}
+\item{parentDf}{A data frame from \code{\link[Statial]{parentCombinations}}}
 
-\item{all}{A list of all cell types}
+\item{r}{Radius to evaluated pairwise relationships between from and to cells.}
+
+\item{from}{The first cell type to be evaluated in the pairwise relationship.}
+
+\item{to}{The second cell type to be evaluated in the pairwise relationship.}
+
+\item{parent}{The parent population of the from cell type (must include from cell type).}
+
+\item{inhom}{A logical value indicating whether to account for inhomogeneity.}
+
+\item{edgeCorrect}{A logical value indicating whether to perform edge correction.}
+
+\item{window}{Type of window for data, either `square`, `convex` or `concave`, passed into \code{\link[Statial]{makeWindow}}}
+
+\item{window.length}{A tuning parameter for controlling the level of concavity when estimating concave windows.
+Passed into \code{\link[Statial]{makeWindow}}}
+
+\item{weightQuantile}{A decimal value indicating what quantile of parent density used to weight the `from` cells.}
+
+\item{includeZeroCells}{A logical value indicating whether to include cells with
+zero counts in the pairwise association calculation.}
+
+\item{includeOriginal}{A logical value to return the original L function values along with the konditional values.}
+
+\item{cores}{Number of cores for parallel processing.}
 }
 \value{
-A Statial result object
-
-A single data frame row containing the konditional and orignal L values
-
-A data frame containing all pairwise cell relationships and their corresponding parent
+A Koditional result object
 }
 \description{
 Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
-
-Core function used by Konditional
-
-Create all combinations of cell type relationships from a list of parents
 }
 \examples{
-
 1+1
-
-XYZ
-
-tcells = c("CD4", "CD8")
-tissue = c("epithelial", "stromal")
-allCells = c("tumour", tissue, tcells)
-
-parentCombinations(all = allCells, tcells, tissue)
-
 
 }
