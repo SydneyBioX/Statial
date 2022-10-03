@@ -6,7 +6,7 @@
 #' @param window Type of window for data, either `square`, `convex` or `concave`, passed into \code{\link[Statial]{makeWindow}}
 #' @param window.length A tuning parameter for controlling the level of concavity when estimating concave windows.
 #' Passed into \code{\link[Statial]{makeWindow}}
-#' @param weightQuantile A decimal value indicating what quantile of parent density used to weight the `from` cells.
+#' @param weightQuantile A decimal value indicating what quantile of parent density used to weight the `from` cells. 
 #' @param from The first cell type to be evaluated in the pairwise relationship.
 #' @param to The second cell type to be evaluated in the pairwise relationship.
 #' @param parent The parent population of the from cell type (must include from cell type).
