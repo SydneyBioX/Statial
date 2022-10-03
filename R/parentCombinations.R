@@ -22,10 +22,7 @@
 parentCombinations = function(all, ...) {
     
     #Gets variable names of all the parent vector
-    names = deparse(substitute(c(...))) %>%
-        str_remove_all("^[c(]{2}|[)]$") %>% 
-        str_split(", ") %>% 
-        unlist()
+    names = as.list(substitute(c(...)))[-1]
     
     parentList = list(...)
     names(parentList) = names
@@ -54,4 +51,3 @@ parentCombinations = function(all, ...) {
     return(parentDf)
     
 }
-

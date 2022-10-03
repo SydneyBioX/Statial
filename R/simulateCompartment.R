@@ -55,7 +55,7 @@ simulateCompartment = function (removal = 0.25,
     cd8Den[cd8Den > max(cd8Den) * removal] = 0
     
     #Smooth out cd8, use pmax so there are no negative probabilities, and scale the values up so that the cell counts matches the other densities
-    cd8Den$v = gblur(cd8Den, sigma = childSigma)
+    cd8Den$v = EBImage::gblur(cd8Den, sigma = childSigma)
     cd8Den$v = pmax(cd8Den$v, 0)
     cd8Den = cd8Den * (mean(max(tumourDen), max(tDen)) / max(cd8Den))
     
