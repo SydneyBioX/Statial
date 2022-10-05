@@ -32,10 +32,7 @@ library(BiocStyle)
 #Loading required packages
 library(Statial)
 library(tidyverse)
-<<<<<<< HEAD
 library(plotly)
-=======
->>>>>>> 260cd88c65d93e4390e920590861a8ad59ee9f73
 library(spatstat)
 library(EBImage)
 
@@ -61,14 +58,13 @@ In the following we will analyse some Head and Neck cancer data. These images ar
 
 ```{r}
 # Load head and neck data
-<<<<<<< HEAD
 data("headSCE")
-=======
-sce = readRDS("../data/Head and Neck/sce.RDS")
->>>>>>> 260cd88c65d93e4390e920590861a8ad59ee9f73
+
+load("../data/headSCE.rda")
+
 
 # Examine all cell types in image
-unique(sce$cellType)
+unique(headSCE$cellType)
 
 # Set up cell populations
 tumour = c("SC1", "SC2", "SC3", "SC4", "SC5", "SC6", "SC7")
@@ -93,30 +89,19 @@ all = c(tumour, tissue, immune, "Undefined")
 
 Konditional accepts a `SingleCellExperiment` object, or a single image and list of images from a `SingleCellExperiment` object, this gets passed into the `imageData` argument. The two cell types which will be evaluated are specified in the `to` and `from` arguments. A $3^{rd}$ references population must also be specified in the `parent` argument, note the $3^{rd}$ cell population must include the `to` cell type.  The argument `r` will specify the radius which the cell relationship will be evaluated on. Konditional supports parallel processing, the number of cores can be specified using the `cores` argument. Konditional can take a single value or multiple values for each argument and will test all combinations of the arguments specified. 
 
-<<<<<<< HEAD
+
 Here we test the relationship between CD4 T cells (`TC_CD4`) and one type of Tumour cell (`SC5`) with all immune cells being our reference population. The output is a data frame with the original L-function values and konditional values as well as the values for the arguments specified. 
 
 ```{r}
 CD4_Konditional = Konditional(
-    imageData = sce,
+    imageData = headSCE,
     r = 50,
     from = "TC_CD4",
     to = "SC5",
-=======
-Here we test the relationship between CD4 T cells (`TC_CD4`) and one type of Tumour cell (`SC1`) with all immune cells being our reference population. The output is a data frame with the original L-function values and konditional values as well as the values for the arguments specified. 
-
-```{r}
-konditionalResult = Konditional(
-    imageData = sce,
-    r = 50,
-    from = "TC_CD4",
-    to = "SC1",
->>>>>>> 260cd88c65d93e4390e920590861a8ad59ee9f73
     parent = immune,
     cores = 40
 )
 
-<<<<<<< HEAD
 CD4_Konditional
 ```
 
@@ -131,14 +116,6 @@ plot = ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)
 ggplotly(plot)
 ```
 
-
-
-=======
-konditionalResult
-
-```
-
->>>>>>> 260cd88c65d93e4390e920590861a8ad59ee9f73
 Alternatively all pairwise cell relationships and their corresponding parent in the dataset can be tested. A data frame with all pairwise combinations can be creating using the `parentCombinations` function. This function takes in a vector of all the cells, as well as all the parent vectors set up earlier. As shown below the output is a data frame specifying the `to`, `from`, and `parent` arguments for Kondtional.
 
 ```{r}
@@ -151,9 +128,9 @@ parentDf
 Rather than specifying `to`, `from`, and `parent` in Konditional, the output from `parentCombinations` can be inputed into Konditional. Here we will test all pairwise cell relationships on the first image of the dataset.
 ```{r}
 # Selecting Image 1 as an example
-image_1 = sce %>% colData %>% data.frame() %>% filter(imageID == "1")
+image_1 = headSCE %>% colData %>% data.frame() %>% filter(imageID == "1")
 
-<<<<<<< HEAD
+
 image1_Konditional = Konditional(image_1, 
                                 parentDf = parentDf,
                                 r = 50,
@@ -162,17 +139,6 @@ image1_Konditional
 ```
 
 
-
-=======
-konditionalResult = Konditional(image_1, 
-                                parentDf = parentDf,
-                                r = 50,
-                                cores = 40)
-konditionalResult
-```
-
-
->>>>>>> 260cd88c65d93e4390e920590861a8ad59ee9f73
 # Simulation and RsCurve
 
 Here we use `simulationCompartment` to create an image where the relationship between 2 cell types depends on a $3^{rd}$ cell population. In the image below we see that `tumour_cells` and `cd8_t_cells` appear dispersed, however when this relationship is placed in context of the large dispersion between `tumour_cells` and all the other `t_cells`, now `tumour_cells` and `cd8_t_cells` appear localised. 
