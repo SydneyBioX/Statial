@@ -32,6 +32,11 @@ library(BiocStyle)
 #Loading required packages
 library(Statial)
 library(tidyverse)
+library(plotly)
+library(spatstat)
+library(EBImage)
+
+theme_set(theme_classic())
 ```
 
 
@@ -42,9 +47,135 @@ library(tidyverse)
 devtools::install_github("SydneyBioX/Statial")
 ```
 
+# Overview
+
+`Konditional` is a method to evaluate the localisation relationship between two cell types in an image. Konditional builds on the L-function by contenualising the relationship between two cell types in reference to the typical spatial behaviour of a  $3^{rd}$ cell type/population. By taking this approach, Konditional is invariant to changes in the window of the image as well as tissue structures which may be present. 
 
 
-## Session Info
+# Loading example data
+
+In the following we will analyse some Head and Neck cancer data. These images are stored in a `SingleCellExperiment` object. The first step in analysing these images is to organise all the cells present into cell populations, e.g. all the B cells are put in a vector called bcells.
+
+```{r}
+# Load head and neck data
+data("headSCE")
+
+# Examine all cell types in image
+unique(sce$cellType)
+
+# Set up cell populations
+tumour = c("SC1", "SC2", "SC3", "SC4", "SC5", "SC6", "SC7")
+
+bcells = c("BC1", "BC2", "BC3")
+tcells = c("TC_CD4", "TC_CD8")
+myeloid = c("MC1", "MC2", "MC3")
+
+endothelial = c("EC1", "EC2")
+epithelial = c("EP")
+
+tissue = c(endothelial, epithelial)
+immune = c(bcells, tcells, myeloid, "GC") #GC = granulocytes
+
+all = c(tumour, tissue, immune, "Undefined")
+
+
+```
+
+
+# Konditional
+
+Konditional accepts a `SingleCellExperiment` object, or a single image and list of images from a `SingleCellExperiment` object, this gets passed into the `imageData` argument. The two cell types which will be evaluated are specified in the `to` and `from` arguments. A $3^{rd}$ references population must also be specified in the `parent` argument, note the $3^{rd}$ cell population must include the `to` cell type.  The argument `r` will specify the radius which the cell relationship will be evaluated on. Konditional supports parallel processing, the number of cores can be specified using the `cores` argument. Konditional can take a single value or multiple values for each argument and will test all combinations of the arguments specified. 
+
+Here we test the relationship between CD4 T cells (`TC_CD4`) and one type of Tumour cell (`SC5`) with all immune cells being our reference population. The output is a data frame with the original L-function values and konditional values as well as the values for the arguments specified. 
+
+```{r}
+CD4_Konditional = Konditional(
+    imageData = sce,
+    r = 50,
+    from = "TC_CD4",
+    to = "SC5",
+    parent = immune,
+    cores = 40
+)
+
+CD4_Konditional
+```
+
+The `original` and `konditional` values can be compared in a scatter plot to identify relationships which have been identified differently between the functions The top left quadrant represents values where `Konditional` has identified localisation between `CD8` and `SC5` and the original L-function has identified dispersion, the opposite is true for the bottom right quadrant.
+
+```{r}
+plot = ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) + 
+    geom_point() +
+    geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
+    geom_vline(xintercept = 0, col = "red", linetype = "dashed")
+
+ggplotly(plot)
+```
+
+
+
+Alternatively all pairwise cell relationships and their corresponding parent in the dataset can be tested. A data frame with all pairwise combinations can be creating using the `parentCombinations` function. This function takes in a vector of all the cells, as well as all the parent vectors set up earlier. As shown below the output is a data frame specifying the `to`, `from`, and `parent` arguments for Kondtional.
+
+```{r}
+# Get all relationships between cell types and their parents
+parentDf = parentCombinations(all = all, tumour, bcells, tcells, myeloid, endothelial, epithelial, tissue, immune)
+parentDf
+```
+
+
+Rather than specifying `to`, `from`, and `parent` in Konditional, the output from `parentCombinations` can be inputed into Konditional. Here we will test all pairwise cell relationships on the first image of the dataset.
+```{r}
+# Selecting Image 1 as an example
+image_1 = sce %>% colData %>% data.frame() %>% filter(imageID == "1")
+
+image1_Konditional = Konditional(image_1, 
+                                parentDf = parentDf,
+                                r = 50,
+                                cores = 40)
+image1_Konditional
+```
+
+
+
+# Simulation and RsCurve
+
+Here we use `simulationCompartment` to create an image where the relationship between 2 cell types depends on a $3^{rd}$ cell population. In the image below we see that `tumour_cells` and `cd8_t_cells` appear dispersed, however when this relationship is placed in context of the large dispersion between `tumour_cells` and all the other `t_cells`, now `tumour_cells` and `cd8_t_cells` appear localised. 
+
+```{r}
+set.seed(10)
+
+#simulating images
+simulation = simulateCompartment(includeTissue = FALSE)
+
+#selecting image where a significant conditional relationship exists
+conditionalImage = simulation$sig
+
+#plotting image
+ggplot(conditionalImage, aes(x = x, y = y, col = cellType)) +
+    geom_point()
+
+```
+
+
+The `rsCurve` function plots the L-function value and Konditional values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Konditional is able to correctly identify localisation between `tumour_cells` and `cd8_t_cells` in the simulated image for a certain range of radii. When the radius gets too large the overall relationship `tumour_cells` and `cd8_t_cells` looks dispersed. The original L-function is not able to identify localisation at any value of radii. 
+
+```{r}
+rsDf = rsCurve(
+    conditionalImage,
+    from = "cd8_t_cells",
+    to = "tumour_cells",
+    parent = c("cd8_t_cells", "t_cells"),
+    rs = seq(0.01, 0.15, 0.01),
+    cores = 10
+)
+
+ggplotRs(rsDf)
+
+```
+
+
+
+# Session Info
 ```{r}
 sessionInfo()
 ```

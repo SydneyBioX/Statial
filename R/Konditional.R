@@ -43,11 +43,15 @@ Konditional = function(imageData,
                        cores = 1)
 {
     
-    if(is.null(c(parentDf, from, to, parent))){
-        stop("Please specificy a parentDf (obtained from parentCombinations, or from, to, and parent cellTypes")
-    } else if(!is.null(from) &
-              !is.null(to) &
-              !is.null(parent)) {
+    if(is.null(parentDf) &
+       is.null(from) &
+       is.null(to) &
+       is.null(parent)) {
+        stop("Please specificy a parentDf (obtained from parentCombinations), or from, to, and parent cellTypes")
+    } else if (!is.null(from) &
+               !is.null(to) &
+               !is.null(parent)
+    ) {
         
         parentDf = data.frame(from = from,
                               to = to,
@@ -63,12 +67,14 @@ Konditional = function(imageData,
             data.frame()
         
         imageData = mutate(imageData, imageID = as.character(imageID))
-        images = split(imageData, imageData$imageID)
+        imageData = split(imageData, imageData$imageID)
+        
     }
     
     if(class(imageData) != "list") {
         imageData = list(imageData)
         names(imageData) = as.character(seq_along(imageData))
+        
     }
     
     images = imageData
@@ -127,10 +133,10 @@ Konditional = function(imageData,
     
     if(includeOriginal == FALSE) {
         lValsClean = lValsClean %>% 
-            select(imageID, test, konditional, r, weightQuantile, inhom, edge, includeZeroCells, window.length)
+            select(imageID, test, konditional, r, weightQuantile, inhom, edge, includeZeroCells, window, window.length)
     } else {
         lValsClean = lValsClean %>% 
-            select(imageID, test, original, konditional, r, weightQuantile, inhom, edge, includeZeroCells, window.length) 
+            select(imageID, test, original, konditional, r, weightQuantile, inhom, edge, includeZeroCells, window, window.length) 
     }
     
     return(lValsClean)

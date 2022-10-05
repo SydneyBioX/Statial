@@ -87,7 +87,7 @@ relabelKonditional = function(image,
 #' @return A data frame containing all pairwise cell relationships and their corresponding parent
 #'
 #' @examples
-#' XyZ
+#' 
 #' 
 #' 
 #' @export
