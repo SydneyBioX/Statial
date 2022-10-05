@@ -33,8 +33,6 @@ library(BiocStyle)
 library(Statial)
 library(tidyverse)
 library(plotly)
-library(spatstat)
-library(EBImage)
 
 theme_set(theme_classic())
 ```
@@ -58,8 +56,9 @@ In the following we will analyse some Head and Neck cancer data. These images ar
 
 ```{r}
 # Load head and neck data
-data("headSCE")
 
+data(headSCE)
+#data("headSCE")
 load("../data/headSCE.rda")
 
 
@@ -168,7 +167,7 @@ rsDf = rsCurve(
     to = "tumour_cells",
     parent = c("cd8_t_cells", "t_cells"),
     rs = seq(0.01, 0.15, 0.01),
-    cores = 10
+    cores = 40
 )
 
 ggplotRs(rsDf)
