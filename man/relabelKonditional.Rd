@@ -60,7 +60,4 @@ Function to randomise all specified cells labels in an image
 XYZ
 
 
-XyZ
-
-
 }
