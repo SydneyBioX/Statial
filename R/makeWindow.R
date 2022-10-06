@@ -4,6 +4,7 @@
 #' @param data A single image from a Single Cell Experiment or PPP object.
 #' @param window The shape of window around the regions, can be `square`, `convex` or `concave`
 #' @param window.length A tuning parameter for controlling the level of concavity when estimating concave windows.
+#' @return Creates an `owin` class, representing the observation window for the image.
 #'
 #' @examples
 #' data = data.frame(x = rnorm(10), y = rnorm(10))

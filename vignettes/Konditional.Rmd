@@ -177,7 +177,7 @@ ggplotRs(rsDf)
 
 
 
-# Session Info
+# sessionInfo
 ```{r}
 sessionInfo()
 ```
