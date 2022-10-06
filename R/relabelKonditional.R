@@ -16,8 +16,16 @@
 #' @return A data frame containing Konditional value for each randomised image. If `returnImages = TRUE` function will return a list with Konditional values and the randomised images.
 #'
 #' @examples
-#' XYZ
+#' data("exampleImage")
 #' 
+#' relabelResult = relabelKonditional(
+#' image = exampleImage,
+#' nSim = 5,
+#' r = 0.05,
+#' from = "cd8_t_cells",
+#' to = "tumour_cells",
+#' parent = c("cd8_t_cells", "t_cells"),
+#' cores = 40)
 #' 
 #' @export
 #' @rdname relabelKonditional
@@ -78,17 +86,20 @@ relabelKonditional = function(image,
 
 
 
-#' Function to randomise all specified cells labels in an image
+#' Function to permute all specified cells labels in an image
 #'
 #'
 #' @param image A single image from a Single Cell Experiment object. 
-#' @param labels A vector of CellTypes to be randomised. If NULL all cells labels will be radomised.
+#' @param labels A vector of CellTypes labels to be permuted If NULL all cells labels will be radomised.
 #'
 #' @return A data frame containing all pairwise cell relationships and their corresponding parent
 #'
 #' @examples
+#' data("exampleImage")
 #' 
-#' 
+#' #Permute CD8 T cells and T cell labels in the image
+#' relabeledImage = relabel(exampleImage, labels = c("cd8_t_cells", "t_cells"))
+#' plot(relabeledImage)
 #' 
 #' @export
 #' @rdname relabelKonditional

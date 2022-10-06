@@ -4,7 +4,7 @@
 \alias{ggplotRs}
 \title{Plotting the original and konditional L values over a range of radii.}
 \usage{
-ggplotRs(rsDf, plot = TRUE)
+ggplotRs(rsDf)
 }
 \arguments{
 \item{rsDf}{A data frame from \code{\link[Statial]{rsCurve}}.}
@@ -18,6 +18,15 @@ A ggplotly object showing the original and konditional L function values over a 
 Plotting the original and konditional L values over a range of radii.
 }
 \examples{
-XYZ
+data("exampleImage")
+
+rsDf = rsCurve(exampleImage,
+from = "cd8_t_cells",
+to = "tumour_cells",
+parent = c("cd8_t_cells", "t_cells"),
+rs = seq(0.01, 0.10, 0.01),
+cores = 40)
+
+ggplotRs(rsDf)
 
 }
