@@ -11,7 +11,7 @@ headData a SingleCellExperiment object
 exampleImage
 }
 \description{
-This is a single image obtained from the simulateCompartment function using the following code:
+This is a single image obtained from the simulateCompartment function obtained using the following code:
 }
 \details{
 set.seed(10)

@@ -25,10 +25,6 @@ theme_set(theme_classic())
 # Load head and neck data
 data("headSCE")
 
-data("exampleImage")
-plot(exampleImage)
-
-
 # Examine all cell types in image
 unique(headSCE$cellType)
 

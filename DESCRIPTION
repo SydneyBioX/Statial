@@ -17,7 +17,6 @@ biocViews: SingleCell, Spatial
 Depends: R (>= 4.1.0)
 Imports: BiocParallel, spatstat.geom
 Suggests: BiocStyle, knitr
-Description: Statial provides functionality to examine pairwise cell relationships which are conditional on 
-the spatial behaviour of a 3rd cell population in high multiplexed images.
+Description: Statial provides functionality to examine pairwise cell relationships which are conditional on the spatial behaviour of a 3rd cell population in high multiplexed images.
 License: GPL-3
 RoxygenNote: 7.2.1
