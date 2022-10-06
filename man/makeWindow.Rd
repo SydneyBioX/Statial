@@ -13,6 +13,9 @@ makeWindow(data, window = "square", window.length = NULL)
 
 \item{window.length}{A tuning parameter for controlling the level of concavity when estimating concave windows.}
 }
+\value{
+Creates an `owin` class, representing the observation window for the image.
+}
 \description{
 Creates a window for PPP object
 }
