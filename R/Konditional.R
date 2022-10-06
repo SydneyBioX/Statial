@@ -8,13 +8,16 @@
 #' @param parent The parent population of the from cell type (must include from cell type).
 #' @param inhom  A logical value indicating whether to account for inhomogeneity.
 #' @param edgeCorrect A logical value indicating whether to perform edge correction.
-#' @param window Type of window for data, either `square`, `convex` or `concave`, passed into \code{\link[Statial]{makeWindow}}
+#' @param window Type of window for data, either `square`, `convex` or `concave`,
+#'  passed into \code{\link[Statial]{makeWindow}}
 #' @param window.length A tuning parameter for controlling the level of concavity when estimating concave windows.
 #' Passed into \code{\link[Statial]{makeWindow}}
-#' @param weightQuantile A decimal value indicating what quantile of parent density used to weight the `from` cells.
-#' @param includeZeroCells A logical value indicating whether to include cells with
-#' zero counts in the pairwise association calculation.
-#' @param includeOriginal A logical value to return the original L function values along with the konditional values.
+#' @param weightQuantile A decimal value indicating what quantile of parent 
+#' density used to weight the `from` cells.
+#' @param includeZeroCells A logical value indicating whether to include cells 
+#' with zero counts in the pairwise association calculation.
+#' @param includeOriginal A logical value to return the original L function 
+#' values along with the konditional values.
 #' @param cores Number of cores for parallel processing.
 #' @return A Koditional result object
 #'
@@ -42,7 +45,7 @@
 #' @importFrom tibble remove_rownames
 #' @importFrom methods is
 
-Konditional = function(imageData,
+Konditional <- function(imageData,
                        parentDf = NULL,
                        r,
                        from = NULL,
@@ -68,7 +71,7 @@ Konditional = function(imageData,
                !is.null(parent)
     ) {
         
-        parentDf = data.frame(from = from,
+        parentDf <- data.frame(from = from,
                               to = to,
                               parent = I(list(parent)))
         
@@ -77,28 +80,28 @@ Konditional = function(imageData,
     
     # Creating a vector for images
     if(is(imageData, "SingleCellExperiment")) {
-        imageData = imageData %>%
+        imageData <- imageData %>%
             SingleCellExperiment::colData() %>%
             data.frame()
         
-        imageData = mutate(imageData, imageID = as.character(imageID))
-        imageData = split(imageData, imageData$imageID)
+        imageData <- mutate(imageData, imageID = as.character(imageID))
+        imageData <- split(imageData, imageData$imageID)
         
     }
     
     if(!is(imageData, "list")) {
-        imageData = list(imageData)
-        names(imageData) = as.character(seq_along(imageData))
+        imageData <- list(imageData)
+        names(imageData) <- as.character(seq_along(imageData))
         
     }
     
-    images = imageData
+    images <- imageData
     
-    imagesInfo = data.frame(imageID = names(images),
+    imagesInfo <- data.frame(imageID = names(images),
                             images = I(images))
     
     # Create all combinations of specified parameters
-    allCombinations = expand_grid(
+    allCombinations <- expand_grid(
         parentDf,
         r = r,
         inhom = inhom,
@@ -110,15 +113,15 @@ Konditional = function(imageData,
     )
     
     # Create data frame for mapply
-    konditionalDf = merge(imagesInfo, allCombinations, all = TRUE) %>% 
+    konditionalDf <- merge(imagesInfo, allCombinations, all = TRUE) %>% 
         mutate(test = paste(from, "__", to))
     
     if("parent_name" %in% names(konditionalDf)) {
-        konditionalDf = mutate(konditionalDf, test = paste(test, "__", parent_name))
+        konditionalDf <- mutate(konditionalDf, test = paste(test, "__", parent_name))
     }
     
     # Calculate conditional L values
-    lVals = bpmapply(
+    lVals <- bpmapply(
         KonditionalCore,
         image = konditionalDf$images,
         r = konditionalDf$r,
@@ -137,21 +140,43 @@ Konditional = function(imageData,
     )
     
     # Combine data.frame rows
-    lVals = lVals %>%
+    lVals <- lVals %>%
         bind_rows()
     
-    lValsClean = konditionalDf %>%
+    lValsClean <- konditionalDf %>%
         mutate(parent_name = "") %>% 
         select(-c(images, from, to, parent_name, parent)) %>%
         cbind(lVals) %>%
         remove_rownames() 
     
-    if(includeOriginal == FALSE) {
-        lValsClean = lValsClean %>% 
-            select(imageID, test, konditional, r, weightQuantile, inhom, edge, includeZeroCells, window, window.length)
+    if (includeOriginal == FALSE) {
+        lValsClean <- lValsClean %>%
+            select(
+                imageID,
+                test,
+                konditional,
+                r,
+                weightQuantile,
+                inhom,
+                edge,
+                includeZeroCells,
+                window,
+                window.length)
+        
     } else {
-        lValsClean = lValsClean %>% 
-            select(imageID, test, original, konditional, r, weightQuantile, inhom, edge, includeZeroCells, window, window.length) 
+        lValsClean <- lValsClean %>%
+            select(
+                imageID,
+                test,
+                original,
+                konditional,
+                r,
+                weightQuantile,
+                inhom,
+                edge,
+                includeZeroCells,
+                window,
+                window.length)
     }
     
     return(lValsClean)
@@ -164,7 +189,7 @@ Konditional = function(imageData,
 #'
 #' @import spatstat
 #' @import tidyverse
-KonditionalCore = function(image,
+KonditionalCore <- function(image,
                            r,
                            from,
                            to,
@@ -177,14 +202,14 @@ KonditionalCore = function(image,
     
     # Returns NA if to and from cell types not in image
     if(!(c(to, from)  %in% unique(image$cellType) %>% all())) {
-        condL = data.frame(original = NA, konditional = NA)
-        rownames(condL) = paste(from, "__", to)
+        condL <- data.frame(original = NA, konditional = NA)
+        rownames(condL) <- paste(from, "__", to)
         return(condL)
         
     }
     
     #Calculated the child and parent values for the image
-    konditionalVal =
+    konditionalVal <-
         inhomLParent(
             image,
             Rs = r,
@@ -199,11 +224,11 @@ KonditionalCore = function(image,
     
     
     if(includeOriginal == FALSE) {
-        condL = data.frame(konditional = konditionalVal)
+        condL <- data.frame(konditional = konditionalVal)
         return(condL)
     }
     
-    originalVal =
+    originalVal <-
         inhomLParent(
             image,
             Rs = r,
@@ -217,7 +242,7 @@ KonditionalCore = function(image,
         )
     
     #return data frame of original and konditional values.
-    condL = data.frame(original = originalVal,
+    condL <- data.frame(original = originalVal,
                        konditional = konditionalVal)
     
     return(condL)
