@@ -67,7 +67,7 @@ imageData = headSCE,
 r = 50,
 from = "TC_CD4",
 to = "SC5",
-parent = immune,
+parent = c("TC_CD4", "TC_CD8"),
 cores = 40)
 
 
