@@ -157,19 +157,6 @@ Konditional = function(imageData,
 
 
 #' @noRd
-#' Core function used by Konditional
-#'
-#' @param image A single image from a Single Cell Experiment object. 
-#' @param r The radius which pairwise cell relationships are evaluated at.
-#' @param from The first cell type to be evaluated in the pairwise relationship.
-#' @param to The second cell type to be evaluated in the pairwise relationship.
-#' @param parent The parent population of the from cell type (must include from cell type).
-#' @param inhom A logical value indicating whether to perform an inhomogeneous L function.
-#' @param edge A logical value indicating whether to perform edge correction.
-#' @param includeOriginal A logical value to return the original L function values along with the konditional values.
-#' @param ... Any arguments passed into \code{\link[Statial]{inhomLParent}}.
-#'
-#' @return A single row of a data frame containing the konditional and orignal L values.
 #'
 #' @import spatstat
 #' @import tidyverse

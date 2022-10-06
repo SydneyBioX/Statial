@@ -3,7 +3,7 @@
 \docType{data}
 \name{headSCE}
 \alias{headSCE}
-\title{Head and Neck cancer IMC data}
+\title{Head and neck cutaneous squamous cell carcinoma IMC data}
 \format{
 headData a SingleCellExperiment object
 }
