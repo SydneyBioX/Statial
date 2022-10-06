@@ -56,11 +56,7 @@ In the following we will analyse some Head and Neck cancer data. These images ar
 
 ```{r}
 # Load head and neck data
-
-data(headSCE)
-#data("headSCE")
-load("../data/headSCE.rda")
-
+data("headSCE")
 
 # Examine all cell types in image
 unique(headSCE$cellType)
@@ -101,26 +97,32 @@ CD4_Konditional = Konditional(
     cores = 40
 )
 
-CD4_Konditional
+head(CD4_Konditional)
 ```
 
-The `original` and `konditional` values can be compared in a scatter plot to identify relationships which have been identified differently between the functions The top left quadrant represents values where `Konditional` has identified localisation between `CD8` and `SC5` and the original L-function has identified dispersion, the opposite is true for the bottom right quadrant.
+The `original` and `konditional` values can be compared in a scatter plot to identify relationships which have been identified differently between the functions The top left quadrant represents values where `Konditional` has identified localisation between `CD4` and `SC5` and the original L-function has identified dispersion, the opposite is true for the bottom right quadrant.
 
-```{r}
-plot = ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) + 
+```{r fig.wide = TRUE}
+ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) + 
     geom_point() +
     geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
     geom_vline(xintercept = 0, col = "red", linetype = "dashed")
-
-ggplotly(plot)
 ```
 
 Alternatively all pairwise cell relationships and their corresponding parent in the dataset can be tested. A data frame with all pairwise combinations can be creating using the `parentCombinations` function. This function takes in a vector of all the cells, as well as all the parent vectors set up earlier. As shown below the output is a data frame specifying the `to`, `from`, and `parent` arguments for Kondtional.
 
 ```{r}
 # Get all relationships between cell types and their parents
-parentDf = parentCombinations(all = all, tumour, bcells, tcells, myeloid, endothelial, epithelial, tissue, immune)
-parentDf
+parentDf = parentCombinations(all = all,
+                              tumour,
+                              bcells,
+                              tcells,
+                              myeloid,
+                              endothelial,
+                              epithelial,
+                              tissue,
+                              immune)
+head(parentDf)
 ```
 
 
@@ -134,7 +136,7 @@ image1_Konditional = Konditional(image_1,
                                 parentDf = parentDf,
                                 r = 50,
                                 cores = 40)
-image1_Konditional
+head(image1_Konditional)
 ```
 
 
@@ -145,13 +147,13 @@ Here we use `simulationCompartment` to create an image where the relationship be
 ```{r}
 set.seed(10)
 
-#simulating images
+#Simulating example image
 simulation = simulateCompartment(includeTissue = FALSE)
 
-#selecting image where a significant conditional relationship exists
+#Selecting image where a significant conditional relationship exists
 conditionalImage = simulation$sig
 
-#plotting image
+#Plotting image
 ggplot(conditionalImage, aes(x = x, y = y, col = cellType)) +
     geom_point()
 

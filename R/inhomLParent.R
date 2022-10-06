@@ -1,3 +1,4 @@
+#' @noRd
 #' Calculates conditional L value
 #'
 #'
@@ -15,11 +16,6 @@
 #' @param inhom A logical value indicating whether to account for inhomogeneity.
 #' @param closePairs Optional spatstat.geom::closepairs object, if `NULL` closepairs will be calculated in the function.
 #'
-#' @examples
-#' XYZ
-#' 
-#' @export
-#' @rdname inhomLParent
 #' @import spatstat
 inhomLParent <- function (data,
                           Rs = 20,
