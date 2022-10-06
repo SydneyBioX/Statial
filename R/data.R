@@ -1,4 +1,4 @@
-#' Head and Neck cancer IMC data 
+#' Head and neck cutaneous squamous cell carcinoma IMC data 
 #'
 #'
 #' This is a imaging mass cytometry dataset from Ferguson et al 2022. The object contains 29 images.
@@ -14,7 +14,7 @@
 #' Example simulated image
 #'
 #'
-#' This is a single image obtained from the simulateCompartment function using the following code:
+#' This is a single image obtained from the simulateCompartment function obtained using the following code:
 #' 
 #' set.seed(10)
 #' 
