@@ -31,7 +31,7 @@
 #' @importFrom spatstat.random rMatClust rpoispp
 #' @importFrom spatstat.core density.ppp
 #' @importFrom EBImage gblur filter2
-simulateCompartment = function (removal = 0.25,
+simulateCompartment <- function(removal = 0.25,
                                 r = 0.1,
                                 sigma = 0.05,
                                 k = 40,
@@ -47,8 +47,8 @@ simulateCompartment = function (removal = 0.25,
     tumourDen <- cDen
     
     #Density values in the bottom removal% will = 0, so that no points can be placed there, make top 1-removal % be solid (create a mask)
-    tumourDen[tumourDen < max(tumourDen) * removal] = 0
-    tumourDen[tumourDen > 0] = max(tumourDen)
+    tumourDen[tumourDen < max(tumourDen) * removal] <- 0
+    tumourDen[tumourDen > 0] <- max(tumourDen)
     
     #Invert tumourDen mask to create T cell mask, doing pmax with zero so that there are no negative probabilities 
     tDen <- ((-tumourDen) / sum(tumourDen) * sum(tumourDen)) + max(tumourDen)
@@ -58,7 +58,7 @@ simulateCompartment = function (removal = 0.25,
     cd8Den <- cDen
     cd8Den <- (tDen * cDen) / mean(max(cDen), max(tDen))
     cd8Den <- ((1 - cd8Den) / sum(cd8Den) * sum(cd8Den)) + max(cd8Den)
-    cd8Den[cd8Den > max(cd8Den) * removal] = 0
+    cd8Den[cd8Den > max(cd8Den) * removal] <- 0
     
     #Smooth out cd8, use pmax so there are no negative probabilities, and scale the values up so that the cell counts matches the other densities
     cd8Den$v <- EBImage::gblur(cd8Den$v, sigma = childSigma)
