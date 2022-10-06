@@ -23,7 +23,7 @@
 #' 
 #' @export
 #' @rdname simulateCompart
-#' @importFrom spatstat.core density
+#' @import spatstat
 #' @importFrom spatstat.random rMatClust rpoispp
 #' @importFrom EBImage gblur filter2
 simulateCompartment = function (removal = 0.25,
@@ -36,7 +36,7 @@ simulateCompartment = function (removal = 0.25,
     
     #constructing compartment densities (cDen) which other densities will be based off
     compartment = spatstat.random::rMatClust(kappa = k, scale = r, mu = mu)
-    cDen = spatstat.core::density(compartment, sigma = sigma)
+    cDen = density(compartment, sigma = sigma)
     
     #Defining tumour den
     tumourDen = cDen
@@ -77,7 +77,7 @@ simulateCompartment = function (removal = 0.25,
     simSig = superimpose(tumourCells, tCells, cd8Sig)
     
     if (includeTissue == TRUE) {
-        tissueCells = rpoispp(mean(intensity(tumourCells), intensity(tCells)))
+        tissueCells = spatstat.random::rpoispp(mean(intensity(tumourCells), intensity(tCells)))
         marks(tissueCells) = factor("tissue_cells")
         simInsig = superimpose(simInsig, tissueCells) 
         simSig = superimpose(simSig, tissueCells)

@@ -23,8 +23,10 @@ theme_set(theme_classic())
 
 ## -----------------------------------------------------------------------------
 # Load head and neck data
-#data("headSCE")
-load("../data/headSCE.rda")
+data("headSCE")
+
+data("exampleImage")
+plot(exampleImage)
 
 
 # Examine all cell types in image
@@ -57,20 +59,26 @@ CD4_Konditional = Konditional(
     cores = 40
 )
 
-CD4_Konditional
+head(CD4_Konditional)
 
-## -----------------------------------------------------------------------------
-plot = ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) + 
+## ----fig.wide = TRUE----------------------------------------------------------
+ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) + 
     geom_point() +
     geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
     geom_vline(xintercept = 0, col = "red", linetype = "dashed")
 
-ggplotly(plot)
-
 ## -----------------------------------------------------------------------------
 # Get all relationships between cell types and their parents
-parentDf = parentCombinations(all = all, tumour, bcells, tcells, myeloid, endothelial, epithelial, tissue, immune)
-parentDf
+parentDf = parentCombinations(all = all,
+                              tumour,
+                              bcells,
+                              tcells,
+                              myeloid,
+                              endothelial,
+                              epithelial,
+                              tissue,
+                              immune)
+head(parentDf)
 
 ## -----------------------------------------------------------------------------
 # Selecting Image 1 as an example
@@ -81,18 +89,18 @@ image1_Konditional = Konditional(image_1,
                                 parentDf = parentDf,
                                 r = 50,
                                 cores = 40)
-image1_Konditional
+head(image1_Konditional)
 
 ## -----------------------------------------------------------------------------
 set.seed(10)
 
-#simulating images
+#Simulating example image
 simulation = simulateCompartment(includeTissue = FALSE)
 
-#selecting image where a significant conditional relationship exists
+#Selecting image where a significant conditional relationship exists
 conditionalImage = simulation$sig
 
-#plotting image
+#Plotting image
 ggplot(conditionalImage, aes(x = x, y = y, col = cellType)) +
     geom_point()
 

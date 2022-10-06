@@ -19,7 +19,19 @@
 #' @return A Koditional result object
 #'
 #' @examples
-#' 1+1
+#' #Load data
+#' data("headSCE")
+#' 
+#' CD4_Konditional = Konditional(
+#' imageData = headSCE,
+#' r = 50,
+#' from = "TC_CD4",
+#' to = "SC5",
+#' parent = immune,
+#' cores = 40)
+#' 
+#' 
+#' head(CD4_Konditional)
 #' 
 #' @export Konditional
 #' @rdname Konditional
@@ -144,8 +156,8 @@ Konditional = function(imageData,
 
 
 
+#' @noRd
 #' Core function used by Konditional
-#'
 #'
 #' @param image A single image from a Single Cell Experiment object. 
 #' @param r The radius which pairwise cell relationships are evaluated at.
@@ -159,11 +171,6 @@ Konditional = function(imageData,
 #'
 #' @return A single row of a data frame containing the konditional and orignal L values.
 #'
-#' @examples
-#' XYZ
-#' 
-#' @export
-#' @rdname KonditionalCore
 #' @import spatstat
 #' @import tidyverse
 KonditionalCore = function(image,

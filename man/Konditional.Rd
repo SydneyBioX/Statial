@@ -59,6 +59,18 @@ A Koditional result object
 Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
 }
 \examples{
-1+1
+#Load data
+data("headSCE")
+
+CD4_Konditional = Konditional(
+imageData = headSCE,
+r = 50,
+from = "TC_CD4",
+to = "SC5",
+parent = immune,
+cores = 40)
+
+
+head(CD4_Konditional)
 
 }

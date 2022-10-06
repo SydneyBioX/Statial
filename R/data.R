@@ -9,3 +9,24 @@
 #' headSCE
 "headSCE"
 
+
+
+#' Example simulated image
+#'
+#'
+#' This is a single image obtained from the simulateCompartment function using the following code:
+#' 
+#' set.seed(10)
+#' 
+#' #Simulating example image
+#' simulation = simulateCompartment(includeTissue = FALSE)
+#' 
+#' #Selecting image where a significant conditional relationship exists
+#' exampleImage = simulation$sig
+#'
+#' @format headData a SingleCellExperiment object
+#' @aliases 
+#' exampleImage
+"exampleImage"
+
+
