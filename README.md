@@ -4,7 +4,8 @@ Statial
 Overview
 --------
 
-**Statial** provides a ...
+**Statial** provides functionality to examine pairwise cell relationships which are conditional on 
+the spatial behaviour of a 3rd cell population in high multiplexed images.
 
 
 Installation
