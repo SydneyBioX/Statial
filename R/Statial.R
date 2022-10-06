@@ -737,21 +737,22 @@ visualiseImageRelationship = function(singleCellData,
                       "Model Fit:", plotModelFit)) +
         ggplot2::facet_wrap(~imageID, scales = "free")
     
-    g2 = singleCellData %>% 
-        dplyr::filter(cellType == mainCellType) %>% 
-        ggplot2::ggplot(ggplot2::aes_string(x = "OriginalMarker", y = "fittedValues")) +
-        ggplot2::geom_point() +
-        ggplot2::theme_classic() +
-        ggplot2::xlab("True Values") +
-        ggplot2::ylab("Fitted Values") +
-        ggplot2::ggtitle("Predicted vs Real Values")
+    # g2 = singleCellData %>% 
+    #     dplyr::filter(cellType == mainCellType) %>% 
+    #     ggplot2::ggplot(ggplot2::aes_string(x = "OriginalMarker", y = "fittedValues")) +
+    #     ggplot2::geom_point() +
+    #     ggplot2::theme_classic() +
+    #     ggplot2::xlab("True Values") +
+    #     ggplot2::ylab("Fitted Values") +
+    #     ggplot2::ggtitle("Predicted vs Real Values")
     
     g1 = plotly::ggplotly(g1)
-    g2 = plotly::ggplotly(g2)
+    # g2 = plotly::ggplotly(g2)
     # g3 = ggfortify::autoplot(model) +
     #     ggplot2::theme_classic()
     
     # list(g1,g2, g3)
-    list(g1,g2)
+    # list(g1,g2)
+    list(g1)
     
 }

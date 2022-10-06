@@ -23,24 +23,24 @@ output:
 ---
   
 ```{r, include = FALSE}
-# knitr::opts_chunk$set(
-#   collapse = TRUE,
-#   comment = "#>"
-# )
-# library(BiocStyle)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
 ```
 
 
 ```{r warning=FALSE, message=FALSE}
-# # load required packages
+# load required packages
 # library(Statial)
-# 
-# # .libPaths("/dora/nobackup/biostat/Rpackages/v4")
-# 
-# library(ggplot2)
-# library(spicyR)
-# library(tidyverse)
-# library(SingleCellExperiment)
+
+.libPaths("/dora/nobackup/biostat/Rpackages/v4")
+
+library(BiocStyle)
+library(ggplot2)
+library(spicyR)
+library(tidyverse)
+library(SingleCellExperiment)
 ```
 
 # Installation
@@ -61,8 +61,6 @@ The `Statial` package provides functionality to....
 In the following we will reanalyse......
 
 ```{r}
-# sce = readRDS("/albona/nobackup2/biostat/datasets/spatial/Damond2019_Diabetes_IMC/analysis/DamondCellsSCE.rds")
-
 # cellExp = readRDS("../data/cellExp.RDS")
 # intensities = data.frame(t(data.frame(cellMarks(cellExp))))
 # colnames(intensities) =  paste0("cellID", cellSummary(cellExp)$cellID)
@@ -83,36 +81,45 @@ In the following we will reanalyse......
 # sce = readRDS("../data/sce.RDS")
 ```
 
-
-
 ```{r}
-# intensitiesData = data.frame(t(assay(sce, "intensities")))
-# spatialData = data.frame(colData(sce))
-# markersToUse = colnames(intensitiesData)
-# 
-# singleCellData = cbind(spatialData[rownames(intensitiesData),], intensitiesData)
-# singleCellData = singleCellData %>% 
-#     mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>% 
-#     mutate_if(is.factor, as.character)
+cellExp = readRDS("../../Head and Neck/cellExp.RDS")
+intensities = data.frame(t(data.frame(cellMarks(cellExp))))
+colnames(intensities) =  paste0("cellID", cellSummary(cellExp)$cellID)
+
+spatialMeasurements = data.frame(cellSummary(cellExp))
+rownames(spatialMeasurements) = paste0("cellID", cellSummary(cellExp)$cellID)
+
+sce = SingleCellExperiment(list(intensities = intensities),
+                           colData = spatialMeasurements)
+
+
+# saveRDS(sce, "../data/sce.RDS")
 ```
 
 
 ```{r}
-# singleCellDataDistances = calculateCellDistances(singleCellData, nCores = 50, Rs = c(200))
+intensitiesData = data.frame(t(assay(sce, "intensities")))
+spatialData = data.frame(colData(sce))
+markersToUse = colnames(intensitiesData)
+
+singleCellData = cbind(spatialData[rownames(intensitiesData),], intensitiesData)
+singleCellData = singleCellData %>%
+    mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
+    mutate_if(is.factor, as.character)
 ```
 
 
 ```{r}
-# singleCellDataDistancesCounts = calculateK(singleCellDataDistances, nCores = 50, Rs = c(200))
+singleCellDataDistances = calculateCellDistances(singleCellData, nCores = 50, Rs = c(200))
 ```
 
 
 ```{r}
-# imageModels = calculateModelsAllInteractions(singleCellData = singleCellDataDistancesCounts, 
-#                                markers = markersToUse, 
-#                                typeAll = c("dist"),
-#                                nCores = 50)
+singleCellDataDistancesCounts = calculateK(singleCellDataDistances, nCores = 50, Rs = c(200))
 ```
+
+
+
 
 ```{r}
 # fastImageModels = function(singleCellData,
@@ -159,12 +166,6 @@ In the following we will reanalyse......
 # 
 #     model
 # }
-
-# 
-# imageModels = BiocParallel::bplapply(split(singleCellDataDistancesCounts, ~imageID + cellType), 
-#                            fastImageModels, 
-#                            markers = markersToUse,
-#                            BPPARAM = BiocParallel::MulticoreParam(workers = 50))
 # 
 
 
@@ -173,16 +174,32 @@ In the following we will reanalyse......
 
 
 
+```{r}
+# imageModels = calculateModelsAllInteractions(singleCellData = singleCellDataDistancesCounts, 
+#                                markers = markersToUse, 
+#                                typeAll = c("dist"),
+#                                nCores = 50)
 
+
+imageModels = BiocParallel::bplapply(split(singleCellDataDistancesCounts, ~imageID + cellType),
+                           fastImageModels,
+                           markers = markersToUse,
+                           BPPARAM = BiocParallel::MulticoreParam(workers = 50))
+
+imageModels = imageModels[unlist(lapply(imageModels, function(x) class(x) != "try-error"))] %>% 
+    bind_rows()
+
+
+```
 
 
 
 ```{r}
-# mixedModels = calculateModelsAllInteractions(singleCellData = singleCellDataDistancesCounts, 
-#                                markers = markersToUse, 
-#                                typeAll = c("dist"),
-#                                isMixed = TRUE,
-#                                nCores = 50)
+mixedModels = calculateModelsAllInteractions(singleCellData = singleCellDataDistancesCounts,
+                               markers = markersToUse,
+                               typeAll = c("dist"),
+                               isMixed = TRUE,
+                               nCores = 50)
 # 
 # mixedModels %>% 
 #     filter(pValue*nrow(.) < 0.05) %>% 
@@ -194,23 +211,24 @@ In the following we will reanalyse......
 
 
 ```{r}
-# imageModels %>% 
-#     filter(cellType == "MC2", independent == "dist200_SC7", dependent == "Podoplanin") 
+imageModels %>%
+    filter(cellType == "MC2", independent == "dist200_SC7", dependent == "Podoplanin") %>% 
+    arrange(pValue)
 
 ```
 
 
 
 ```{r}
-# visualiseImageRelationship(singleCellData, 
-#                           imageID = "36", 
-#                           mainCellType = "MC2",
-#                           interactingCellType = "SC7",
-#                           depedentMarker = "Podoplanin", 
-#                           interactive = TRUE, 
-#                           plotModelFit = FALSE,
-#                           method = "lm",
-#                           modelType = "dist200_")
+visualiseImageRelationship(singleCellData = singleCellDataDistances,
+                          imageID = "1",
+                          mainCellType = "MC2",
+                          interactingCellType = "SC7",
+                          depedentMarker = "Podoplanin",
+                          interactive = TRUE,
+                          plotModelFit = FALSE,
+                          method = "lm",
+                          modelType = "dist200_") 
 ```
 
 
