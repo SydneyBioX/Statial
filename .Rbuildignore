@@ -1,2 +1,8 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^R/Statial\.R$
+^vignettes/Statial\.R$
+^vignettes/Statial\.Rmd$
+^vignettes/Statial\.html$
+^data/cellExp\.RDS$
+^data/sce\.RDS$

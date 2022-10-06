@@ -48,6 +48,15 @@ A data frame of original L values and Konditional values evaluated over a range 
 Evaluation of Konditional over a range of radii.
 }
 \examples{
-XYZ
+data("exampleImage")
+
+
+rsDf = rsCurve(exampleImage,
+from = "cd8_t_cells",
+to = "tumour_cells",
+parent = c("cd8_t_cells", "t_cells"),
+rs = seq(0.01, 0.10, 0.01),
+cores = 40)
+
 
 }

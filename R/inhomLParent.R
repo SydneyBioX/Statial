@@ -1,25 +1,4 @@
-#' Calculates conditional L value
-#'
-#'
-#' @param data A single image from a Single Cell Experiment or point pattern object.
-#' @param Rs The radius which pairwise cell relationships are evaluated at.
-#' @param window Type of window for data, either `square`, `convex` or `concave`, passed into \code{\link[Statial]{makeWindow}}
-#' @param window.length A tuning parameter for controlling the level of concavity when estimating concave windows.
-#' Passed into \code{\link[Statial]{makeWindow}}
-#' @param weightQuantile A decimal value indicating what quantile of parent density used to weight the `from` cells. 
-#' @param from The first cell type to be evaluated in the pairwise relationship.
-#' @param to The second cell type to be evaluated in the pairwise relationship.
-#' @param parent The parent population of the from cell type (must include from cell type).
-#' @param edgeCorrect A logical value indicating whether to perform edge correction.
-#' @param includeZeroCells A logical value indicating whether to include cells with 
-#' @param inhom A logical value indicating whether to account for inhomogeneity.
-#' @param closePairs Optional spatstat.geom::closepairs object, if `NULL` closepairs will be calculated in the function.
-#'
-#' @examples
-#' XYZ
-#' 
-#' @export
-#' @rdname inhomLParent
+#' @noRd
 #' @import spatstat
 inhomLParent <- function (data,
                           Rs = 20,
@@ -128,20 +107,6 @@ inhomLParent <- function (data,
     if(inhom)num <- tapply(pmin(1/w, quantile(1/w, weightQuantile)), data$cellType, sum)
     if(!inhom)p$wt <- 1
     
-    # # inhom density
-    # p$wt <- rep(1,length(p$d))
-    # if(!is.null(sigma)){
-    #     np <- spatstat.geom::nearest.valid.pixel(X$x, X$y, den)
-    #     w <- den$v[cbind(np$row, np$col)]
-    #     names(w) <- data$cellID
-    #     p$wt <- w[p$j]#*mean(w)
-    #     rm(np)
-    # }
-    
-    
-    #lam <- table(data$cellType)/spatstat.geom::area(X)
-    # p$wt <- as.numeric(p$wt/lam[cT[p$j]])
-    
     p$cellTypeJ <- cT[as.character(p$j)]
     p$cellTypeI <- cT[as.character(p$i)]
     p$i <- factor(p$i, levels = data$cellID)
@@ -190,7 +155,7 @@ inhomLParent <- function (data,
 
 #' Calculates L value from weights and lambda values
 #' @noRd
-#' @import data.table
+#' @importFrom data.table as.data.table setkey CJ .SD ":="
 
 inhomL <-
     function (p, lam, X, Rs, num, Area) {

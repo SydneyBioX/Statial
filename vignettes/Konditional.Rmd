@@ -32,8 +32,6 @@ library(BiocStyle)
 #Loading required packages
 library(Statial)
 library(tidyverse)
-library(spatstat)
-library(EBImage)
 
 theme_set(theme_classic())
 ```
@@ -57,10 +55,10 @@ In the following we will analyse some Head and Neck cancer data. These images ar
 
 ```{r}
 # Load head and neck data
-sce = readRDS("../data/Head and Neck/sce.RDS")
+data("headSCE")
 
 # Examine all cell types in image
-unique(sce$cellType)
+unique(headSCE$cellType)
 
 # Set up cell populations
 tumour = c("SC1", "SC2", "SC3", "SC4", "SC5", "SC6", "SC7")
@@ -85,41 +83,59 @@ all = c(tumour, tissue, immune, "Undefined")
 
 Konditional accepts a `SingleCellExperiment` object, or a single image and list of images from a `SingleCellExperiment` object, this gets passed into the `imageData` argument. The two cell types which will be evaluated are specified in the `to` and `from` arguments. A $3^{rd}$ references population must also be specified in the `parent` argument, note the $3^{rd}$ cell population must include the `to` cell type.  The argument `r` will specify the radius which the cell relationship will be evaluated on. Konditional supports parallel processing, the number of cores can be specified using the `cores` argument. Konditional can take a single value or multiple values for each argument and will test all combinations of the arguments specified. 
 
-Here we test the relationship between CD4 T cells (`TC_CD4`) and one type of Tumour cell (`SC1`) with all immune cells being our reference population. The output is a data frame with the original L-function values and konditional values as well as the values for the arguments specified. 
+
+Here we test the relationship between CD4 T cells (`TC_CD4`) and one type of Tumour cell (`SC5`) with all immune cells being our reference population. The output is a data frame with the original L-function values and konditional values as well as the values for the arguments specified. 
 
 ```{r}
-konditionalResult = Konditional(
-    imageData = sce,
+CD4_Konditional = Konditional(
+    imageData = headSCE,
     r = 50,
     from = "TC_CD4",
-    to = "SC1",
+    to = "SC5",
     parent = immune,
     cores = 40
 )
 
-konditionalResult
+head(CD4_Konditional)
+```
 
+The `original` and `konditional` values can be compared in a scatter plot to identify relationships which have been identified differently between the functions The top left quadrant represents values where `Konditional` has identified localisation between `CD4` and `SC5` and the original L-function has identified dispersion, the opposite is true for the bottom right quadrant.
+
+```{r fig.wide = TRUE}
+ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) + 
+    geom_point() +
+    geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
+    geom_vline(xintercept = 0, col = "red", linetype = "dashed")
 ```
 
 Alternatively all pairwise cell relationships and their corresponding parent in the dataset can be tested. A data frame with all pairwise combinations can be creating using the `parentCombinations` function. This function takes in a vector of all the cells, as well as all the parent vectors set up earlier. As shown below the output is a data frame specifying the `to`, `from`, and `parent` arguments for Kondtional.
 
 ```{r}
 # Get all relationships between cell types and their parents
-parentDf = parentCombinations(all = all, tumour, bcells, tcells, myeloid, endothelial, epithelial, tissue, immune)
-parentDf
+parentDf = parentCombinations(all = all,
+                              tumour,
+                              bcells,
+                              tcells,
+                              myeloid,
+                              endothelial,
+                              epithelial,
+                              tissue,
+                              immune)
+head(parentDf)
 ```
 
 
 Rather than specifying `to`, `from`, and `parent` in Konditional, the output from `parentCombinations` can be inputed into Konditional. Here we will test all pairwise cell relationships on the first image of the dataset.
 ```{r}
 # Selecting Image 1 as an example
-image_1 = sce %>% colData %>% data.frame() %>% filter(imageID == "1")
+image_1 = headSCE %>% colData %>% data.frame() %>% filter(imageID == "1")
 
-konditionalResult = Konditional(image_1, 
+
+image1_Konditional = Konditional(image_1, 
                                 parentDf = parentDf,
                                 r = 50,
                                 cores = 40)
-konditionalResult
+head(image1_Konditional)
 ```
 
 
@@ -130,13 +146,13 @@ Here we use `simulationCompartment` to create an image where the relationship be
 ```{r}
 set.seed(10)
 
-#simulating images
+#Simulating example image
 simulation = simulateCompartment(includeTissue = FALSE)
 
-#selecting image where a significant conditional relationship exists
+#Selecting image where a significant conditional relationship exists
 conditionalImage = simulation$sig
 
-#plotting image
+#Plotting image
 ggplot(conditionalImage, aes(x = x, y = y, col = cellType)) +
     geom_point()
 
@@ -152,7 +168,7 @@ rsDf = rsCurve(
     to = "tumour_cells",
     parent = c("cd8_t_cells", "t_cells"),
     rs = seq(0.01, 0.15, 0.01),
-    cores = 10
+    cores = 40
 )
 
 ggplotRs(rsDf)
@@ -161,7 +177,7 @@ ggplotRs(rsDf)
 
 
 
-# Session Info
+# sessionInfo
 ```{r}
 sessionInfo()
 ```

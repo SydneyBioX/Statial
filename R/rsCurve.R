@@ -16,7 +16,16 @@
 #' @return A data frame of original L values and Konditional values evaluated over a range of radii.
 #'
 #' @examples
-#' XYZ
+#' data("exampleImage")
+#' 
+#' 
+#' rsDf = rsCurve(exampleImage,
+#' from = "cd8_t_cells",
+#' to = "tumour_cells",
+#' parent = c("cd8_t_cells", "t_cells"),
+#' rs = seq(0.01, 0.10, 0.01),
+#' cores = 40)
+#' 
 #' 
 #' @export
 #' @rdname rsCurve
@@ -86,15 +95,24 @@ rsCurve = function(image,
 #'
 #' @return A ggplotly object showing the original and konditional L function values over a range of radii
 #'
-#' @examples
-#' XYZ
+#' @examples 
+#' data("exampleImage")
+#' 
+#' rsDf = rsCurve(exampleImage,
+#' from = "cd8_t_cells",
+#' to = "tumour_cells",
+#' parent = c("cd8_t_cells", "t_cells"),
+#' rs = seq(0.01, 0.10, 0.01),
+#' cores = 40)
+#' 
+#' ggplotRs(rsDf)
 #' 
 #' @export
 #' @rdname ggplotRs
 #' @import tidyverse
 #' @import plotly
 
-ggplotRs = function(rsDf, plot = TRUE) {
+ggplotRs = function(rsDf) {
     
     
     if(str_detect(names(rsDf), "Sd") %>% any()) {
@@ -141,9 +159,5 @@ ggplotRs = function(rsDf, plot = TRUE) {
         
     }
     
-    if(plot == TRUE) {
-        ggplotly(p)
-    } else {
-        return(p)
-    }
+    return(p)
 }
