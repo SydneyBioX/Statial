@@ -8,8 +8,6 @@ ggplotRs(rsDf)
 }
 \arguments{
 \item{rsDf}{A data frame from \code{\link[Statial]{rsCurve}}.}
-
-\item{plot}{A logical which will output a ggplotly object if `TRUE` or return a ggplot object if `FALSE`}
 }
 \value{
 A ggplotly object showing the original and konditional L function values over a range of radii

@@ -27,7 +27,7 @@
 #' r = 50,
 #' from = "TC_CD4",
 #' to = "SC5",
-#' parent = immune,
+#' parent = c("TC_CD4", "TC_CD8"),
 #' cores = 40)
 #' 
 #' 
@@ -38,6 +38,9 @@
 #' @import dplyr
 #' @import tidyr
 #' @import BiocParallel
+#' @import SingleCellExperiment
+#' @importFrom tibble remove_rownames
+#' @importFrom methods is
 
 Konditional = function(imageData,
                        parentDf = NULL,
@@ -73,9 +76,9 @@ Konditional = function(imageData,
     
     
     # Creating a vector for images
-    if(class(imageData) == "SingleCellExperiment") {
+    if(is(imageData, "SingleCellExperiment")) {
         imageData = imageData %>%
-            colData() %>%
+            SingleCellExperiment::colData() %>%
             data.frame()
         
         imageData = mutate(imageData, imageID = as.character(imageID))
@@ -83,7 +86,7 @@ Konditional = function(imageData,
         
     }
     
-    if(class(imageData) != "list") {
+    if(!is(imageData, "list")) {
         imageData = list(imageData)
         names(imageData) = as.character(seq_along(imageData))
         
@@ -188,7 +191,7 @@ KonditionalCore = function(image,
             from = from,
             to = to,
             parent = parent,
-            edge = edge,
+            edgeCorrect = edge,
             inhom = inhom,
             weightQuantile = weightQuantile,
             ...
@@ -207,7 +210,7 @@ KonditionalCore = function(image,
             from = from,
             to = to,
             parent = unique(image$cellType),
-            edge = edge,
+            edgeCorrect = edge,
             inhom = inhom,
             weightQuantile = weightQuantile,
             ...

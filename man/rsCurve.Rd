@@ -39,7 +39,7 @@ rsCurve(
 
 \item{cores}{Number of cores for parallel processing.}
 
-\item{...}{Any arguments passed into \code{\link[Statial]{inhomLParent}}.}
+\item{...}{Any arguments passed into \code{\link[Statial]{Konditional}}.}
 }
 \value{
 A data frame of original L values and Konditional values evaluated over a range of radii.

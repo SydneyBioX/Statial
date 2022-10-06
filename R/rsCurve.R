@@ -11,7 +11,7 @@
 #' @param se A logical value to indicate if the standard deviation of konditional should be calculated to construct error bars.
 #' @param nSim Number of randomisations to perform using \code{\link[Statial]{relabelKonditional}}, which will be used to calculated the SE.
 #' @param cores Number of cores for parallel processing.
-#' @param ... Any arguments passed into \code{\link[Statial]{inhomLParent}}.
+#' @param ... Any arguments passed into \code{\link[Statial]{Konditional}}.
 #'
 #' @return A data frame of original L values and Konditional values evaluated over a range of radii.
 #'
@@ -30,6 +30,7 @@
 #' @export
 #' @rdname rsCurve
 #' @import tidyverse
+#' @importFrom stats sd
 
 
 rsCurve = function(image,
@@ -51,7 +52,7 @@ rsCurve = function(image,
                                   parent = parent,
                                   r = rs,
                                   inhom = inhom,
-                                  edge = edge,
+                                  edgeCorrect = edge,
                                   cores = cores,
                                   includeOriginal = TRUE,
                                   ...)
@@ -91,7 +92,6 @@ rsCurve = function(image,
 #'
 #'
 #' @param rsDf A data frame from \code{\link[Statial]{rsCurve}}.
-#' @param plot A logical which will output a ggplotly object if `TRUE` or return a ggplot object if `FALSE`
 #'
 #' @return A ggplotly object showing the original and konditional L function values over a range of radii
 #'
@@ -110,7 +110,10 @@ rsCurve = function(image,
 #' @export
 #' @rdname ggplotRs
 #' @import tidyverse
-#' @import plotly
+#' @import ggplot2
+#' @importFrom stringr str_detect
+#' @importFrom dplyr select
+#' @importFrom tidyselect starts_with
 
 ggplotRs = function(rsDf) {
     

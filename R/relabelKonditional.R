@@ -68,7 +68,7 @@ relabelKonditional = function(image,
         r = r,
         parentDf = parentDf,
         inhom = inhom,
-        edge = edge,
+        edgeCorrect = edge,
         cores = cores,
         ...
     )

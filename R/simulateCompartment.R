@@ -2,13 +2,13 @@
 #'
 #'
 #' @param removal A decimal value indicating how much of the density map to discard to make a mask.
-#' @param r Radius of the clusters passed to \code{\link[spatstat]{rMatClust}}.
+#' @param r Radius of the clusters passed to \code{\link[spatstat.random]{rMatClust}}.
 #' @param sigma A numerical variable to indicated the standard deviation of the isotropic smoothing kernel for density calculation,
-#' passed into \code{\link[spatstat]{density}}.
-#' @param k Intensity of the cluster centers passed to \code{\link[spatstat]{rMatClust}}.
-#' @param mu Average number of cells per cluster, passed to \code{\link[spatstat]{rMatClust}}
+#' passed into \code{\link[spatstat.core]{density.ppp}}.
+#' @param k Intensity of the cluster centers passed to \code{\link[spatstat.random]{rMatClust}}.
+#' @param mu Average number of cells per cluster, passed to \code{\link[spatstat.random]{rMatClust}}
 #' @param childSigma A numerical variable to indicated the standard deviation of the isotropic smoothing kernel for density calculation,
-#' used to create the cd8 population of cells. Passed into \code{\link[EBImage]{fblur}}.
+#' used to create the cd8 population of cells. Passed into \code{\link[EBImage]{gblur}}.
 #' @param includeTissue A logical to include a uniformly distributed tissue cell type.
 #'
 #'
@@ -17,14 +17,15 @@
 #'
 #' @examples
 #' images = simulateCompartment()
-#' simSig = images$simSig
+#' simSig = images$sig
 #' 
 #' plot(x = simSig$x, y = simSig$y, col = simSig$cellType)
 #' 
 #' @export
-#' @rdname simulateCompart
+#' @rdname simulateCompartment
 #' @import spatstat
 #' @importFrom spatstat.random rMatClust rpoispp
+#' @importFrom spatstat.core density.ppp
 #' @importFrom EBImage gblur filter2
 simulateCompartment = function (removal = 0.25,
                                 r = 0.1,
@@ -36,7 +37,7 @@ simulateCompartment = function (removal = 0.25,
     
     #constructing compartment densities (cDen) which other densities will be based off
     compartment = spatstat.random::rMatClust(kappa = k, scale = r, mu = mu)
-    cDen = density(compartment, sigma = sigma)
+    cDen = spatstat.core::density.ppp(compartment, sigma = sigma)
     
     #Defining tumour den
     tumourDen = cDen

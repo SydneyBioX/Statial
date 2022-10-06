@@ -1,6 +1,6 @@
 Package: Statial
 Type: Package
-Title: A package to identify changes in cell state relative to spatial associations.
+Title: A package to identify changes in cell state relative to spatial associations
 Version: 0.0.1
 Date: 2022-09-19
 Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
@@ -15,7 +15,25 @@ VignetteBuilder: knitr
 Encoding: UTF-8
 biocViews: SingleCell, Spatial
 Depends: R (>= 4.1.0)
-Imports: BiocParallel, spatstat.geom, concaveman, tidyverse, plotly, EBImage, data.table, spatstat.random, dplyr, spatstat, tidyr
+Imports: 
+    BiocParallel,
+    spatstat.geom,
+    concaveman, 
+    tidyverse,
+    EBImage, 
+    data.table, 
+    spatstat.random, 
+    spatstat.core,
+    dplyr, 
+    spatstat, 
+    tidyr, 
+    SingleCellExperiment,
+    tibble,
+    stringr,
+    tidyselect,
+    ggplot2,
+    methods,
+    stats
 Suggests: BiocStyle, knitr
 Description: Statial provides functionality to examine pairwise cell relationships which are conditional on the spatial behaviour of a 3rd cell population in high multiplexed images.
 License: GPL-3

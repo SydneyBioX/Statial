@@ -1,5 +1,7 @@
 #' @noRd
 #' @import spatstat
+#' @importFrom methods is
+#' @importFrom stats quantile
 inhomLParent <- function (data,
                           Rs = 20,
                           window = "convex",
@@ -13,7 +15,7 @@ inhomLParent <- function (data,
                           includeZeroCells = TRUE,
                           closePairs = NULL) {
     
-    if (class(data) == "ppp") {
+    if (is(data, "ppp")) {
         data = PPPdf(data)
     }
     
