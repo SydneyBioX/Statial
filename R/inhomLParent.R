@@ -155,7 +155,7 @@ inhomLParent <- function (data,
 
 #' Calculates L value from weights and lambda values
 #' @noRd
-#' @import data.table
+#' @importFrom data.table as.data.table setkey CJ .SD ":="
 
 inhomL <-
     function (p, lam, X, Rs, num, Area) {

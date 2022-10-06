@@ -12,7 +12,6 @@ library(BiocStyle)
 #Loading required packages
 library(Statial)
 library(tidyverse)
-library(plotly)
 
 theme_set(theme_classic())
 
