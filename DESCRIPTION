@@ -15,7 +15,7 @@ VignetteBuilder: knitr
 Encoding: UTF-8
 biocViews: SingleCell, Spatial
 Depends: R (>= 4.1.0)
-Imports: BiocParallel, spatstat.geom
+Imports: BiocParallel, spatstat.geom, concveman, tidyverse, plotly, EBImage, data.table, spatsat.random
 Suggests: BiocStyle, knitr
 Description: Statial provides functionality to examine pairwise cell relationships which are conditional on the spatial behaviour of a 3rd cell population in high multiplexed images.
 License: GPL-3
