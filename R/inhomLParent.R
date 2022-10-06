@@ -16,19 +16,19 @@ inhomLParent <- function (data,
                           closePairs = NULL) {
     
     if (is(data, "ppp")) {
-        data = PPPdf(data)
+        data <- PPPdf(data)
     }
     
     if(!("cellID" %in% names(data))){
-        data$cellID = factor(seq_len(nrow(data)))
+        data$cellID <- factor(seq_len(nrow(data)))
     }
     #if class is data frame it show make window etc.
     ow <- makeWindow(data, window, window.length)
     
     #sigma = radius
     if (is.null(Rs))
-        Rs = 50
-    sigma = Rs
+        Rs <- 50
+    sigma <- Rs
     
     X <-
         spatstat.geom::ppp(
@@ -42,14 +42,16 @@ inhomLParent <- function (data,
     Y <- X
     if(!is.null(parent)) Y <- Y[Y$marks %in% parent, ]
     
-    Area = area(X)
+    Area <- area(X)
     
     
     if(!is.null(Rs)){
-        den <- spatstat.core::density.ppp(Y, sigma = sigma, kernel = "disc") #Use disc kernel for interpretation
+        #Use disc kernel for interpretation
+        den <-
+            spatstat.core::density.ppp(Y, sigma = sigma, kernel = "disc")
         den <- den / max(den)
         #den$v <- pmax(den$v, minLambda)
-        Area = area(X)*mean(den) #area of the parent 
+        Area <- area(X)*mean(den) #area of the parent 
     }
     
     
@@ -61,23 +63,25 @@ inhomLParent <- function (data,
     if(is.null(to)) to <- levels(data$cellType)
     
     use <- data$cellType %in% c(from, to)
-    fulldata = data
+    fulldata <- data
     data <- data[use,]
     X <- X[use,]
     
     #pairwise relationships for a r
     if(is.null(closePairs)) {
-        closePairs = spatstat.geom::closepairs(X, max(Rs), what = "ijd", distinct = FALSE) 
+        closePairs <-
+            spatstat.geom::closepairs(X, max(Rs), what = "ijd", distinct = FALSE) 
         closePairs$j <- data$cellID[closePairs$j]
         closePairs$i <- data$cellID[closePairs$i]
         
     } else {
-        closePairs = closePairs %>% data.frame() %>% filter(d <= max(Rs))
+        closePairs <- 
+            closePairs %>% data.frame() %>% filter(d <= max(Rs))
         
         #Convert True false into indexes using seq_along and then subset closePairs dataframe
         
-        closePairs = closePairs[closePairs$i %in% seq_along(use)[use],]
-        closePairs = closePairs[closePairs$j %in% seq_along(use)[use],]
+        closePairs <- closePairs[closePairs$i %in% seq_along(use)[use],]
+        closePairs <- closePairs[closePairs$j %in% seq_along(use)[use],]
         
     }
     
@@ -98,7 +102,7 @@ inhomLParent <- function (data,
         np <- spatstat.geom::nearest.valid.pixel(X$x, X$y, den)
         w <- den$v[cbind(np$row, np$col)]
         names(w) <- data$cellID
-        invWeight = 1/w[as.character(p$i)]
+        invWeight <- 1/w[as.character(p$i)]
         p$wt <- pmin(invWeight, quantile(invWeight, weightQuantile))
     }        
     
@@ -106,7 +110,9 @@ inhomLParent <- function (data,
     #weights of each cell type
     lam <- tapply(w, data$cellType, sum)/Area
     #sum of the weights 
-    if(inhom)num <- tapply(pmin(1/w, quantile(1/w, weightQuantile)), data$cellType, sum)
+    if(inhom) {
+        num <- tapply(pmin(1 / w, quantile(1 / w, weightQuantile)), data$cellType, sum)
+    }
     if(!inhom)p$wt <- 1
     
     p$cellTypeJ <- cT[as.character(p$j)]
@@ -146,7 +152,7 @@ inhomLParent <- function (data,
     
     assoc <- rep(-sum(Rs), length(labels))
     names(assoc) <- labels
-    if(!includeZeroCells)assoc[!(m1%in%X$marks&m2%in%X$marks)] = NA
+    if(!includeZeroCells)assoc[!(m1%in%X$marks&m2%in%X$marks)] <- NA
     assoc[names(wt)] <- wt
     names(assoc) <- labels
     
@@ -163,7 +169,8 @@ inhomL <-
     function (p, lam, X, Rs, num, Area) {
         r <- data.table::as.data.table(p)
         
-        r$wt <- (r$wt)/as.numeric(lam[r$cellTypeJ])/(as.numeric(num[r$cellTypeI]))
+        r$wt <-
+            (r$wt) / as.numeric(lam[r$cellTypeJ]) / (as.numeric(num[r$cellTypeI]))
         
         r <- r[,j:=NULL]
         r <- r[,value:=NULL]
@@ -186,9 +193,9 @@ inhomL <-
 #' @noRd
 #' @import spatstat.geom
 #' 
-PPPdf = function(ppp) {
+PPPdf <- function(ppp) {
     x <- as.data.frame(ppp)
-    x$cellType = factor(x$marks)
+    x$cellType <- factor(x$marks)
     x$x <- x$x
     x$y <- x$y
     x$cellID <- factor(seq_len(nrow(x)))
@@ -202,13 +209,15 @@ PPPdf = function(ppp) {
 
 borderEdge <- function(X, maxD){
     W <-X$window
-    bW <- spatstat.geom::union.owin(spatstat.geom::border(W,maxD, outside = FALSE),
-                                    spatstat.geom::border(W,2, outside = TRUE))
+    bW <- spatstat.geom::union.owin(
+            spatstat.geom::border(W, maxD, outside = FALSE),
+            spatstat.geom::border(W, 2, outside = TRUE))
     inB <- spatstat.geom::inside.owin(X$x, X$y, bW)
     e <- rep(1, X$n)
     if(any(inB)){
         circs <-spatstat.geom:: discs(X[inB], maxD, separate = TRUE)
-        circs <- spatstat.geom::solapply(circs, spatstat.geom::intersect.owin, X$window)
+        circs <-
+            spatstat.geom::solapply(circs, spatstat.geom::intersect.owin, X$window)
         areas <- unlist(lapply(circs, spatstat.geom::area))/(pi*maxD^2)
         e[inB] <- areas
     }

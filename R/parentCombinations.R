@@ -4,7 +4,8 @@
 #' @param all A list of all cell types
 #' @param ... Vectors of each parent population
 #'
-#' @return A data frame containing all pairwise cell relationships and their corresponding parent
+#' @return A data frame containing all pairwise cell relationships and their 
+#' corresponding parent
 #'
 #' @examples
 #' tcells = c("CD4", "CD8")
@@ -19,27 +20,28 @@
 #' @import dplyr
 #' @import tidyr
 #' 
-parentCombinations = function(all, ...) {
+parentCombinations <- function(all, ...) {
     
     #Gets variable names of all the parent vector
-    names = as.list(substitute(c(...)))[-1]
+    names <- as.list(substitute(c(...)))[-1]
     
-    parentList = list(...)
-    names(parentList) = names
+    parentList <- list(...)
+    names(parentList) <- names
     
     #Creates data.frame of parent name and parent vector
-    parentTable = data.frame(parent_name = names(parentList),
+    parentTable <- data.frame(parent_name = names(parentList),
                              parent = I(parentList))
     
     
     #Creates all combination of parent and child
-    parentDfs = list()
+    parentDfs <- list()
     
     for (i in 1:length(names(parentList))) {
-        parentDfs[[i]] =  crossing(from = parentList[[i]], parent_name = names(parentList)[i])
+        parentDfs[[i]] <-  crossing(from = parentList[[i]],
+                                    parent_name = names(parentList)[i])
     }
     
-    parentDf = bind_rows(parentDfs) %>% 
+    parentDf <- bind_rows(parentDfs) %>% 
         merge(parentTable, by = "parent_name") %>% 
         expand_grid(to = unique(all)) %>% 
         data.frame() %>% 
