@@ -6,7 +6,7 @@
 \title{Function which randomises specific cells in an image and cacluates the Konditional value.}
 \usage{
 relabelKonditional(
-  image,
+  cells,
   nSim = 1,
   r,
   from,
@@ -22,7 +22,7 @@ relabelKonditional(
 relabel(image, labels = NULL)
 }
 \arguments{
-\item{image}{A single image from a Single Cell Experiment object.}
+\item{cells}{A single image from a Single Cell Experiment object.}
 
 \item{nSim}{Number of randomisations which will be calculated.}
 
@@ -45,6 +45,8 @@ return the randomised images along with the Konditional values.}
 
 \item{...}{Any arguments passed into \code{\link[Statial]{Konditional}}}
 
+\item{image}{A single image from a Single Cell Experiment object.}
+
 \item{labels}{A vector of CellTypes labels to be permuted If NULL all cells 
 labels will be radomised.}
 }
@@ -62,21 +64,22 @@ Function which randomises specific cells in an image and cacluates the Kondition
 Function to permute all specified cells labels in an image
 }
 \examples{
-data("exampleImage")
+data("kerenImage")
 
 relabelResult = relabelKonditional(
-image = exampleImage,
+cells = kerenImage,
 nSim = 5,
-r = 0.05,
-from = "cd8_t_cells",
-to = "tumour_cells",
-parent = c("cd8_t_cells", "t_cells"),
+r = 250,
+from = "p53",
+to = "Immune",
+parent = c("p53", "Keratin+Tumour"),
 cores = 40)
 
-data("exampleImage")
+
+data("kerenImage")
 
 #Permute CD8 T cells and T cell labels in the image
-relabeledImage = relabel(exampleImage, labels = c("cd8_t_cells", "t_cells"))
+relabeledImage = relabel(kerenImage, labels = c("p53", "Keratin+Tumour"))
 plot(relabeledImage)
 
 }

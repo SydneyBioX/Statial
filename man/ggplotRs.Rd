@@ -17,13 +17,14 @@ A ggplotly object showing the original and konditional L function
 Plotting the original and konditional L values over a range of radii.
 }
 \examples{
-data("exampleImage")
+data("kerenImage")
 
-rsDf = rsCurve(exampleImage,
-from = "cd8_t_cells",
-to = "tumour_cells",
-parent = c("cd8_t_cells", "t_cells"),
-rs = seq(0.01, 0.10, 0.01),
+rsDf = rsCurve(
+cells = kerenImage,
+from = "p53",
+to = "Immune",
+parent = c("p53", "Keratin+Tumour"),
+rs = seq(10, 510, 100), 
 cores = 40)
 
 ggplotRs(rsDf)

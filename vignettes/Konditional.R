@@ -20,6 +20,7 @@ theme_set(theme_classic())
 #  # Install the development version from GitHub:
 #  # install.packages("devtools")
 #  devtools::install_github("SydneyBioX/Statial")
+#  
 
 ## -----------------------------------------------------------------------------
 # Load head and neck data
@@ -47,7 +48,7 @@ all = c(tumour, tissue, immune, "Undefined")
 
 ## -----------------------------------------------------------------------------
 CD4_Konditional = Konditional(
-    imageData = headSCE,
+    cells = headSCE,
     r = 50,
     from = "TC_CD4",
     to = "SC5",
@@ -58,6 +59,7 @@ CD4_Konditional = Konditional(
 head(CD4_Konditional)
 
 ## ----fig.wide = TRUE----------------------------------------------------------
+
 ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) + 
     geom_point() +
     geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
@@ -88,26 +90,21 @@ image1_Konditional = Konditional(image_1,
 head(image1_Konditional)
 
 ## -----------------------------------------------------------------------------
-set.seed(10)
+data("kerenImage")
 
-#Simulating example image
-simulation = simulateCompartment(includeTissue = FALSE)
-
-#Selecting image where a significant conditional relationship exists
-conditionalImage = simulation$sig
-
-#Plotting image
-ggplot(conditionalImage, aes(x = x, y = y, col = cellType)) +
-    geom_point()
-
+kerenImage %>% filter(cellType %in% c("Keratin+Tumour", "Immune", "p53")) %>%
+    arrange(cellType) %>% 
+  ggplot(aes(x = x, y = y, color = cellType)) + 
+  geom_point(size = 1) +
+  scale_colour_manual(values = c("#505050", "#D6D6D6", "#64BC46"))
 
 ## -----------------------------------------------------------------------------
 rsDf = rsCurve(
-    conditionalImage,
-    from = "cd8_t_cells",
-    to = "tumour_cells",
-    parent = c("cd8_t_cells", "t_cells"),
-    rs = seq(0.01, 0.15, 0.01),
+    cells = kerenImage,
+    from = "p53",
+    to = "Immune",
+    parent = c("p53", "Keratin+Tumour"),
+    rs = seq(10, 510, 100),
     cores = 40
 )
 
