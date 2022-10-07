@@ -34,7 +34,7 @@ relabel(image, labels = NULL)
 
 \item{parent}{The parent population of the from cell type (must include from cell type).}
 
-\item{returnImages}{A logical value to indicate whether the function should 
+\item{returnImages}{A logical value to indicate whether the function should
 return the randomised images along with the Konditional values.}
 
 \item{inhom}{A logical value indicating whether to account for inhomogeneity.}
@@ -47,15 +47,15 @@ return the randomised images along with the Konditional values.}
 
 \item{image}{A single image from a Single Cell Experiment object.}
 
-\item{labels}{A vector of CellTypes labels to be permuted If NULL all cells 
+\item{labels}{A vector of CellTypes labels to be permuted If NULL all cells
 labels will be radomised.}
 }
 \value{
-A data frame containing Konditional value for each randomised image. 
-If `returnImages = TRUE` function will return a list with Konditional values 
+A data frame containing Konditional value for each randomised image.
+If `returnImages = TRUE` function will return a list with Konditional values
 and the randomised images.
 
-A data frame containing all pairwise cell relationships and their 
+A data frame containing all pairwise cell relationships and their
 corresponding parent
 }
 \description{
@@ -66,20 +66,20 @@ Function to permute all specified cells labels in an image
 \examples{
 data("kerenImage")
 
-relabelResult = relabelKonditional(
-cells = kerenImage,
-nSim = 5,
-r = 250,
-from = "p53",
-to = "Immune",
-parent = c("p53", "Keratin+Tumour"),
-cores = 40)
-
+relabelResult <- relabelKonditional(
+  cells = kerenImage,
+  nSim = 5,
+  r = 250,
+  from = "p53",
+  to = "Immune",
+  parent = c("p53", "Keratin+Tumour"),
+  cores = 40
+)
 
 data("kerenImage")
 
-#Permute CD8 T cells and T cell labels in the image
-relabeledImage = relabel(kerenImage, labels = c("p53", "Keratin+Tumour"))
+# Permute CD8 T cells and T cell labels in the image
+relabeledImage <- relabel(kerenImage, labels = c("p53", "Keratin+Tumour"))
 plot(relabeledImage)
 
 }

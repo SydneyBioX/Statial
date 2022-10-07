@@ -20,8 +20,8 @@ Creates an `owin` class, representing the observation window for the image.
 Creates a window for PPP object
 }
 \examples{
-data = data.frame(x = rnorm(10), y = rnorm(10))
-ow = makeWindow(data, window = "square")
+data <- data.frame(x = rnorm(10), y = rnorm(10))
+ow <- makeWindow(data, window = "square")
 
 spatstat.geom::ppp(x = data$x, y = data$y, window = ow)
 
