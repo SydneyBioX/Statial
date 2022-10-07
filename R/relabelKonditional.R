@@ -79,7 +79,7 @@ relabelKonditional <- function(cells,
   )
 
   relabeledDf <- relabeledDf %>%
-    select(imageID, original, konditional, r) %>%
+    select('imageID', 'original', 'konditional', 'r') %>%
     mutate(type = ifelse(imageID == 1, "original", "randomised"))
 
   if (returnImages) {

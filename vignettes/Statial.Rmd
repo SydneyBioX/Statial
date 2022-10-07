@@ -1,0 +1,200 @@
+---
+title: "Statial"
+date: "`r BiocStyle::doc_date()`"
+params:
+  test: FALSE
+author:
+- name: Farhan Ameen
+  affiliation:  
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Sourish Iyengar
+  affiliation:
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Ellis Patrick
+  affiliation:
+  - &WIMR Westmead Institute for Medical Research, University of Sydney, Australia
+  - School of Mathematics and Statistics, University of Sydney, Australia
+vignette: >
+  %\VignetteIndexEntry{"Introduction to Statial"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output: 
+  BiocStyle::html_document
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(BiocStyle)
+```
+
+
+```{r warning = FALSE, message = FALSE}
+# Loading required packages
+library(Statial)
+library(tidyverse)
+library(SingleCellExperiment)
+
+theme_set(theme_classic())
+```
+
+
+# Installation
+```{r eval = FALSE}
+# Install the development version from GitHub:
+# install.packages("devtools")
+devtools::install_github("SydneyBioX/Statial")
+
+
+
+```
+
+# Overview
+
+There are over 37 trillion cells in the human body, each taking up different forms and functions. The behaviour of these cells can be described by canonical characteristics, but their functions can also dynamically change based on their environmental context, leading to cells with diverse states. Understanding changes in cell state and the interplay between cells is key to understanding their mechanisms of action and how they contribute to human disease. `Statial` is a suite of functions for identifying changes in cell state. This guide will provide a step-by-step overview of some key functions within `Statial`. 
+
+
+# Evaluating cell localisation 
+
+`Konditional` is a method to evaluate the localisation relationship between two cell types in an image. `Konditional` builds on the L-function by contextualising the relationship between two cell types in reference to the typical spatial behaviour of a  $3^{rd}$ cell type/population. By taking this approach, `Konditional` is invariant to changes in the window of the image as well as tissue structures which may be present. 
+
+The definitions of cell types and cell states are somewhat ambiguous, cell types imply well defined groups of cells that serve different roles from one another, on the other hand cell states imply that cells are a dynamic entity which cannot be discretised, and thus exist in a continuum. For the purposes of using `Konditional` we treat cell states as identified clusters of cells, where larger clusters represent a "parent" cell population, and finer sub-clusters representing a "child" cell population. For example a CD4 T cell may be considered a child to a larger parent population of Immune cells. `Konditional` thus aims to see how a child population of cells deviate from the spatial behaviour of their parent population, and how that influences the localisation between the child cell state and another cell state.
+
+# Loading example data
+
+In the following we will analyse cutaneous squamous cell carcinoma data from the head and neck region (Ferguson et al. 2022). These images are stored in a `SingleCellExperiment` object. The first step in analysing these images is to organise all the cells present into cell state populations or clusters, e.g. all the different B cell types are put in a vector called bcells.
+
+```{r}
+# Load head and neck data
+data("headSCE")
+
+# Examine all cell types in image
+unique(headSCE$cellType)
+
+# Set up cell populations
+tumour <- c("SC1", "SC2", "SC3", "SC4", "SC5", "SC6", "SC7")
+
+bcells <- c("BC1", "BC2", "BC3")
+tcells <- c("TC_CD4", "TC_CD8")
+myeloid <- c("MC1", "MC2", "MC3")
+
+endothelial <- c("EC1", "EC2")
+epithelial <- c("EP")
+
+tissue <- c(endothelial, epithelial)
+immune <- c(bcells, tcells, myeloid, "GC") # GC = granulocytes
+
+all <- c(tumour, tissue, immune, "Undefined")
+```
+
+
+# Konditional
+
+`Konditional` accepts a `SingleCellExperiment` object, or a single image, or list of images from a `SingleCellExperiment` object, this gets passed into the `cells` argument. The two cell types which will be evaluated are specified in the `to` and `from` arguments. A parent population must also be specified in the `parent` argument, note the parent cell population must include the `to` cell type.  The argument `r` will specify the radius which the cell relationship will be evaluated on. `Konditional` supports parallel processing, the number of cores can be specified using the `cores` argument. `Konditional` can take a single value or multiple values for each argument and will test all combinations of the arguments specified. 
+
+
+Here we test the relationship between CD4 T cells (`TC_CD4`) and one type of Tumour cell (`SC1`) with all immune cells being our parent population. The output is a data frame with the `original` L-function values and `konditional` values as well as the values for the arguments specified. Where a negative `original` or `konditional` value represents dispersion between `TC_CD4` and `SC1` and a positive value indicates localisation. 
+
+```{r}
+CD4_Konditional <- Konditional(
+  cells = headSCE,
+  r = 50,
+  from = "TC_CD4",
+  to = "SC1",
+  parent = immune,
+  cores = 1
+)
+
+head(CD4_Konditional)
+```
+
+The `original` and `konditional` values can be compared in a scatter plot to identify relationships which have been identified differently between the functions. The dashed red line represents the expected pattern of the data, i.e. where there exists no relationship between the two cell types. The top left quadrant therefore represents values where `Konditional` has identified localisation between `CD4` and `SC1` and the original L-function has identified dispersion, the opposite is true for the bottom right quadrant.
+
+```{r fig.wide = TRUE}
+
+ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) +
+  geom_point() +
+  geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
+  geom_vline(xintercept = 0, col = "red", linetype = "dashed")
+```
+
+Alternatively all pairwise cell relationships and their corresponding parent in the dataset can be tested. A data frame with all pairwise combinations can be creating using the `parentCombinations` function. This function takes in a vector of all the cells, as well as all the parent vectors set up earlier. As shown below the output is a data frame specifying the `to`, `from`, and `parent` arguments for `Konditional`.
+
+```{r}
+# Get all relationships between cell types and their parents
+parentDf <- parentCombinations(
+  all = all,
+  tumour,
+  bcells,
+  tcells,
+  myeloid,
+  endothelial,
+  epithelial,
+  tissue,
+  immune
+)
+head(parentDf)
+```
+
+
+Rather than specifying `to`, `from`, and `parent` in Konditional, the output from `parentCombinations` can be inputed into `Konditional` using the `parentDf` argument. Here we will test the first 20 pairwise cell relationships in `parentCombinations` on the first image of the dataset.
+```{r}
+# Selecting Image 1 as an example
+image_1 <- headSCE %>%
+  colData() %>%
+  data.frame() %>%
+  filter(imageID == "1")
+
+
+image1_Konditional <- Konditional(
+  cells = image_1,
+  parentDf = parentDf[1:20,],
+  r = 50,
+  cores = 1
+)
+
+head(image1_Konditional)
+```
+
+
+#RsCurve
+
+Here we examine an image were the relationship between 2 cell types depends on a parent cell population. This is a breast cancer image obtained from Keren et al, 2018 from patient 6. In the image below we can see that `p53` and `Immune` are dispersed. However when the behaviour of `p53` is placed in the context of the spatial behaviour of its parent population `Keratin+Tumour`, `p53` and `Immune` now appear localised.
+
+
+```{r}
+data("kerenImage")
+
+kerenImage %>%
+  filter(cellType %in% c("Keratin+Tumour", "Immune", "p53")) %>%
+  arrange(cellType) %>%
+  ggplot(aes(x = x, y = y, color = cellType)) +
+  geom_point(size = 1) +
+  scale_colour_manual(values = c("#505050", "#D6D6D6", "#64BC46"))
+```
+
+
+The `rsCurve` function plots the L-function value and Konditional values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Konditional is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii. 
+
+```{r}
+rsDf <- rsCurve(
+  cells = kerenImage,
+  from = "p53",
+  to = "Immune",
+  parent = c("p53", "Keratin+Tumour"),
+  rs = seq(10, 510, 100),
+  cores = 5
+)
+
+
+ggplotRs(rsDf)
+```
+
+
+
+# sessionInfo
+```{r}
+sessionInfo()
+```

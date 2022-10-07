@@ -60,6 +60,10 @@ Konditional <- function(cells,
                         includeZeroCells = TRUE,
                         includeOriginal = TRUE,
                         cores = 1) {
+    
+    
+    
+    
   if (is.null(parentDf) &
     is.null(from) &
     is.null(to) &
@@ -83,7 +87,7 @@ Konditional <- function(cells,
       SingleCellExperiment::colData() %>%
       data.frame()
 
-    cells <- mutate(cells, imageID = as.character(imageID))
+    cells <- mutate(cells, 'imageID' = as.character(imageID))
     cells <- split(cells, cells$imageID)
   }
 
@@ -113,12 +117,14 @@ Konditional <- function(cells,
 
   # Create data frame for mapply
   konditionalDf <- merge(imagesInfo, allCombinations, all = TRUE) %>%
-    mutate(test = paste(from, "__", to))
+    mutate('test' = paste(from, "__", to))
 
   if ("parent_name" %in% names(konditionalDf)) {
-    konditionalDf <- mutate(konditionalDf, test = paste(test, "__", parent_name))
+    konditionalDf <- mutate(konditionalDf, 'test' = paste(test, "__", parent_name))
   }
 
+  #BPPARAM = .generateBPParam(cores = cores)
+  
   # Calculate conditional L values
   lVals <- bpmapply(
     KonditionalCore,
@@ -136,46 +142,46 @@ Konditional <- function(cells,
     SIMPLIFY = FALSE,
     MoreArgs = list(includeOriginal = includeOriginal),
     BPPARAM = MulticoreParam(workers = cores)
-  )
+    )
 
   # Combine data.frame rows
   lVals <- lVals %>%
     bind_rows()
 
   lValsClean <- konditionalDf %>%
-    mutate(parent_name = "") %>%
-    select(-c(images, from, to, parent_name, parent)) %>%
+    mutate("parent_name" = "") %>%
+    select(-c('images', 'from', 'to', 'parent_name', 'parent')) %>%
     cbind(lVals) %>%
     remove_rownames()
 
   if (includeOriginal == FALSE) {
     lValsClean <- lValsClean %>%
       select(
-        imageID,
-        test,
-        konditional,
-        r,
-        weightQuantile,
-        inhom,
-        edge,
-        includeZeroCells,
-        window,
-        window.length
+        'imageID',
+        'test',
+        'konditional',
+        'r',
+        'weightQuantile',
+        'inhom',
+        'edge',
+        'includeZeroCells',
+        'window',
+        'window.length'
       )
   } else {
     lValsClean <- lValsClean %>%
       select(
-        imageID,
-        test,
-        original,
-        konditional,
-        r,
-        weightQuantile,
-        inhom,
-        edge,
-        includeZeroCells,
-        window,
-        window.length
+        'imageID',
+        'test',
+        'original',
+        'konditional',
+        'r',
+        'weightQuantile',
+        'inhom',
+        'edge',
+        'includeZeroCells',
+        'window',
+        'window.length'
       )
   }
 

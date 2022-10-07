@@ -48,7 +48,7 @@ parentCombinations <- function(all, ...) {
     merge(parentTable, by = "parent_name") %>%
     expand_grid(to = unique(all)) %>%
     data.frame() %>%
-    select(from, to, parent, parent_name) %>%
+    select('from', 'to', 'parent', 'parent_name') %>%
     filter(from != to)
 
 
