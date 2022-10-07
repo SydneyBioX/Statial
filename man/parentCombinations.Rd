@@ -12,7 +12,8 @@ parentCombinations(all, ...)
 \item{...}{Vectors of each parent population}
 }
 \value{
-A data frame containing all pairwise cell relationships and their corresponding parent
+A data frame containing all pairwise cell relationships and their 
+corresponding parent
 }
 \description{
 Create all combinations of cell type relationships from a list of parents

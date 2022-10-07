@@ -12,6 +12,7 @@ library(BiocStyle)
 #Loading required packages
 library(Statial)
 library(tidyverse)
+library(SingleCellExperiment)
 
 theme_set(theme_classic())
 
