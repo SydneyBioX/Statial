@@ -4,7 +4,13 @@ Statial
 Overview
 --------
 
-**Statial** provides functionality to examine pairwise cell relationships which are conditional on the spatial behaviour of a 3rd cell population in high multiplexed images.
+**Statial** Statial is a suite of functions for identifying changes in cell 
+    state. The functionality provided by Statial provides robust quantification 
+    of cell type localisation which are invariant to changes in tissue 
+    structure. In addition to this Statial uncovers changes in marker expression
+    associated with varying levels of localisation. These features can be used 
+    to explore how the structure and function of different cell types may be 
+    altered by the agents they are surrounded with.
 
 
 Installation
