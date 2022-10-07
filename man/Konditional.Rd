@@ -38,17 +38,20 @@ Konditional(
 
 \item{edgeCorrect}{A logical value indicating whether to perform edge correction.}
 
-\item{window}{Type of window for data, either `square`, `convex` or `concave`, passed into \code{\link[Statial]{makeWindow}}}
+\item{window}{Type of window for data, either `square`, `convex` or `concave`,
+passed into \code{\link[Statial]{makeWindow}}}
 
 \item{window.length}{A tuning parameter for controlling the level of concavity when estimating concave windows.
 Passed into \code{\link[Statial]{makeWindow}}}
 
-\item{weightQuantile}{A decimal value indicating what quantile of parent density used to weight the `from` cells.}
+\item{weightQuantile}{A decimal value indicating what quantile of parent 
+density used to weight the `from` cells.}
 
-\item{includeZeroCells}{A logical value indicating whether to include cells with
-zero counts in the pairwise association calculation.}
+\item{includeZeroCells}{A logical value indicating whether to include cells 
+with zero counts in the pairwise association calculation.}
 
-\item{includeOriginal}{A logical value to return the original L function values along with the konditional values.}
+\item{includeOriginal}{A logical value to return the original L function 
+values along with the konditional values.}
 
 \item{cores}{Number of cores for parallel processing.}
 }

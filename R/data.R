@@ -30,3 +30,13 @@
 "exampleImage"
 
 
+#' Patient 6 image from Keren et al
+#'
+#'
+#' This is a single image obtained from the simulateCompartment function obtained using the following code:
+#' 
+#'
+#' @format headData a SingleCellExperiment object
+#' @aliases 
+#' kerenImage
+"kerenImage"

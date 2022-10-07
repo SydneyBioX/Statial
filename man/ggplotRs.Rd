@@ -10,7 +10,8 @@ ggplotRs(rsDf)
 \item{rsDf}{A data frame from \code{\link[Statial]{rsCurve}}.}
 }
 \value{
-A ggplotly object showing the original and konditional L function values over a range of radii
+A ggplotly object showing the original and konditional L function
+ values over a range of radii
 }
 \description{
 Plotting the original and konditional L values over a range of radii.

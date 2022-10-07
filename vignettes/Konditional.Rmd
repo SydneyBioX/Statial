@@ -43,6 +43,7 @@ theme_set(theme_classic())
 # Install the development version from GitHub:
 # install.packages("devtools")
 devtools::install_github("SydneyBioX/Statial")
+
 ```
 
 # Overview
@@ -153,11 +154,17 @@ simulation = simulateCompartment(includeTissue = FALSE)
 #Selecting image where a significant conditional relationship exists
 conditionalImage = simulation$sig
 
+
 #Plotting image
 ggplot(conditionalImage, aes(x = x, y = y, col = cellType)) +
     geom_point()
 
 ```
+
+```{r}
+
+```
+
 
 
 The `rsCurve` function plots the L-function value and Konditional values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Konditional is able to correctly identify localisation between `tumour_cells` and `cd8_t_cells` in the simulated image for a certain range of radii. When the radius gets too large the overall relationship `tumour_cells` and `cd8_t_cells` looks dispersed. The original L-function is not able to identify localisation at any value of radii. 
