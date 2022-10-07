@@ -1,7 +1,7 @@
 #' Evaluation of Konditional over a range of radii.
 #'
 #'
-#' @param image A single image from a Single Cell Experiment object. 
+#' @param cells A single image from a Single Cell Experiment object. 
 #' @param from The first cell type to be evaluated in the pairwise relationship.
 #' @param to The second cell type to be evaluated in the pairwise relationship.
 #' @param parent The parent population of the from cell type (must include from cell type).
@@ -19,16 +19,16 @@
 #' over a range of radii.
 #'
 #' @examples
-#' data("exampleImage")
 #' 
+#' data("kerenImage")
 #' 
-#' rsDf = rsCurve(exampleImage,
-#' from = "cd8_t_cells",
-#' to = "tumour_cells",
-#' parent = c("cd8_t_cells", "t_cells"),
-#' rs = seq(0.01, 0.10, 0.01),
+#' rsDf = rsCurve(
+#' cells = kerenImage,
+#' from = "p53",
+#' to = "Immune",
+#' parent = c("p53", "Keratin+Tumour"),
+#' rs = seq(10, 510, 100), 
 #' cores = 40)
-#' 
 #' 
 #' @export
 #' @rdname rsCurve
@@ -49,7 +49,7 @@ rsCurve <- function(cells,
                    ...) {
     
     
-    konditionalVals <- Konditional(imageData = cells,
+    konditionalVals <- Konditional(cells = cells,
                                   from = from,
                                   to = to,
                                   parent = parent,
@@ -65,7 +65,7 @@ rsCurve <- function(cells,
     
     
     if (se == TRUE) {
-        seDf <- relabelKonditional(image = cells,
+        seDf <- relabelKonditional(cells = cells,
                                   nSim = nSim,
                                   r = rs,
                                   from = from,
@@ -100,13 +100,14 @@ rsCurve <- function(cells,
 #'  values over a range of radii
 #'
 #' @examples 
-#' data("exampleImage")
+#' data("kerenImage")
 #' 
-#' rsDf = rsCurve(exampleImage,
-#' from = "cd8_t_cells",
-#' to = "tumour_cells",
-#' parent = c("cd8_t_cells", "t_cells"),
-#' rs = seq(0.01, 0.10, 0.01),
+#' rsDf = rsCurve(
+#' cells = kerenImage,
+#' from = "p53",
+#' to = "Immune",
+#' parent = c("p53", "Keratin+Tumour"),
+#' rs = seq(10, 510, 100), 
 #' cores = 40)
 #' 
 #' ggplotRs(rsDf)

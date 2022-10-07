@@ -5,7 +5,7 @@
 \title{Evaluation of Konditional over a range of radii.}
 \usage{
 rsCurve(
-  image,
+  cells,
   from,
   to,
   parent,
@@ -19,7 +19,7 @@ rsCurve(
 )
 }
 \arguments{
-\item{image}{A single image from a Single Cell Experiment object.}
+\item{cells}{A single image from a Single Cell Experiment object.}
 
 \item{from}{The first cell type to be evaluated in the pairwise relationship.}
 
@@ -51,15 +51,15 @@ over a range of radii.
 Evaluation of Konditional over a range of radii.
 }
 \examples{
-data("exampleImage")
 
+data("kerenImage")
 
-rsDf = rsCurve(exampleImage,
-from = "cd8_t_cells",
-to = "tumour_cells",
-parent = c("cd8_t_cells", "t_cells"),
-rs = seq(0.01, 0.10, 0.01),
+rsDf = rsCurve(
+cells = kerenImage,
+from = "p53",
+to = "Immune",
+parent = c("p53", "Keratin+Tumour"),
+rs = seq(10, 510, 100), 
 cores = 40)
-
 
 }

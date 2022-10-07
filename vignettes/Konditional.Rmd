@@ -90,7 +90,7 @@ Here we test the relationship between CD4 T cells (`TC_CD4`) and one type of Tum
 
 ```{r}
 CD4_Konditional = Konditional(
-    imageData = headSCE,
+    cells = headSCE,
     r = 50,
     from = "TC_CD4",
     to = "SC5",
@@ -104,6 +104,7 @@ head(CD4_Konditional)
 The `original` and `konditional` values can be compared in a scatter plot to identify relationships which have been identified differently between the functions The top left quadrant represents values where `Konditional` has identified localisation between `CD4` and `SC5` and the original L-function has identified dispersion, the opposite is true for the bottom right quadrant.
 
 ```{r fig.wide = TRUE}
+
 ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) + 
     geom_point() +
     geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
@@ -133,51 +134,42 @@ Rather than specifying `to`, `from`, and `parent` in Konditional, the output fro
 image_1 = headSCE %>% colData %>% data.frame() %>% filter(imageID == "1")
 
 
-image1_Konditional = Konditional(image_1, 
-                                parentDf = parentDf,
-                                r = 50,
-                                cores = 40)
+image1_Konditional = Konditional(cells = image_1,
+                                 parentDf = parentDf,
+                                 r = 50,
+                                 cores = 40)
 head(image1_Konditional)
 ```
 
 
-# Simulation and RsCurve
+#RsCurve
 
-Here we use `simulationCompartment` to create an image where the relationship between 2 cell types depends on a $3^{rd}$ cell population. In the image below we see that `tumour_cells` and `cd8_t_cells` appear dispersed, however when this relationship is placed in context of the large dispersion between `tumour_cells` and all the other `t_cells`, now `tumour_cells` and `cd8_t_cells` appear localised. 
-
-```{r}
-set.seed(10)
-
-#Simulating example image
-simulation = simulateCompartment(includeTissue = FALSE)
-
-#Selecting image where a significant conditional relationship exists
-conditionalImage = simulation$sig
-
-
-#Plotting image
-ggplot(conditionalImage, aes(x = x, y = y, col = cellType)) +
-    geom_point()
-
-```
+Here we examine an image were the relationship between 2 cell types depends on a $3^{rd}$ cell population. This is a breast cancer image obtained from Keren et al, 2018 from patient 6. In the image below we can see that `p53` and `Immune` are dispersed, however when this relationship is placed in context of the large dispersion between `Keratin+Tumour` and `Immune`, now `p53` and `Immune` appear localised. 
 
 ```{r}
+data("kerenImage")
 
+kerenImage %>% filter(cellType %in% c("Keratin+Tumour", "Immune", "p53")) %>%
+    arrange(cellType) %>% 
+  ggplot(aes(x = x, y = y, color = cellType)) + 
+  geom_point(size = 1) +
+  scale_colour_manual(values = c("#505050", "#D6D6D6", "#64BC46"))
 ```
 
 
 
-The `rsCurve` function plots the L-function value and Konditional values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Konditional is able to correctly identify localisation between `tumour_cells` and `cd8_t_cells` in the simulated image for a certain range of radii. When the radius gets too large the overall relationship `tumour_cells` and `cd8_t_cells` looks dispersed. The original L-function is not able to identify localisation at any value of radii. 
+The `rsCurve` function plots the L-function value and Konditional values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Konditional is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii. 
 
 ```{r}
 rsDf = rsCurve(
-    conditionalImage,
-    from = "cd8_t_cells",
-    to = "tumour_cells",
-    parent = c("cd8_t_cells", "t_cells"),
-    rs = seq(0.01, 0.15, 0.01),
+    cells = kerenImage,
+    from = "p53",
+    to = "Immune",
+    parent = c("p53", "Keratin+Tumour"),
+    rs = seq(10, 510, 100),
     cores = 40
 )
+
 
 ggplotRs(rsDf)
 

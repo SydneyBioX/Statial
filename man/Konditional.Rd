@@ -5,7 +5,7 @@
 \title{Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.}
 \usage{
 Konditional(
-  imageData,
+  cells,
   parentDf = NULL,
   r,
   from = NULL,
@@ -22,7 +22,7 @@ Konditional(
 )
 }
 \arguments{
-\item{imageData}{A SingleCellExperiment or SpatialExperiment or a list of single images.}
+\item{cells}{A SingleCellExperiment or SpatialExperiment or a list of single images.}
 
 \item{parentDf}{A data frame from \code{\link[Statial]{parentCombinations}}}
 
@@ -66,7 +66,7 @@ Identify changes in cell state of a cell type as it becomes closer to another, c
 data("headSCE")
 
 CD4_Konditional = Konditional(
-imageData = headSCE,
+cells = headSCE,
 r = 50,
 from = "TC_CD4",
 to = "SC5",

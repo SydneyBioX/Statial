@@ -46,19 +46,20 @@
 #' @importFrom methods is
 
 Konditional <- function(cells,
-                       parentDf = NULL,
-                       r,
-                       from = NULL,
-                       to = NULL,
-                       parent = NULL,
-                       inhom = TRUE,
-                       edgeCorrect = FALSE,
-                       window = "convex",
-                       window.length = NA,
-                       weightQuantile = .80,
-                       includeZeroCells = TRUE,
-                       includeOriginal = TRUE,
-                       cores = 1)
+                        parentDf = NULL,
+                        r,
+                        from = NULL,
+                        to = NULL,
+                        parent = NULL,
+                        inhom = TRUE,
+                        edgeCorrect = FALSE,
+                        window = "convex",
+                        window.length = NA,
+                        weightQuantile = .80,
+                        includeZeroCells = TRUE,
+                        includeOriginal = TRUE,
+                        cores = 1
+)
 {
     
     if(is.null(parentDf) &

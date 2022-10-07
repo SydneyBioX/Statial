@@ -2,7 +2,7 @@
 #' Function which randomises specific cells in an image and cacluates the Konditional value.
 #'
 #'
-#' @param image A single image from a Single Cell Experiment object. 
+#' @param cells A single image from a Single Cell Experiment object. 
 #' @param nSim Number of randomisations which will be calculated. 
 #' @param r Radius to evaluated pairwise relationships between from and to cells.
 #' @param from The first cell type to be evaluated in the pairwise relationship.
@@ -19,16 +19,17 @@
 #' and the randomised images.
 #'
 #' @examples
-#' data("exampleImage")
+#' data("kerenImage")
 #' 
 #' relabelResult = relabelKonditional(
-#' image = exampleImage,
+#' cells = kerenImage,
 #' nSim = 5,
-#' r = 0.05,
-#' from = "cd8_t_cells",
-#' to = "tumour_cells",
-#' parent = c("cd8_t_cells", "t_cells"),
+#' r = 250,
+#' from = "p53",
+#' to = "Immune",
+#' parent = c("p53", "Keratin+Tumour"),
 #' cores = 40)
+#' 
 #' 
 #' @export
 #' @rdname relabelKonditional
@@ -37,16 +38,16 @@
 #' @import tidyverse
 
 relabelKonditional <- function(cells,
-                              nSim = 1,
-                              r,
-                              from,
-                              to,
-                              parent,
-                              returnImages = FALSE,
-                              inhom = TRUE,
-                              edge = FALSE,
-                              cores = 1,
-                              ...
+                               nSim = 1,
+                               r,
+                               from,
+                               to,
+                               parent,
+                               returnImages = FALSE,
+                               inhom = TRUE,
+                               edge = FALSE,
+                               cores = 1,
+                               ...
 ) {
     
     imageArray <- replicate(nSim, cells, simplify = FALSE)
@@ -54,9 +55,9 @@ relabelKonditional <- function(cells,
     
     #relabel cells in parent population for all images in imageArray
     relabeled <- bplapply(imageArray,
-                         relabel,
-                         labels = parent,
-                         BPPARAM = MulticoreParam(workers = cores))
+                          relabel,
+                          labels = parent,
+                          BPPARAM = MulticoreParam(workers = cores))
     
     relabeled <- c(list(cells), relabeled)
     names(relabeled) <- as.character(seq_along(relabeled))
@@ -67,7 +68,7 @@ relabelKonditional <- function(cells,
     
     #Calculated the child and parent values for the relabeled images
     relabeledDf <- Konditional(
-        imageData = relabeled,
+        cells = relabeled,
         r = r,
         parentDf = parentDf,
         inhom = inhom,
@@ -100,10 +101,10 @@ relabelKonditional <- function(cells,
 #' corresponding parent
 #'
 #' @examples
-#' data("exampleImage")
+#' data("kerenImage")
 #' 
 #' #Permute CD8 T cells and T cell labels in the image
-#' relabeledImage = relabel(exampleImage, labels = c("cd8_t_cells", "t_cells"))
+#' relabeledImage = relabel(kerenImage, labels = c("p53", "Keratin+Tumour"))
 #' plot(relabeledImage)
 #' 
 #' @export
