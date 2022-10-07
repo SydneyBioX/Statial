@@ -36,7 +36,7 @@
 #' @importFrom stats sd
 
 
-rsCurve <- function(image,
+rsCurve <- function(cells,
                    from,
                    to,
                    parent,
@@ -49,7 +49,7 @@ rsCurve <- function(image,
                    ...) {
     
     
-    konditionalVals <- Konditional(imageData = image,
+    konditionalVals <- Konditional(imageData = cells,
                                   from = from,
                                   to = to,
                                   parent = parent,
@@ -65,7 +65,7 @@ rsCurve <- function(image,
     
     
     if (se == TRUE) {
-        seDf <- relabelKonditional(image = image,
+        seDf <- relabelKonditional(image = cells,
                                   nSim = nSim,
                                   r = rs,
                                   from = from,

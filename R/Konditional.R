@@ -1,6 +1,6 @@
 #' Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
 #'
-#' @param imageData A SingleCellExperiment or SpatialExperiment or a list of single images. 
+#' @param cells A SingleCellExperiment or SpatialExperiment or a list of single images. 
 #' @param parentDf A data frame from \code{\link[Statial]{parentCombinations}}
 #' @param r Radius to evaluated pairwise relationships between from and to cells.
 #' @param from The first cell type to be evaluated in the pairwise relationship.
@@ -26,7 +26,7 @@
 #' data("headSCE")
 #' 
 #' CD4_Konditional = Konditional(
-#' imageData = headSCE,
+#' cells = headSCE,
 #' r = 50,
 #' from = "TC_CD4",
 #' to = "SC5",
@@ -45,7 +45,7 @@
 #' @importFrom tibble remove_rownames
 #' @importFrom methods is
 
-Konditional <- function(imageData,
+Konditional <- function(cells,
                        parentDf = NULL,
                        r,
                        from = NULL,
@@ -79,23 +79,23 @@ Konditional <- function(imageData,
     
     
     # Creating a vector for images
-    if(is(imageData, "SingleCellExperiment")) {
-        imageData <- imageData %>%
+    if(is(cells, "SingleCellExperiment")) {
+        cells <- cells %>%
             SingleCellExperiment::colData() %>%
             data.frame()
         
-        imageData <- mutate(imageData, imageID = as.character(imageID))
-        imageData <- split(imageData, imageData$imageID)
+        cells <- mutate(cells, imageID = as.character(imageID))
+        cells <- split(cells, cells$imageID)
         
     }
     
-    if(!is(imageData, "list")) {
-        imageData <- list(imageData)
-        names(imageData) <- as.character(seq_along(imageData))
+    if(!is(cells, "list")) {
+        cells <- list(cells)
+        names(cells) <- as.character(seq_along(cells))
         
     }
     
-    images <- imageData
+    images <- cells
     
     imagesInfo <- data.frame(imageID = names(images),
                             images = I(images))

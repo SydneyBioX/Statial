@@ -36,7 +36,7 @@
 #' @import BiocParallel
 #' @import tidyverse
 
-relabelKonditional <- function(image,
+relabelKonditional <- function(cells,
                               nSim = 1,
                               r,
                               from,
@@ -49,7 +49,7 @@ relabelKonditional <- function(image,
                               ...
 ) {
     
-    imageArray <- replicate(nSim, image, simplify = FALSE)
+    imageArray <- replicate(nSim, cells, simplify = FALSE)
     
     
     #relabel cells in parent population for all images in imageArray
@@ -58,7 +58,7 @@ relabelKonditional <- function(image,
                          labels = parent,
                          BPPARAM = MulticoreParam(workers = cores))
     
-    relabeled <- c(list(image), relabeled)
+    relabeled <- c(list(cells), relabeled)
     names(relabeled) <- as.character(seq_along(relabeled))
     
     parentDf <- data.frame(from = from,
