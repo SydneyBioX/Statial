@@ -7,11 +7,11 @@
 #' @return Creates an `owin` class, representing the observation window for the image.
 #'
 #' @examples
-#' data = data.frame(x = rnorm(10), y = rnorm(10))
-#' ow = makeWindow(data, window = "square")
-#' 
+#' data <- data.frame(x = rnorm(10), y = rnorm(10))
+#' ow <- makeWindow(data, window = "square")
+#'
 #' spatstat.geom::ppp(x = data$x, y = data$y, window = ow)
-#' 
+#'
 #' @export
 #' @rdname makeWindow
 #' @import spatstat
@@ -20,45 +20,44 @@
 makeWindow <- function(data,
                        window = "square",
                        window.length = NULL) {
-    
-    ow <-
-        spatstat.geom::owin(xrange = range(data$x), yrange = range(data$y))
-    
-    
-    if (window == "convex") {
-        p <- spatstat.geom::ppp(data$x, data$y, ow)
-        ow <- spatstat.geom::convexhull(p)
-        
+  ow <-
+    spatstat.geom::owin(xrange = range(data$x), yrange = range(data$y))
+
+
+  if (window == "convex") {
+    p <- spatstat.geom::ppp(data$x, data$y, ow)
+    ow <- spatstat.geom::convexhull(p)
+  }
+  if (window == "concave") {
+    message(
+      "Concave windows are temperamental. Try choosing values of window.length > and < 1 if you have problems."
+    )
+    if (is.null(window.length) | is.na(window.length)) {
+      window.length <- (max(data$x) - min(data$x)) / 20
+    } else {
+      window.length <- (max(data$x) - min(data$x)) / 20 * window.length
     }
-    if (window == "concave") {
-        message(
-            "Concave windows are temperamental. Try choosing values of window.length > and < 1 if you have problems."
+    dist <- (max(data$x) - min(data$x)) / (length(data$x))
+    bigDat <-
+      do.call("rbind", lapply(as.list(as.data.frame(t(data[, c("x", "y")]))), function(x) {
+        cbind(
+          x[1] + c(0, 1, 0, -1, -1, 0, 1, -1, 1) * dist,
+          x[2] + c(0, 1, 1, 1, -1, -1, -1, 0, 0) * dist
         )
-        if (is.null(window.length) | is.na(window.length)) {
-            window.length <- (max(data$x) - min(data$x)) / 20
-        } else{
-            window.length <- (max(data$x) - min(data$x)) / 20 * window.length
-        }
-        dist <- (max(data$x) - min(data$x)) / (length(data$x))
-        bigDat <-
-            do.call("rbind", lapply(as.list(as.data.frame(t(data[, c("x", "y")]))), function(x)
-                cbind(
-                    x[1] + c(0, 1, 0,-1,-1, 0, 1,-1, 1) * dist,
-                    x[2] + c(0, 1, 1, 1,-1,-1,-1, 0, 0) * dist
-                )))
-        ch <-
-            concaveman::concaveman(bigDat,
-                                   length_threshold = window.length,
-                                   concavity = 1)
-        poly <- as.data.frame(ch[nrow(ch):1, ])
-        colnames(poly) <- c("x", "y")
-        ow <-
-            spatstat.geom::owin(
-                xrange = range(poly$x),
-                yrange = range(poly$y),
-                poly = poly
-            )
-        
-    }
-    ow
+      }))
+    ch <-
+      concaveman::concaveman(bigDat,
+        length_threshold = window.length,
+        concavity = 1
+      )
+    poly <- as.data.frame(ch[nrow(ch):1, ])
+    colnames(poly) <- c("x", "y")
+    ow <-
+      spatstat.geom::owin(
+        xrange = range(poly$x),
+        yrange = range(poly$y),
+        poly = poly
+      )
+  }
+  ow
 }

@@ -19,13 +19,14 @@ Plotting the original and konditional L values over a range of radii.
 \examples{
 data("kerenImage")
 
-rsDf = rsCurve(
-cells = kerenImage,
-from = "p53",
-to = "Immune",
-parent = c("p53", "Keratin+Tumour"),
-rs = seq(10, 510, 100), 
-cores = 40)
+rsDf <- rsCurve(
+  cells = kerenImage,
+  from = "p53",
+  to = "Immune",
+  parent = c("p53", "Keratin+Tumour"),
+  rs = seq(10, 510, 100),
+  cores = 40
+)
 
 ggplotRs(rsDf)
 

@@ -83,10 +83,10 @@ head(parentDf)
 image_1 = headSCE %>% colData %>% data.frame() %>% filter(imageID == "1")
 
 
-image1_Konditional = Konditional(image_1, 
-                                parentDf = parentDf,
-                                r = 50,
-                                cores = 40)
+image1_Konditional = Konditional(cells = image_1,
+                                 parentDf = parentDf,
+                                 r = 50,
+                                 cores = 40)
 head(image1_Konditional)
 
 ## -----------------------------------------------------------------------------
@@ -107,6 +107,7 @@ rsDf = rsCurve(
     rs = seq(10, 510, 100),
     cores = 40
 )
+
 
 ggplotRs(rsDf)
 

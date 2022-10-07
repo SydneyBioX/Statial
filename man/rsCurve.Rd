@@ -33,7 +33,7 @@ rsCurve(
 
 \item{edge}{A logical value indicating whether to perform edge correction.}
 
-\item{se}{A logical value to indicate if the standard deviation of 
+\item{se}{A logical value to indicate if the standard deviation of
 konditional should be calculated to construct error bars.}
 
 \item{nSim}{Number of randomisations to perform using \code{\link[Statial]{relabelKonditional}},
@@ -44,7 +44,7 @@ which will be used to calculated the SE.}
 \item{...}{Any arguments passed into \code{\link[Statial]{Konditional}}.}
 }
 \value{
-A data frame of original L values and Konditional values evaluated 
+A data frame of original L values and Konditional values evaluated
 over a range of radii.
 }
 \description{
@@ -54,12 +54,13 @@ Evaluation of Konditional over a range of radii.
 
 data("kerenImage")
 
-rsDf = rsCurve(
-cells = kerenImage,
-from = "p53",
-to = "Immune",
-parent = c("p53", "Keratin+Tumour"),
-rs = seq(10, 510, 100), 
-cores = 40)
+rsDf <- rsCurve(
+  cells = kerenImage,
+  from = "p53",
+  to = "Immune",
+  parent = c("p53", "Keratin+Tumour"),
+  rs = seq(10, 510, 100),
+  cores = 40
+)
 
 }

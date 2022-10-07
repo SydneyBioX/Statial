@@ -44,13 +44,13 @@ passed into \code{\link[Statial]{makeWindow}}}
 \item{window.length}{A tuning parameter for controlling the level of concavity when estimating concave windows.
 Passed into \code{\link[Statial]{makeWindow}}}
 
-\item{weightQuantile}{A decimal value indicating what quantile of parent 
+\item{weightQuantile}{A decimal value indicating what quantile of parent
 density used to weight the `from` cells.}
 
-\item{includeZeroCells}{A logical value indicating whether to include cells 
+\item{includeZeroCells}{A logical value indicating whether to include cells
 with zero counts in the pairwise association calculation.}
 
-\item{includeOriginal}{A logical value to return the original L function 
+\item{includeOriginal}{A logical value to return the original L function
 values along with the konditional values.}
 
 \item{cores}{Number of cores for parallel processing.}
@@ -62,16 +62,17 @@ A Koditional result object
 Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
 }
 \examples{
-#Load data
+# Load data
 data("headSCE")
 
-CD4_Konditional = Konditional(
-cells = headSCE,
-r = 50,
-from = "TC_CD4",
-to = "SC5",
-parent = c("TC_CD4", "TC_CD8"),
-cores = 40)
+CD4_Konditional <- Konditional(
+  cells = headSCE,
+  r = 50,
+  from = "TC_CD4",
+  to = "SC5",
+  parent = c("TC_CD4", "TC_CD8"),
+  cores = 40
+)
 
 
 head(CD4_Konditional)
