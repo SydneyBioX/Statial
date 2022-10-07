@@ -62,7 +62,7 @@ rsCurve <- function(cells,
   )
 
   rsDf <- konditionalVals %>%
-    select(r, original, konditional)
+    select('r', 'original', 'konditional')
 
 
   if (se == TRUE) {
@@ -82,11 +82,11 @@ rsCurve <- function(cells,
 
     seDf <- seDf %>%
       filter(type != "original") %>%
-      select(r, original, konditional) %>%
+      select('r', 'original', 'konditional') %>%
       group_by(r) %>%
       summarise(
-        originalSd = sd(original),
-        konditionalSd = sd(konditional)
+        'originalSd' = sd(original),
+        'konditionalSd' = sd(konditional)
       )
 
     rsDf <- merge(rsDf, seDf, by = "r")
@@ -94,6 +94,7 @@ rsCurve <- function(cells,
 
   return(rsDf)
 }
+
 
 
 #' Plotting the original and konditional L values over a range of radii.
@@ -131,20 +132,20 @@ ggplotRs <- function(rsDf) {
     konditional <- rsDf %>%
       select(r, starts_with("konditional")) %>%
       mutate(
-        lower = konditional - konditionalSd,
-        upper = konditional + konditionalSd
+        'lower' = konditional - konditionalSd,
+        'upper' = konditional + konditionalSd
       ) %>%
-      select(-konditionalSd) %>%
+      select(-'konditionalSd') %>%
       pivot_longer(konditional)
 
 
     original <- rsDf %>%
-      select(r, starts_with("original")) %>%
+      select('r', starts_with("original")) %>%
       mutate(
-        lower = original - originalSd,
-        upper = original + originalSd
+        'lower' = original - originalSd,
+        'upper' = original + originalSd
       ) %>%
-      select(-originalSd) %>%
+      select(-'originalSd') %>%
       pivot_longer(original)
 
     seDf <- rbind(konditional, original)
