@@ -1,7 +1,7 @@
 #' Create all combinations of cell type relationships from a list of parents
 #'
 #'
-#' @param all A list of all cell types
+#' @param all A list of all the `to` cell types Konditional is evaluated over
 #' @param ... Vectors of each parent population
 #'
 #' @return A data frame containing all pairwise cell relationships and their
