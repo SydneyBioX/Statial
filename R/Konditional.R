@@ -45,6 +45,7 @@
 #' @import SingleCellExperiment
 #' @importFrom tibble remove_rownames
 #' @importFrom methods is
+#' @importFrom stats runif
 
 Konditional <- function(cells,
                         parentDf = NULL,
@@ -122,8 +123,11 @@ Konditional <- function(cells,
   if ("parent_name" %in% names(konditionalDf)) {
     konditionalDf <- mutate(konditionalDf, 'test' = paste(test, "__", parent_name))
   }
-
-  #BPPARAM = .generateBPParam(cores = cores)
+  
+  x <- runif(1) # nolint
+  
+  BPPARAM <- .generateBPParam(cores = cores)
+  #BPPARAM = MulticoreParam(workers = cores)
   
   # Calculate conditional L values
   lVals <- bpmapply(
@@ -141,7 +145,7 @@ Konditional <- function(cells,
     includeZeroCells = konditionalDf$includeZeroCells,
     SIMPLIFY = FALSE,
     MoreArgs = list(includeOriginal = includeOriginal),
-    BPPARAM = MulticoreParam(workers = cores)
+    BPPARAM = BPPARAM
     )
 
   # Combine data.frame rows
