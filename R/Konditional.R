@@ -246,7 +246,7 @@ KonditionalCore <- function(image,
       parent = unique(image$cellType),
       edgeCorrect = edge,
       inhom = inhom,
-      weightQuantile = weightQuantile,
+      weightQuantile = 1,
       ...
     )
 
