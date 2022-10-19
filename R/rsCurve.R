@@ -1,7 +1,7 @@
 #' Evaluation of Konditional over a range of radii.
 #'
 #'
-#' @param cells A single image from a Single Cell Experiment object.
+#' @param cells A single image data frame from a SingleCellExperiment object
 #' @param from The first cell type to be evaluated in the pairwise relationship.
 #' @param to The second cell type to be evaluated in the pairwise relationship.
 #' @param parent The parent population of the from cell type (must include from cell type).

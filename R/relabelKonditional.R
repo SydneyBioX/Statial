@@ -2,7 +2,7 @@
 #' Function which randomises specific cells in an image and cacluates the Konditional value.
 #'
 #'
-#' @param cells A single image from a Single Cell Experiment object.
+#' @param cells A single image data frame from a SingleCellExperiment object
 #' @param nSim Number of randomisations which will be calculated.
 #' @param r Radius to evaluated pairwise relationships between from and to cells.
 #' @param from The first cell type to be evaluated in the pairwise relationship.
