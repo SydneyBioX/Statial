@@ -35,14 +35,11 @@ parentCombinations <- function(all, ...) {
 
 
   # Creates all combination of parent and child
-  parentDfs <- list()
-
-  for (i in seq_along(names(parentList))) {
-    parentDfs[[i]] <- crossing(
-      from = parentList[[i]],
-      parent_name = names(parentList)[i]
-    )
-  }
+  parentDfs = lapply(seq_along(parentList),
+                     function(x) {
+                         return(crossing(from = parentList[[x]],
+                                         parent_name = names(parentList)[x]))
+                     })
 
   parentDf <- bind_rows(parentDfs) %>%
     merge(parentTable, by = "parent_name") %>%
