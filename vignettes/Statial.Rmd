@@ -43,12 +43,11 @@ theme_set(theme_classic())
 
 # Installation
 ```{r eval = FALSE}
-# Install the development version from GitHub:
-# install.packages("devtools")
-devtools::install_github("SydneyBioX/Statial")
-
-
-
+# Install the package from Bioconductor
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install("Statial")
 ```
 
 # Overview
@@ -115,9 +114,15 @@ The `original` and `konditional` values can be compared in a scatter plot to ide
 ```{r fig.wide = TRUE}
 
 ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) +
-  geom_point() +
+  geom_point(size = 2) +
   geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
-  geom_vline(xintercept = 0, col = "red", linetype = "dashed")
+  geom_vline(xintercept = 0, col = "red", linetype = "dashed") +
+  theme(
+    axis.title.x = element_text(size = 14),
+    axis.text.x = element_text(size = 10),
+    axis.text.y = element_text(size = 10),
+    axis.title.y = element_text(size = 14)
+  )
 ```
 
 Alternatively all pairwise cell relationships and their corresponding parent in the dataset can be tested. A data frame with all pairwise combinations can be creating using the `parentCombinations` function. This function takes in a vector of all the cells, as well as all the parent vectors set up earlier. As shown below the output is a data frame specifying the `to`, `from`, and `parent` arguments for `Konditional`.
@@ -150,7 +155,7 @@ image_1 <- headSCE %>%
 
 image1_Konditional <- Konditional(
   cells = image_1,
-  parentDf = parentDf[1:20,],
+  parentDf = parentDf[1:20, ],
   r = 50,
   cores = 1
 )
@@ -191,6 +196,12 @@ rsDf <- rsCurve(
 
 ggplotRs(rsDf)
 ```
+
+# References
+
+Ferguson, A. L., Sharman, A. R., Allen, R. O., Ye, T., Lee, J. H., Low, T.-H. H., Ch'ng, S., Palme, C. E., Ashford, B., Ranson, M., Clark, J. R., Patrick, E., Gupta, R., & Palendira, U. (2022). High-Dimensional and Spatial Analysis Reveals Immune Landscape–Dependent Progression in Cutaneous Squamous Cell Carcinoma. Clinical Cancer Research, OF1-OF12. ([DOI](https://doi.org/10.1158/1078-0432.Ccr-22-1332))
+
+Keren, L., Bosse, M., Marquez, D., Angoshtari, R., Jain, S., Varma, S., Yang, S. R., Kurian, A., Van Valen, D., West, R., Bendall, S. C., & Angelo, M. (2018). A Structured Tumor-Immune Microenvironment in Triple Negative Breast Cancer Revealed by Multiplexed Ion Beam Imaging. Cell, 174(6), 1373-1387.e1319. ([DOI](https://doi.org/10.1016/j.cell.2018.08.039))
 
 
 

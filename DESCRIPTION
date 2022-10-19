@@ -1,7 +1,7 @@
 Package: Statial
 Type: Package
 Title: A package to identify changes in cell state relative to spatial associations
-Version: 0.99.3
+Version: 0.99.4
 Date: 2022-09-19
 Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
     role = c("aut", "cre")),
@@ -32,7 +32,10 @@ Imports:
     ggplot2,
     methods,
     stats
-Suggests: BiocStyle, knitr
+Suggests: 
+    BiocStyle,
+    knitr,
+    testthat (>= 3.0.0)
 Description: Statial is a suite of functions for identifying changes in cell 
     state. The functionality provided by Statial provides robust quantification 
     of cell type localisation which are invariant to changes in tissue 
@@ -42,3 +45,4 @@ Description: Statial is a suite of functions for identifying changes in cell
     altered by the agents they are surrounded with.
 License: GPL-3
 RoxygenNote: 7.2.1
+Config/testthat/edition: 3

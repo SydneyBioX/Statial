@@ -15,6 +15,16 @@ they are surrounded with.
 
 Installation
 --------
+Installing the package from Bioconductor.
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
+
+BiocManager::install("Statial")
+```
+
+Otherwise, install the development version from GitHub.
 
 ```r
 # Install the development version from GitHub:
