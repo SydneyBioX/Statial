@@ -1,6 +1,7 @@
 #' Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
 #'
-#' @param cells A SingleCellExperiment or SpatialExperiment or a list of single images.
+#' @param cells A SingleCellExperiment or a list of data.frames with 
+#' imageID, x, y, and cellType columns.
 #' @param parentDf A data frame from \code{\link[Statial]{parentCombinations}}
 #' @param r Radius to evaluated pairwise relationships between from and to cells.
 #' @param from The first cell type to be evaluated in the pairwise relationship.
@@ -61,9 +62,6 @@ Konditional <- function(cells,
                         includeZeroCells = TRUE,
                         includeOriginal = TRUE,
                         cores = 1) {
-    
-    
-    
     
   if (is.null(parentDf) &
     is.null(from) &
@@ -127,7 +125,6 @@ Konditional <- function(cells,
   x <- runif(1) # nolint
   
   BPPARAM <- .generateBPParam(cores = cores)
-  #BPPARAM = MulticoreParam(workers = cores)
   
   # Calculate conditional L values
   lVals <- bpmapply(
