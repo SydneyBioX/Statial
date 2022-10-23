@@ -4,7 +4,7 @@ test_that("Expecting an error when parentDf or to, from, parent is NULL", {
   data("headSCE")
 
   testthat::expect_error(
-    Statial::Konditional(
+    Konditional(
       cells = headSCE,
       r = 50,
       parentDf = NULL,
@@ -22,7 +22,7 @@ test_that("Konditional values from headSCE are the same as the saved ones", {
   expected_data <- readRDS("CD4_Konditional.rds")
 
   CD4_Konditional <-
-    Statial::Konditional(
+    Konditional(
       cells = headSCE,
       r = 50,
       from = "TC_CD4",
@@ -42,3 +42,5 @@ test_that("Konditional values from headSCE are the same as the saved ones", {
     expected_data
   )
 })
+
+
