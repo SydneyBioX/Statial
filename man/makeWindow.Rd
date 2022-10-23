@@ -7,7 +7,7 @@
 makeWindow(data, window = "square", window.length = NULL)
 }
 \arguments{
-\item{data}{A single image from a Single Cell Experiment or PPP object.}
+\item{data}{A single image data frame from a SingleCellExperiment object or PPP object.}
 
 \item{window}{The shape of window around the regions, can be `square`, `convex` or `concave`}
 

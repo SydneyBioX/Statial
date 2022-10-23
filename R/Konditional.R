@@ -116,10 +116,10 @@ Konditional <- function(cells,
 
   # Create data frame for mapply
   konditionalDf <- merge(imagesInfo, allCombinations, all = TRUE) %>%
-    mutate('test' = paste(from, "__", to))
+    mutate('test' = paste(from, "__", to, sep = ""))
 
   if ("parent_name" %in% names(konditionalDf)) {
-    konditionalDf <- mutate(konditionalDf, 'test' = paste(test, "__", parent_name))
+    konditionalDf <- mutate(konditionalDf, 'test' = paste(test, "__", parent_name, sep = ""))
   }
   
   x <- runif(1) # nolint

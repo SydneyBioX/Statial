@@ -7,7 +7,7 @@
 parentCombinations(all, ...)
 }
 \arguments{
-\item{all}{A list of all cell types}
+\item{all}{A list of all the `to` cell types Konditional is evaluated over}
 
 \item{...}{Vectors of each parent population}
 }

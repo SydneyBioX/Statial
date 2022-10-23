@@ -181,7 +181,7 @@ kerenImage %>%
 ```
 
 
-The `rsCurve` function plots the L-function value and Konditional values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Konditional is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii. 
+The `rsCurve` function plots the L-function value and Konditional values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Konditional is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii.
 
 ```{r}
 rsDf <- rsCurve(
@@ -190,7 +190,7 @@ rsDf <- rsCurve(
   to = "Immune",
   parent = c("p53", "Keratin+Tumour"),
   rs = seq(10, 510, 100),
-  cores = 5
+  cores = 1
 )
 
 
