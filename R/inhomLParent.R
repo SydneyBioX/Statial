@@ -120,7 +120,7 @@ inhomLParent <- function(data,
   p$i <- factor(p$i, levels = data$cellID)
 
   if (edgeCorrect) {
-    edge <- borderEdge(X, Rs[-1])
+    edge <- sapply(Rs[-1], function(x) borderEdge(X, x), simplify = FALSE)
     edge <- do.call("cbind", edge)
     edge <- as.data.frame(edge)
     colnames(edge) <- Rs[-1]
