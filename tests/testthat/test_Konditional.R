@@ -64,7 +64,7 @@ test_that("Expecting an error when dataset contains wrong column names", {
 })
 
 
-test_that("Inputting something other than SingleCellExperiment, SpatialExperiment and list of data frames", {
+test_that("Fail on invalid input", {
     
     wrong_input = c("wrong", "input")
     
