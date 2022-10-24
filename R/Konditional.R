@@ -1,7 +1,7 @@
 #' Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
 #'
-#' @param cells A SingleCellExperiment, SpatialExperiment or a list of 
-#' data.frames containing columns specifying the imageID, cellType, and x and y 
+#' @param cells A SingleCellExperiment, SpatialExperiment or a list of
+#' data.frames containing columns specifying the imageID, cellType, and x and y
 #' spatial coordinates.
 #' @param parentDf A data frame from \code{\link[Statial]{parentCombinations}}
 #' @param r Radius to evaluated pairwise relationships between from and to cells.
@@ -69,13 +69,11 @@ Konditional <- function(cells,
                         cellType = "cellType",
                         imageID = "imageID",
                         cores = 1) {
-    
   if (is.null(parentDf) &
     is.null(from) &
     is.null(to) &
     is.null(parent)) {
     stop("Please specificy a parentDf (obtained from parentCombinations), or from, to, and parent cellTypes")
-      
   } else if (!is.null(from) &
     !is.null(to) &
     !is.null(parent)
@@ -238,7 +236,6 @@ KonditionalCore <- function(image,
                             includeOriginal = TRUE,
                             weightQuantile = .80,
                             ...) {
-
   # Returns NA if to and from cell types not in image
   if (!(c(to, from) %in% unique(image$cellType) %>% all())) {
     condL <- data.frame(original = NA, konditional = NA)
@@ -293,12 +290,10 @@ KonditionalCore <- function(image,
 #'
 #' @import tidyverse
 validateDf <- function(cells, cellType, imageID, spatialCoords) {
-    
   if (!("imageID" %in% names(cells)) ||
     !("cellType" %in% names(cells)) ||
     !("x" %in% names(cells)) ||
     !("y" %in% names(cells))) {
-      
     result <- try(
       {
         cells <- cells %>%

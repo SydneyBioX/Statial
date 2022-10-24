@@ -20,7 +20,6 @@
 #' @import tidyr
 #'
 parentCombinations <- function(all, ...) {
-
   # Gets variable names of all the parent vector
   names <- as.list(substitute(c(...)))[-1]
 
