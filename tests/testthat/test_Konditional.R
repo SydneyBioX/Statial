@@ -53,13 +53,13 @@ test_that("Expecting an error when dataset contains wrong column names", {
         rename("imageName" = "imageID")
 
     testthat::expect_error(
-        Konditional(
+        suppressWarnings(Konditional(
             cells = renamedSCE,
             r = 50,
             from = "TC_CD4",
             to = "SC5",
             parent = c("TC_CD4", "TC_CD8")
-        )
+        ))
     )
 })
 
