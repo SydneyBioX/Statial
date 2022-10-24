@@ -47,8 +47,8 @@ test_that("Konditional values from headSCE are the same as the saved ones", {
 test_that("Expecting an error when dataset contains wrong column names", {
   data("headSCE")
 
-  renamedSCE <- colData(headSCE) %>%
-    data.frame() %>%
+  renamedSCE <- colData(headSCE) |>
+    data.frame() |>
     rename("imageName" = "imageID")
 
   testthat::expect_error(

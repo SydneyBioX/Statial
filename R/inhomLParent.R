@@ -75,8 +75,8 @@ inhomLParent <- function(data,
     closePairs$i <- data$cellID[closePairs$i]
   } else {
     closePairs <-
-      closePairs %>%
-      data.frame() %>%
+      closePairs |>
+      data.frame() |>
       filter(d <= max(Rs))
 
     # Convert True false into indexes using seq_along and then subset closePairs dataframe

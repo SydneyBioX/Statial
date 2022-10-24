@@ -78,8 +78,8 @@ relabelKonditional <- function(cells,
     ...
   )
 
-  relabeledDf <- relabeledDf %>%
-    select("imageID", "original", "konditional", "r") %>%
+  relabeledDf <- relabeledDf |>
+    select("imageID", "original", "konditional", "r") |>
     mutate(type = ifelse(imageID == 1, "original", "randomised"))
 
   if (returnImages) {
@@ -115,14 +115,14 @@ relabelKonditional <- function(cells,
 relabel <- function(image, labels = NULL) {
   # if labels are NULL relabel the whole image, otherwise relabel just the specified marks
   if (is.null(labels)) {
-    relabeledCells <- image %>% mutate(cellType = sample(cellType))
+    relabeledCells <- image |> mutate(cellType = sample(cellType))
   } else {
     # split up cells into subset which will be relabeled, and subset which wont be relabeled
-    notRelabel <- image %>% filter(!(cellType %in% labels))
-    toRelabel <- image %>% filter(cellType %in% labels)
+    notRelabel <- image |> filter(!(cellType %in% labels))
+    toRelabel <- image |> filter(cellType %in% labels)
 
     # relabel toRelabel cells
-    relabeled <- toRelabel %>% mutate(cellType = sample(cellType))
+    relabeled <- toRelabel |> mutate(cellType = sample(cellType))
 
     # combine relabeled cells and non relabeled cells
     relabeledCells <- rbind(relabeled, notRelabel)
