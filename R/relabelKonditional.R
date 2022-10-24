@@ -79,7 +79,7 @@ relabelKonditional <- function(cells,
   )
 
   relabeledDf <- relabeledDf %>%
-    select('imageID', 'original', 'konditional', 'r') %>%
+    select("imageID", "original", "konditional", "r") %>%
     mutate(type = ifelse(imageID == 1, "original", "randomised"))
 
   if (returnImages) {
@@ -113,7 +113,6 @@ relabelKonditional <- function(cells,
 #' @import dplyr
 #'
 relabel <- function(image, labels = NULL) {
-
   # if labels are NULL relabel the whole image, otherwise relabel just the specified marks
   if (is.null(labels)) {
     relabeledCells <- image %>% mutate(cellType = sample(cellType))
