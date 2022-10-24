@@ -147,9 +147,9 @@ head(parentDf)
 Rather than specifying `to`, `from`, and `parent` in Konditional, the output from `parentCombinations` can be inputed into `Konditional` using the `parentDf` argument. Here we will test the first 20 pairwise cell relationships in `parentCombinations` on the first image of the dataset.
 ```{r}
 # Selecting Image 1 as an example
-image_1 <- headSCE %>%
-  colData() %>%
-  data.frame() %>%
+image_1 <- headSCE |>
+  colData() |>
+  data.frame() |>
   filter(imageID == "1")
 
 
@@ -172,9 +172,9 @@ Here we examine an image were the relationship between 2 cell types depends on a
 ```{r}
 data("kerenImage")
 
-kerenImage %>%
-  filter(cellType %in% c("Keratin+Tumour", "Immune", "p53")) %>%
-  arrange(cellType) %>%
+kerenImage |>
+  filter(cellType %in% c("Keratin+Tumour", "Immune", "p53")) |>
+  arrange(cellType) |>
   ggplot(aes(x = x, y = y, color = cellType)) +
   geom_point(size = 1) +
   scale_colour_manual(values = c("#505050", "#D6D6D6", "#64BC46"))

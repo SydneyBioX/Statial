@@ -97,13 +97,13 @@ Konditional <- function(cells,
   }
 
   if (is(cells, "SingleCellExperiment")) {
-    cells <- cells %>%
-      SingleCellExperiment::colData() %>%
+    cells <- cells |>
+      SingleCellExperiment::colData() |>
       data.frame()
   }
 
   if (is(cells, "SpatialExperiment")) {
-    cells <- cbind(colData(cells), spatialCoords(cells)) %>%
+    cells <- cbind(colData(cells), spatialCoords(cells)) |>
       data.frame()
   }
 
@@ -145,7 +145,7 @@ Konditional <- function(cells,
   )
 
   # Create data frame for mapply
-  konditionalDf <- merge(imagesInfo, allCombinations, all = TRUE) %>%
+  konditionalDf <- merge(imagesInfo, allCombinations, all = TRUE) |>
     mutate("test" = paste(from, "__", to, sep = ""))
 
   if ("parent_name" %in% names(konditionalDf)) {
@@ -176,17 +176,17 @@ Konditional <- function(cells,
   )
 
   # Combine data.frame rows
-  lVals <- lVals %>%
+  lVals <- lVals |>
     bind_rows()
 
-  lValsClean <- konditionalDf %>%
-    mutate("parent_name" = "") %>%
-    select(-c("images", "from", "to", "parent_name", "parent")) %>%
-    cbind(lVals) %>%
+  lValsClean <- konditionalDf |>
+    mutate("parent_name" = "") |>
+    select(-c("images", "from", "to", "parent_name", "parent")) |>
+    cbind(lVals) |>
     remove_rownames()
 
   if (includeOriginal == FALSE) {
-    lValsClean <- lValsClean %>%
+    lValsClean <- lValsClean |>
       select(
         "imageID",
         "test",
@@ -200,7 +200,7 @@ Konditional <- function(cells,
         "window.length"
       )
   } else {
-    lValsClean <- lValsClean %>%
+    lValsClean <- lValsClean |>
       select(
         "imageID",
         "test",
@@ -237,7 +237,7 @@ KonditionalCore <- function(image,
                             weightQuantile = .80,
                             ...) {
   # Returns NA if to and from cell types not in image
-  if (!(c(to, from) %in% unique(image$cellType) %>% all())) {
+  if (!(c(to, from) %in% unique(image$cellType) |> all())) {
     condL <- data.frame(original = NA, konditional = NA)
     rownames(condL) <- paste(from, "__", to)
     return(condL)
@@ -296,7 +296,7 @@ validateDf <- function(cells, cellType, imageID, spatialCoords) {
     !("y" %in% names(cells))) {
     result <- try(
       {
-        cells <- cells %>%
+        cells <- cells |>
           rename(
             "cellType" = cellType,
             "imageID" = imageID,
