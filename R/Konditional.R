@@ -1,7 +1,8 @@
 #' Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
 #'
-#' @param cells A SingleCellExperiment or a list of data.frames with 
-#' imageID, x, y, and cellType columns.
+#' @param cells A SingleCellExperiment, SpatialExperiment or a list of 
+#' data.frames containing columns specifying the imageID, cellType, and x and y 
+#' spatial coordinates.
 #' @param parentDf A data frame from \code{\link[Statial]{parentCombinations}}
 #' @param r Radius to evaluated pairwise relationships between from and to cells.
 #' @param from The first cell type to be evaluated in the pairwise relationship.
@@ -19,6 +20,9 @@
 #' with zero counts in the pairwise association calculation.
 #' @param includeOriginal A logical value to return the original L function
 #' values along with the konditional values.
+#' @param spatialCoords The columns which contain the x and y spatial coordinates.
+#' @param cellType The column which contains the cell types.
+#' @param imageID The column which contains image identifiers.
 #' @param cores Number of cores for parallel processing.
 #' @return A Koditional result object
 #'
@@ -61,6 +65,9 @@ Konditional <- function(cells,
                         weightQuantile = .80,
                         includeZeroCells = TRUE,
                         includeOriginal = TRUE,
+                        spatialCoords = c("x", "y"),
+                        cellType = "cellType",
+                        imageID = "imageID",
                         cores = 1) {
     
   if (is.null(parentDf) &
@@ -68,6 +75,7 @@ Konditional <- function(cells,
     is.null(to) &
     is.null(parent)) {
     stop("Please specificy a parentDf (obtained from parentCombinations), or from, to, and parent cellTypes")
+      
   } else if (!is.null(from) &
     !is.null(to) &
     !is.null(parent)
@@ -80,20 +88,44 @@ Konditional <- function(cells,
   }
 
 
-  # Creating a vector for images
+  if (is(cells, "list")) {
+    cells <- lapply(
+      cells,
+      validateDf,
+      imageID = imageID,
+      cellType = cellType,
+      spatialCoords = spatialCoords
+    )
+  }
+
   if (is(cells, "SingleCellExperiment")) {
     cells <- cells %>%
       SingleCellExperiment::colData() %>%
       data.frame()
+  }
 
-    cells <- mutate(cells, 'imageID' = as.character(imageID))
+  if (is(cells, "SpatialExperiment")) {
+    cells <- cbind(colData(cells), spatialCoords(cells)) %>%
+      data.frame()
+  }
+
+  if (is(cells, "data.frame")) {
+    cells <- validateDf(
+      cells,
+      imageID = imageID,
+      cellType = cellType,
+      spatialCoords = spatialCoords
+    )
+
+    cells <- mutate(cells, imageID = as.character(imageID))
     cells <- split(cells, cells$imageID)
   }
 
   if (!is(cells, "list")) {
-    cells <- list(cells)
-    names(cells) <- as.character(seq_along(cells))
+    stop("Cells must be one of the following: SingleCellExperiment, SpatialExperiment, or a list of data.frames with imageID, cellType, and x and y columns")
   }
+
+
 
   images <- cells
 
@@ -116,16 +148,16 @@ Konditional <- function(cells,
 
   # Create data frame for mapply
   konditionalDf <- merge(imagesInfo, allCombinations, all = TRUE) %>%
-    mutate('test' = paste(from, "__", to, sep = ""))
+    mutate("test" = paste(from, "__", to, sep = ""))
 
   if ("parent_name" %in% names(konditionalDf)) {
-    konditionalDf <- mutate(konditionalDf, 'test' = paste(test, "__", parent_name, sep = ""))
+    konditionalDf <- mutate(konditionalDf, "test" = paste(test, "__", parent_name, sep = ""))
   }
-  
+
   x <- runif(1) # nolint
-  
+
   BPPARAM <- .generateBPParam(cores = cores)
-  
+
   # Calculate conditional L values
   lVals <- bpmapply(
     KonditionalCore,
@@ -143,7 +175,7 @@ Konditional <- function(cells,
     SIMPLIFY = FALSE,
     MoreArgs = list(includeOriginal = includeOriginal),
     BPPARAM = BPPARAM
-    )
+  )
 
   # Combine data.frame rows
   lVals <- lVals %>%
@@ -151,38 +183,38 @@ Konditional <- function(cells,
 
   lValsClean <- konditionalDf %>%
     mutate("parent_name" = "") %>%
-    select(-c('images', 'from', 'to', 'parent_name', 'parent')) %>%
+    select(-c("images", "from", "to", "parent_name", "parent")) %>%
     cbind(lVals) %>%
     remove_rownames()
 
   if (includeOriginal == FALSE) {
     lValsClean <- lValsClean %>%
       select(
-        'imageID',
-        'test',
-        'konditional',
-        'r',
-        'weightQuantile',
-        'inhom',
-        'edge',
-        'includeZeroCells',
-        'window',
-        'window.length'
+        "imageID",
+        "test",
+        "konditional",
+        "r",
+        "weightQuantile",
+        "inhom",
+        "edge",
+        "includeZeroCells",
+        "window",
+        "window.length"
       )
   } else {
     lValsClean <- lValsClean %>%
       select(
-        'imageID',
-        'test',
-        'original',
-        'konditional',
-        'r',
-        'weightQuantile',
-        'inhom',
-        'edge',
-        'includeZeroCells',
-        'window',
-        'window.length'
+        "imageID",
+        "test",
+        "original",
+        "konditional",
+        "r",
+        "weightQuantile",
+        "inhom",
+        "edge",
+        "includeZeroCells",
+        "window",
+        "window.length"
       )
   }
 
@@ -254,4 +286,35 @@ KonditionalCore <- function(image,
   )
 
   return(condL)
+}
+
+
+#' @noRd
+#'
+#' @import tidyverse
+validateDf <- function(cells, cellType, imageID, spatialCoords) {
+    
+  if (!("imageID" %in% names(cells)) ||
+    !("cellType" %in% names(cells)) ||
+    !("x" %in% names(cells)) ||
+    !("y" %in% names(cells))) {
+      
+    result <- try(
+      {
+        cells <- cells %>%
+          rename(
+            "cellType" = cellType,
+            "imageID" = imageID,
+            "x" = spatialCoords[1],
+            "y" = spatialCoords[2]
+          )
+      },
+      silent = TRUE
+    )
+
+    if (is(result, "try-error")) {
+      stop("Please specifiy imageID or cellType or spatialCoords")
+    }
+  }
+  return(cells)
 }
