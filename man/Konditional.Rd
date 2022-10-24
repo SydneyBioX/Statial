@@ -18,12 +18,16 @@ Konditional(
   weightQuantile = 0.8,
   includeZeroCells = TRUE,
   includeOriginal = TRUE,
+  spatialCoords = c("x", "y"),
+  cellType = "cellType",
+  imageID = "imageID",
   cores = 1
 )
 }
 \arguments{
-\item{cells}{A SingleCellExperiment or a list of data.frames with 
-imageID, x, y, and cellType columns.}
+\item{cells}{A SingleCellExperiment, SpatialExperiment or a list of 
+data.frames containing columns specifying the imageID, cellType, and x and y 
+spatial coordinates.}
 
 \item{parentDf}{A data frame from \code{\link[Statial]{parentCombinations}}}
 
@@ -53,6 +57,12 @@ with zero counts in the pairwise association calculation.}
 
 \item{includeOriginal}{A logical value to return the original L function
 values along with the konditional values.}
+
+\item{spatialCoords}{The columns which contain the x and y spatial coordinates.}
+
+\item{cellType}{The column which contains the cell types.}
+
+\item{imageID}{The column which contains image identifiers.}
 
 \item{cores}{Number of cores for parallel processing.}
 }
