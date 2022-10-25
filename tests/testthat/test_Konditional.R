@@ -45,36 +45,34 @@ test_that("Konditional values from headSCE are the same as the saved ones", {
 
 
 test_that("Expecting an error when dataset contains wrong column names", {
+  data("headSCE")
 
-    data("headSCE")
+  renamedSCE <- colData(headSCE) |>
+    data.frame() |>
+    rename("imageName" = "imageID")
 
-    renamedSCE <- colData(headSCE) %>%
-        data.frame() %>%
-        rename("imageName" = "imageID")
-
-    testthat::expect_error(
-        Konditional(
-            cells = renamedSCE,
-            r = 50,
-            from = "TC_CD4",
-            to = "SC5",
-            parent = c("TC_CD4", "TC_CD8")
-        )
-    )
+  testthat::expect_error(
+    suppressWarnings(Konditional(
+      cells = renamedSCE,
+      r = 50,
+      from = "TC_CD4",
+      to = "SC5",
+      parent = c("TC_CD4", "TC_CD8")
+    ))
+  )
 })
 
 
-test_that("Inputting something other than SingleCellExperiment, SpatialExperiment and list of data frames", {
-    
-    wrong_input = c("wrong", "input")
-    
-    testthat::expect_error(
-        Konditional(
-            cells = wrong_input,
-            r = 50,
-            from = "TC_CD4",
-            to = "SC5",
-            parent = c("TC_CD4", "TC_CD8")
-        )
+test_that("Fail on invalid input", {
+  wrong_input <- c("wrong", "input")
+
+  testthat::expect_error(
+    Konditional(
+      cells = wrong_input,
+      r = 50,
+      from = "TC_CD4",
+      to = "SC5",
+      parent = c("TC_CD4", "TC_CD8")
     )
+  )
 })

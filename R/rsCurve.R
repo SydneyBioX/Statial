@@ -66,8 +66,8 @@ rsCurve <- function(cells,
     ...
   )
 
-  rsDf <- konditionalVals %>%
-    select('r', 'original', 'konditional')
+  rsDf <- konditionalVals |>
+    select("r", "original", "konditional")
 
 
   if (se == TRUE) {
@@ -85,13 +85,13 @@ rsCurve <- function(cells,
       ...
     )
 
-    seDf <- seDf %>%
-      filter(type != "original") %>%
-      select('r', 'original', 'konditional') %>%
-      group_by(r) %>%
+    seDf <- seDf |>
+      filter(type != "original") |>
+      select("r", "original", "konditional") |>
+      group_by(r) |>
       summarise(
-        'originalSd' = sd(original),
-        'konditionalSd' = sd(konditional)
+        "originalSd" = sd(original),
+        "konditionalSd" = sd(konditional)
       )
 
     rsDf <- merge(rsDf, seDf, by = "r")
@@ -139,24 +139,24 @@ rsCurve <- function(cells,
 #' @importFrom tidyselect starts_with
 
 ggplotRs <- function(rsDf) {
-  if (str_detect(names(rsDf), "Sd") %>% any()) {
-    konditional <- rsDf %>%
-      select(r, starts_with("konditional")) %>%
+  if (str_detect(names(rsDf), "Sd") |> any()) {
+    konditional <- rsDf |>
+      select(r, starts_with("konditional")) |>
       mutate(
-        'lower' = konditional - konditionalSd,
-        'upper' = konditional + konditionalSd
-      ) %>%
-      select(-'konditionalSd') %>%
+        "lower" = konditional - konditionalSd,
+        "upper" = konditional + konditionalSd
+      ) |>
+      select(-"konditionalSd") |>
       pivot_longer(konditional)
 
 
-    original <- rsDf %>%
-      select('r', starts_with("original")) %>%
+    original <- rsDf |>
+      select("r", starts_with("original")) |>
       mutate(
-        'lower' = original - originalSd,
-        'upper' = original + originalSd
-      ) %>%
-      select(-'originalSd') %>%
+        "lower" = original - originalSd,
+        "upper" = original + originalSd
+      ) |>
+      select(-"originalSd") |>
       pivot_longer(original)
 
     seDf <- rbind(konditional, original)
@@ -179,8 +179,8 @@ ggplotRs <- function(rsDf) {
         col = "Function"
       )
   } else {
-    p <- rsDf %>%
-      pivot_longer(-r) %>%
+    p <- rsDf |>
+      pivot_longer(-r) |>
       ggplot(aes(x = r, y = value, col = name)) +
       geom_point() +
       geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
