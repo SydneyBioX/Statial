@@ -1,12 +1,7 @@
 #' Head and neck cutaneous squamous cell carcinoma IMC data
 #'
-<<<<<<< HEAD
 #' @description
-#' This is a subset of imaging mass cytometry dataset of head and neck cutaneous 
-=======
-#'
 #' This is a subset of imaging mass cytometry dataset of head and neck cutaneous
->>>>>>> 70a139c170fafb36639393856f5f3de0d0279118
 #' squamous cell carcinoma from Ferguson et al 2022. The object contains 5 images.
 #'
 #' @usage data(headSCE)
