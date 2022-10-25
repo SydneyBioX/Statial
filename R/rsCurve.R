@@ -1,4 +1,9 @@
 #' Evaluation of Konditional over a range of radii.
+#' 
+#' @description 
+#' This function obtains `Kondtional` values over a range of radii, standard 
+#' deviations for each value can be obtained using permutation for significance 
+#' testing. To obtain estimates for standard deviations specify `se = TRUE`.
 #'
 #'
 #' @param cells A single image data frame from a SingleCellExperiment object
@@ -99,6 +104,12 @@ rsCurve <- function(cells,
 
 #' Plotting the original and konditional L values over a range of radii.
 #'
+#' @description 
+#' This function takes outputs from \code{\link[Statial]{rsCurve}} and plots
+#' them in ggplot. If standard deviation is estimated in \code{\link[Statial]{rsCurve}},
+#' then confidence intervals will be constructed based on the standard deviation.
+#' If the confidence interval overlaps with 0, then the relationship is insignificant 
+#' for that radius.
 #'
 #' @param rsDf A data frame from \code{\link[Statial]{rsCurve}}.
 #'

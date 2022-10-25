@@ -3,7 +3,7 @@
 \name{relabelKonditional}
 \alias{relabelKonditional}
 \alias{relabel}
-\title{Function which randomises specific cells in an image and cacluates the Konditional value.}
+\title{Cell permutation for Konditional}
 \usage{
 relabelKonditional(
   cells,
@@ -59,9 +59,12 @@ A data frame containing all pairwise cell relationships and their
 corresponding parent
 }
 \description{
-Function which randomises specific cells in an image and cacluates the Konditional value.
+Function which randomises specified cells in an image and calculates
+the `Konditional` value. This can be used to estimate the null distribution, 
+of the parent cell population for significance testing.
 
-Function to permute all specified cells labels in an image
+This function relabels all specified cells within a single image, to 
+estimate the null distribution of cell population specified.
 }
 \examples{
 data("kerenImage")

@@ -1,5 +1,9 @@
 #' Create all combinations of cell type relationships from a list of parents
 #'
+#' @description 
+#' This function takes in named vectors of all the parent populations in the 
+#' dataset, and creates a data frame containing all pairwise cell relationships,
+#' this data frame can be inputed into the `parentDf` argument in `Konditional`.
 #'
 #' @param all A list of all the `to` cell types Konditional is evaluated over
 #' @param ... Vectors of each parent population

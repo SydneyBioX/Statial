@@ -1,4 +1,10 @@
-#' Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
+#' Evaluation of pairwise cell relationships, conditional on a 3rd population.
+#' 
+#' @description 
+#' Konditional identifies the relationship between two cell types which are 
+#' conditional on the spatial behaviour of a 3rd cell population, for a 
+#' particular radius (r).
+#' 
 #'
 #' @param cells A SingleCellExperiment, SpatialExperiment or a list of 
 #' data.frames containing columns specifying the imageID, cellType, and x and y 

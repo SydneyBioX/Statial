@@ -1,5 +1,8 @@
-#' Creates a window for PPP object
+#' Creates a window for a PPP object
 #'
+#' @description
+#' This function creates a window for a `spatstat::ppp` object, the type of 
+#' window can be specified using the `window` argument.
 #'
 #' @param data A single image data frame from a SingleCellExperiment object or PPP object.
 #' @param window The shape of window around the regions, can be `square`, `convex` or `concave`

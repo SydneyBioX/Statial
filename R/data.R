@@ -1,6 +1,6 @@
 #' Head and neck cutaneous squamous cell carcinoma IMC data
 #'
-#'
+#' @description
 #' This is a subset of imaging mass cytometry dataset of head and neck cutaneous 
 #' squamous cell carcinoma from Ferguson et al 2022. The object contains 5 images.
 #'
@@ -23,6 +23,7 @@
 
 #' MIBI-TOF Breast cancer image
 #'
+#' @description
 #' This is a single MIBI-TOF image of breast cancer from patient 6 of the
 #' Keren et al 2018 dataset.
 #'

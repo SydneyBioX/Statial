@@ -48,7 +48,9 @@ A data frame of original L values and Konditional values evaluated
 over a range of radii.
 }
 \description{
-Evaluation of Konditional over a range of radii.
+This function obtains `Kondtional` values over a range of radii, standard 
+deviations for each value can be obtained using permutation for significance 
+testing. To obtain estimates for standard deviations specify `se = TRUE`.
 }
 \examples{
 
