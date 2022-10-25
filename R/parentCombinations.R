@@ -24,7 +24,6 @@
 #' @import tidyr
 #'
 parentCombinations <- function(all, ...) {
-
   # Gets variable names of all the parent vector
   names <- as.list(substitute(c(...)))[-1]
 
@@ -49,11 +48,11 @@ parentCombinations <- function(all, ...) {
     }
   )
 
-  parentDf <- bind_rows(parentDfs) %>%
-    merge(parentTable, by = "parent_name") %>%
-    expand_grid(to = unique(all)) %>%
-    data.frame() %>%
-    select("from", "to", "parent", "parent_name") %>%
+  parentDf <- bind_rows(parentDfs) |>
+    merge(parentTable, by = "parent_name") |>
+    expand_grid(to = unique(all)) |>
+    data.frame() |>
+    select("from", "to", "parent", "parent_name") |>
     filter(from != to)
 
 
