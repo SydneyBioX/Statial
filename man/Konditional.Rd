@@ -2,7 +2,7 @@
 % Please edit documentation in R/Konditional.R
 \name{Konditional}
 \alias{Konditional}
-\title{Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.}
+\title{Evaluation of pairwise cell relationships, conditional on a 3rd population.}
 \usage{
 Konditional(
   cells,
@@ -70,7 +70,9 @@ values along with the konditional values.}
 A Koditional result object
 }
 \description{
-Identify changes in cell state of a cell type as it becomes closer to another, conditional on a third population.
+Konditional identifies the relationship between two cell types which are 
+conditional on the spatial behaviour of a 3rd cell population, for a 
+particular radius (r).
 }
 \examples{
 # Load data

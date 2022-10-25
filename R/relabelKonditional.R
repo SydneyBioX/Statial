@@ -1,6 +1,10 @@
 
-#' Function which randomises specific cells in an image and cacluates the Konditional value.
-#'
+#' Cell permutation for Konditional
+#' 
+#' @description 
+#' Function which randomises specified cells in an image and calculates
+#' the `Konditional` value. This can be used to estimate the null distribution, 
+#' of the parent cell population for significance testing.
 #'
 #' @param cells A single image data frame from a SingleCellExperiment object
 #' @param nSim Number of randomisations which will be calculated.
@@ -91,8 +95,11 @@ relabelKonditional <- function(cells,
 
 
 
-#' Function to permute all specified cells labels in an image
-#'
+#' Permute all specified cells labels in a single image
+#' 
+#' @description 
+#' This function relabels all specified cells within a single image, to 
+#' estimate the null distribution of cell population specified.
 #'
 #' @param image A single image from a Single Cell Experiment object.
 #' @param labels A vector of CellTypes labels to be permuted If NULL all cells

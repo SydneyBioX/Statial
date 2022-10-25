@@ -16,7 +16,9 @@ A data frame containing all pairwise cell relationships and their
 corresponding parent
 }
 \description{
-Create all combinations of cell type relationships from a list of parents
+This function takes in named vectors of all the parent populations in the 
+dataset, and creates a data frame containing all pairwise cell relationships,
+this data frame can be inputed into the `parentDf` argument in `Konditional`.
 }
 \examples{
 tcells <- c("CD4", "CD8")

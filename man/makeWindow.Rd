@@ -2,7 +2,7 @@
 % Please edit documentation in R/makeWindow.R
 \name{makeWindow}
 \alias{makeWindow}
-\title{Creates a window for PPP object}
+\title{Creates a window for a PPP object}
 \usage{
 makeWindow(data, window = "square", window.length = NULL)
 }
@@ -17,7 +17,8 @@ makeWindow(data, window = "square", window.length = NULL)
 Creates an `owin` class, representing the observation window for the image.
 }
 \description{
-Creates a window for PPP object
+This function creates a window for a `spatstat::ppp` object, the type of 
+window can be specified using the `window` argument.
 }
 \examples{
 data <- data.frame(x = rnorm(10), y = rnorm(10))

@@ -1,7 +1,6 @@
-#' Utility function to generate BPPARM object.
-#'
-#' @param cores Desired number of cores for BPPARAM object.
-#' @return A BPPPARAM object.
+
+#' @noRd
+#' 
 #' @importFrom BiocParallel SerialParam SnowParam MulticoreParam bpparam
 .generateBPParam <- function(cores = 1) {
     seed <- .Random.seed[1]
