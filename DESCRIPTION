@@ -21,7 +21,7 @@ Imports:
     concaveman, 
     tidyverse,
     data.table, 
-    spatstat.core,
+    spatstat.explore,
     dplyr, 
     spatstat, 
     tidyr, 
