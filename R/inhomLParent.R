@@ -1,5 +1,4 @@
 #' @noRd
-#' @import spatstat
 #' @importFrom methods is
 #' @importFrom stats quantile
 inhomLParent <- function(data,
