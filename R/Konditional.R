@@ -230,7 +230,6 @@ Konditional <- function(cells,
 
 #' @noRd
 #'
-#' @import spatstat
 #' @import tidyverse
 KonditionalCore <- function(image,
                             r,

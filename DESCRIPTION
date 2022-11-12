@@ -23,7 +23,6 @@ Imports:
     data.table, 
     spatstat.explore,
     dplyr, 
-    spatstat, 
     tidyr, 
     SingleCellExperiment,
     tibble,
