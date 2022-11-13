@@ -17,7 +17,6 @@
 #'
 #' @export
 #' @rdname makeWindow
-#' @import spatstat
 #' @import concaveman
 
 makeWindow <- function(data,

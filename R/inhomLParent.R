@@ -1,5 +1,4 @@
 #' @noRd
-#' @import spatstat
 #' @importFrom methods is
 #' @importFrom stats quantile
 inhomLParent <- function(data,
@@ -48,7 +47,7 @@ inhomLParent <- function(data,
   if (!is.null(Rs)) {
     # Use disc kernel for interpretation
     den <-
-      spatstat.core::density.ppp(Y, sigma = sigma, kernel = "disc")
+      spatstat.explore::density.ppp(Y, sigma = sigma, kernel = "disc")
     den <- den / max(den)
     # den$v <- pmax(den$v, minLambda)
     Area <- area(X) * mean(den) # area of the parent
