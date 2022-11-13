@@ -1,6 +1,8 @@
 Statial
 ======================================================
 
+<img src="https://raw.githubusercontent.com/SydneyBioX/SydneyBioXStickers/main/Statial/statial.png" align="right" width=250 style="margin-left: 10px;">
+
 Overview
 --------
 
