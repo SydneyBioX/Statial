@@ -173,7 +173,7 @@ ggplotRs <- function(rsDf) {
       geom_smooth(formula = y ~ x, method = "loess", se = FALSE) +
       guides(alpha = "none") +
       labs(
-        x = "Raidus (r)",
+        x = "Radius (r)",
         y = "L(r) - r",
         fill = "Function",
         col = "Function"
@@ -186,7 +186,7 @@ ggplotRs <- function(rsDf) {
       geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
       geom_smooth(formula = y ~ x, method = "loess", se = FALSE) +
       labs(
-        x = "Raidus (r)",
+        x = "Radius (r)",
         y = "L(r) - r",
         fill = "Function",
         col = "Function"
