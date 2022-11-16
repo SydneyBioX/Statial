@@ -164,7 +164,7 @@ head(image1_Konditional)
 ```
 
 
-#RsCurve
+# RsCurve
 
 Here we examine an image were the relationship between 2 cell types depends on a parent cell population. This is a breast cancer image obtained from Keren et al, 2018 from patient 6. In the image below we can see that `p53` and `Immune` are dispersed. However when the behaviour of `p53` is placed in the context of the spatial behaviour of its parent population `Keratin+Tumour`, `p53` and `Immune` now appear localised.
 
