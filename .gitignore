@@ -4,7 +4,7 @@
 .Ruserdata
 Statial.Rproj
 .RData
-
+.DS_Store
 
 # vscode settings
 .vscode
