@@ -30,7 +30,7 @@
 #' @param cellType The column which contains the cell types.
 #' @param imageID The column which contains image identifiers.
 #' @param cores Number of cores for parallel processing.
-#' @return A Koditional result object
+#' @return A konditionalResult object
 #'
 #' @examples
 #' # Load data
@@ -221,7 +221,9 @@ Konditional <- function(cells,
         "window.length"
       )
   }
-
+  
+  #lValsClean <- methods::new("konditionalResult", lValsClean)
+  
   return(lValsClean)
 }
 
@@ -317,4 +319,29 @@ validateDf <- function(cells, cellType, imageID, spatialCoords) {
     }
   }
   return(cells)
+}
+
+
+
+
+#' @noRd
+#'
+#' @import tidyverse
+isKonditional <- function(konditionalResult){
+    
+    colNames = c(
+        "imageID",
+        "test",
+        "original",
+        "konditional",
+        "r",
+        "weightQuantile",
+        "inhom",
+        "edge",
+        "includeZeroCells",
+        "window",
+        "window.length"
+    )
+    
+    return(all(colNames %in% names(konditionalResult)))
 }
