@@ -90,7 +90,9 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #'
 #' @examples
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+#' intensitiesData <- data.frame(t(
+#'   SummarizedExperiment::assay(headSCE, "intensities")
+#' ))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
@@ -196,7 +198,9 @@ getDistances <- function(singleCellData,
 #'
 #' @examples
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+#' intensitiesData <- data.frame(t(
+#'   SummarizedExperiment::assay(headSCE, "intensities")
+#' ))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
@@ -332,7 +336,9 @@ getAbundances <- function(singleCellData,
 #'
 #' @examples
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+#' intensitiesData <- data.frame(t(
+#'   SummarizedExperiment::assay(headSCE, "intensities")
+#' ))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
@@ -483,7 +489,9 @@ randomForestContaminationCalculator <- function(singleCellData,
 #'
 #' @examples
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+#' intensitiesData <- data.frame(t(
+#'   SummarizedExperiment::assay(headSCE, "intensities")
+#' ))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
@@ -914,7 +922,9 @@ fitStateModels <- function(x,
 #'
 #' @examples
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+#' intensitiesData <- data.frame(t(
+#'   SummarizedExperiment::assay(headSCE, "intensities")
+#' ))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
@@ -1091,7 +1101,9 @@ calculateStateModelsFast <- function(singleCellData,
 #'
 #' @examples
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+#' intensitiesData <- data.frame(t(
+#'   SummarizedExperiment::assay(headSCE, "intensities")
+#' ))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
@@ -1164,7 +1176,9 @@ imageModelsCVFormat <- function(imageModels,
 #'
 #' @examples
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+#' intensitiesData <- data.frame(t(
+#'   SummarizedExperiment::assay(headSCE, "intensities")
+#' ))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
