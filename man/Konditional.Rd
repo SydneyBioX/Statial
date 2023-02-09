@@ -67,7 +67,7 @@ values along with the konditional values.}
 \item{cores}{Number of cores for parallel processing.}
 }
 \value{
-A Koditional result object
+A konditionalResult object
 }
 \description{
 Konditional identifies the relationship between two cell types which are 
