@@ -25,7 +25,7 @@ visualiseImageRelationship(
 Helper functions to visualise OLS model fits for image based state models
 }
 \examples{
-load("headSCE.rda")
+data("headSCE")
 intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 spatialData <- data.frame(colData(headSCE))
 markersToUse <- colnames(intensitiesData)

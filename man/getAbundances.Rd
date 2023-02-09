@@ -25,7 +25,7 @@ Calculate the imhomogenous K function (a measure of cell type abundance) for
 each cell to other cell types
 }
 \examples{
-load("headSCE.rda")
+data("headSCE")
 intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 spatialData <- data.frame(colData(headSCE))
 markersToUse <- colnames(intensitiesData)

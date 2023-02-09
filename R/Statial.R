@@ -89,7 +89,7 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #' @param nCores Number of cores for parallel processing
 #'
 #' @examples
-#' load("headSCE.rda")
+#' data("headSCE")
 #' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
@@ -195,7 +195,7 @@ getDistances <- function(singleCellData,
 #' @param nCores Number of cores for parallel processing
 #'
 #' @examples
-#' load("headSCE.rda")
+#' data("headSCE")
 #' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
@@ -331,7 +331,7 @@ getAbundances <- function(singleCellData,
 #'   A default value to replace missing marker intensities for classification.
 #'
 #' @examples
-#' load("headSCE.rda")
+#' data("headSCE")
 #' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
@@ -482,7 +482,7 @@ randomForestContaminationCalculator <- function(singleCellData,
 #' @param nCores Number of cores for parallel processing
 #'
 #' @examples
-#' load("headSCE.rda")
+#' data("headSCE")
 #' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
@@ -913,7 +913,7 @@ fitStateModels <- function(x,
 #'
 #'
 #' @examples
-#' load("headSCE.rda")
+#' data("headSCE")
 #' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
@@ -1090,7 +1090,7 @@ calculateStateModelsFast <- function(singleCellData,
 #' @param replacementValue Numeric value to replace missing values
 #'
 #' @examples
-#' load("headSCE.rda")
+#' data("headSCE")
 #' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
@@ -1163,7 +1163,7 @@ imageModelsCVFormat <- function(imageModels,
 #' @param modelType
 #'
 #' @examples
-#' load("headSCE.rda")
+#' data("headSCE")
 #' intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 #' spatialData <- data.frame(colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)

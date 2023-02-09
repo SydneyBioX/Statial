@@ -55,7 +55,7 @@ based of the proximity or abundance of another cell type. The function
 provides the option to build robust and mixed linear model variants
 }
 \examples{
-load("headSCE.rda")
+data("headSCE")
 intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 spatialData <- data.frame(colData(headSCE))
 markersToUse <- colnames(intensitiesData)

@@ -41,7 +41,7 @@ based of the proximity or abundance of another cell type. The function only
 provides the option to build OLS models
 }
 \examples{
-load("headSCE.rda")
+data("headSCE")
 intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 spatialData <- data.frame(colData(headSCE))
 markersToUse <- colnames(intensitiesData)
