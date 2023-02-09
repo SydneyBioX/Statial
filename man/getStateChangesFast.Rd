@@ -42,7 +42,9 @@ provides the option to build OLS models
 }
 \examples{
 data("headSCE")
-intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+intensitiesData <- data.frame(t(
+  SummarizedExperiment::assay(headSCE, "intensities")
+))
 spatialData <- data.frame(colData(headSCE))
 markersToUse <- colnames(intensitiesData)
 singleCellData <- cbind(

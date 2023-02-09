@@ -56,7 +56,9 @@ provides the option to build robust and mixed linear model variants
 }
 \examples{
 data("headSCE")
-intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+intensitiesData <- data.frame(t(
+  SummarizedExperiment::assay(headSCE, "intensities")
+))
 spatialData <- data.frame(colData(headSCE))
 markersToUse <- colnames(intensitiesData)
 singleCellData <- cbind(
