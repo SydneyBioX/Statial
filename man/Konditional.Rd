@@ -25,8 +25,8 @@ Konditional(
 )
 }
 \arguments{
-\item{cells}{A SingleCellExperiment, SpatialExperiment or a list of 
-data.frames containing columns specifying the imageID, cellType, and x and y 
+\item{cells}{A SingleCellExperiment, SpatialExperiment or a list of
+data.frames containing columns specifying the imageID, cellType, and x and y
 spatial coordinates.}
 
 \item{parentDf}{A data frame from \code{\link[Statial]{parentCombinations}}}

@@ -11,7 +11,7 @@ headData a SingleCellExperiment object
 data(headSCE)
 }
 \description{
-This is a subset of imaging mass cytometry dataset of head and neck cutaneous 
+This is a subset of imaging mass cytometry dataset of head and neck cutaneous
 squamous cell carcinoma from Ferguson et al 2022. The object contains 5 images.
 }
 \references{
