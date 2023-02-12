@@ -124,19 +124,6 @@ getDistances <- function(singleCellData,
                          Rs = c(200),
                          whichCellTypes = NULL,
                          nCores = 1) {
-  # if ( "SingleCellExperiment" %in% class(singleCellData)){
-  #     singleCellDataNew = data.frame(SummarizedExperiment::colData(singleCellData)) %>%
-  #         dplyr::mutate(imageID = as.character(imageID), cellType = as.character(cellType))
-  #
-  #     if ("intensities" %in% assayNames(singleCellData)){
-  #         singleCellDataNew = singleCellDataNew %>%
-  #             cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
-  #     }
-  #
-  #     singleCellData = singleCellDataNew
-  # }
-
-
 
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
@@ -228,17 +215,6 @@ getAbundances <- function(singleCellData,
                           Rs = c(200),
                           whichCellTypes = NULL,
                           nCores = 1) {
-  # if ( "SingleCellExperiment" %in% class(singleCellData)){
-  #      singleCellDataNew = data.frame(SummarizedExperiment::colData(singleCellData)) %>%
-  #          dplyr::mutate(imageID = as.character(imageID), cellType = as.character(cellType))
-  #
-  #      if ("intensities" %in% assayNames(singleCellData)){
-  #          singleCellDataNew = singleCellDataNew %>%
-  #              cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
-  #      }
-  #
-  #      singleCellData = singleCellDataNew
-  # }
 
 
   if (!is.null(whichCellTypes)) {
@@ -253,7 +229,7 @@ getAbundances <- function(singleCellData,
     }
   }
 
-  # XYZ Make sure to have check for if rownames are not numbers
+  # Sourish: Make sure to have check to ensure rownames are not purely numbers
 
   singleCellDataK <- singleCellData %>%
     split(~imageID) %>%
@@ -267,6 +243,7 @@ getAbundances <- function(singleCellData,
 
   # Correcting column names when Rs greater than max Rs of image
   # Nick: this is a nested nightmare 😨
+  # Sourish: Haha, I think this is a bug from the output of inhomLocalK from the lisaClust package that I tried to fix
   correctedRadius <- singleCellDataK %>%
     lapply(
       function(x) {
@@ -390,8 +367,6 @@ randomForestContaminationCalculator <- function(singleCellData,
   }
 
   rfData <- singleCellData %>%
-    # dplyr::mutate(cellID = paste0("cellID", cellID)) %>%
-    # tibble::column_to_rownames("cellID") %>%
     dplyr::select(cellType, markers) %>%
     dplyr::mutate_at(markers, function(x) ifelse(is.nan(x) | is.na(x), 0, x))
 
@@ -409,7 +384,6 @@ randomForestContaminationCalculator <- function(singleCellData,
 
   predictions <- predict(rfModel, rfData)$predictions
 
-  # XYZ - Put in Utility
   maxn <- function(n) function(x) order(x, decreasing = TRUE)[!is.na(x)][n]
 
   rfData <- cbind(rfData, predictions) %>%
@@ -1157,22 +1131,34 @@ imageModelsCVFormat <- function(imageModels,
 
 
 
-
 #' Visualise Cell-Cell Marker Relationships
 #'
 #' Helper functions to visualise OLS model fits for image based state models
 #'
 #' @param singleCellData
+#'   A dataframe with a imageID, cellType, and marker intensity column along
+#'   with covariates (e.g. distance or abundance of the nearest cell type) to
+#'   model cell state changes
 #' @param imageID
+#'   Identifier name of the image in the imageID column to be visualised
 #' @param mainCellType
+#'   String indicating the name of the cell type (from the cellType column) whose cell state is being investigated in
 #' @param interactingCellType
+#' String indicating the name of the cell type (from the cellType column) who may be influencing the cell state of another cell type
 #' @param depedentMarker
+#'   String refering to the marker column proxying the cell state of interest
 #' @param sizeVariable
+#'   Aesthetic numerical variable determining the size of the displayed cells
 #' @param shape
+#'   Aesthetic variable determining the shape grouping of the displayed cells
 #' @param interactive
+#'   Logical indicating if the output visualisation should be a interactive (plotly)
 #' @param plotModelFit
-#' @param method
+#'   Logical indicating if fitted values should be plotted or actual intensities for marker specified. The default is to plot actual intensities
+#' @param method 
+#'   The method to build the model with. Currently the only option is "lm". However, capabilities may be expanded in the future
 #' @param modelType
+#'   String indicating the prefix of the independent metric corresponding to the potential state change inducing cell type. For example, values could include "abundance200_" or "dist200_"
 #'
 #' @examples
 #' data("headSCE")
