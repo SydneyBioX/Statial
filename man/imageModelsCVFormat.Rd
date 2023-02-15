@@ -28,18 +28,21 @@ Takes the output from the getStateChanges function for image based state
 models and converts it in a convenient format for cross validation
 }
 \examples{
+library(dplyr)
 data("headSCE")
 intensitiesData <- data.frame(t(
   SummarizedExperiment::assay(headSCE, "intensities")
 ))
-spatialData <- data.frame(colData(headSCE))
+spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
 markersToUse <- colnames(intensitiesData)
 singleCellData <- cbind(
   spatialData[rownames(intensitiesData), ], intensitiesData
 )
 singleCellData <- singleCellData \%>\%
-  mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) \%>\%
-  mutate_if(is.factor, as.character)
+  mutate(
+    across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+  ) \%>\%
+  mutate(across(where(is.factor), as.character))
 
 singleCellDataDistances <- getDistances(singleCellData,
   nCores = 1,

@@ -19,24 +19,50 @@ visualiseImageRelationship(
 )
 }
 \arguments{
-\item{modelType}{}
+\item{imageID}{Identifier name of the image in the imageID column to be visualised}
+
+\item{mainCellType}{String indicating the name of the cell type (from the cellType column) whose cell state is being investigated in}
+
+\item{interactingCellType}{String indicating the name of the cell type (from the cellType column) who may be influencing the cell state of another cell type}
+
+\item{depedentMarker}{String refering to the marker column proxying the cell state of interest}
+
+\item{sizeVariable}{Aesthetic numerical variable determining the size of the displayed cells}
+
+\item{shape}{Aesthetic variable determining the shape grouping of the displayed cells}
+
+\item{interactive}{Logical indicating if the output visualisation should be a interactive (plotly)}
+
+\item{plotModelFit}{Logical indicating if fitted values should be plotted or actual intensities for marker specified. The default is to plot actual intensities}
+
+\item{method}{The method to build the model with. Currently the only option is "lm". However, capabilities may be expanded in the future}
+
+\item{modelType}{String indicating the prefix of the independent metric corresponding to the potential state change inducing cell type. For example, values could include "abundance200_" or "dist200_"}
+
+\item{singleCellData}{A dataframe with a imageID, cellType, and marker intensity column along
+with covariates (e.g. distance or abundance of the nearest cell type) to
+model cell state changes}
 }
 \description{
 Helper functions to visualise OLS model fits for image based state models
 }
 \examples{
+\dontrun{
+library(dplyr)
 data("headSCE")
 intensitiesData <- data.frame(t(
   SummarizedExperiment::assay(headSCE, "intensities")
 ))
-spatialData <- data.frame(colData(headSCE))
+spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
 markersToUse <- colnames(intensitiesData)
 singleCellData <- cbind(
   spatialData[rownames(intensitiesData), ], intensitiesData
 )
 singleCellData <- singleCellData \%>\%
-  mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) \%>\%
-  mutate_if(is.factor, as.character)
+  mutate(
+    across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+  ) \%>\%
+  mutate(across(where(is.factor), as.character))
 
 singleCellDataDistances <- getDistances(singleCellData,
   nCores = 1,
@@ -44,7 +70,7 @@ singleCellDataDistances <- getDistances(singleCellData,
   whichCellTypes = c("MC2", "SC7")
 )
 visualiseImageRelationship(
-  singleCellData = singleCellDataDistances,
+  data = singleCellDataDistances,
   imageID = "36",
   mainCellType = "MC2",
   interactingCellType = "SC7",
@@ -53,6 +79,6 @@ visualiseImageRelationship(
   plotModelFit = FALSE,
   method = "lm",
   modelType = "dist200_"
-)
+)}
 
 }
