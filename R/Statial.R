@@ -89,18 +89,21 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #' @param nCores Number of cores for parallel processing
 #'
 #' @examples
+#' library(dplyr)
 #' data("headSCE")
 #' intensitiesData <- data.frame(t(
 #'   SummarizedExperiment::assay(headSCE, "intensities")
 #' ))
-#' spatialData <- data.frame(colData(headSCE))
+#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
 #'   spatialData[rownames(intensitiesData), ], intensitiesData
 #' )
 #' singleCellData <- singleCellData %>%
-#'   mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
-#'   mutate_if(is.factor, as.character)
+#'   mutate(
+#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+#'   ) %>%
+#'   mutate(across(where(is.factor), as.character))
 #'
 #' singleCellDataDistances <- getDistances(singleCellData,
 #'   nCores = 1,
@@ -119,7 +122,7 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #' @importFrom SummarizedExperiment colData assayNames
 #' @importFrom tibble column_to_rownames
 #' @importFrom dplyr select contains mutate
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 getDistances <- function(singleCellData,
                          Rs = c(200),
                          whichCellTypes = NULL,
@@ -184,18 +187,21 @@ getDistances <- function(singleCellData,
 #' @param nCores Number of cores for parallel processing
 #'
 #' @examples
+#' library(dplyr)
 #' data("headSCE")
 #' intensitiesData <- data.frame(t(
 #'   SummarizedExperiment::assay(headSCE, "intensities")
 #' ))
-#' spatialData <- data.frame(colData(headSCE))
+#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
 #'   spatialData[rownames(intensitiesData), ], intensitiesData
 #' )
 #' singleCellData <- singleCellData %>%
-#'   mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
-#'   mutate_if(is.factor, as.character)
+#'   mutate(
+#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+#'   ) %>%
+#'   mutate(across(where(is.factor), as.character))
 #'
 #' singleCellDataCounts <- getAbundances(singleCellData,
 #'   nCores = 1,
@@ -210,7 +216,7 @@ getDistances <- function(singleCellData,
 #' @importFrom stringr word
 #' @importFrom SummarizedExperiment colData assayNames
 #' @importFrom BiocParallel bplapply MulticoreParam
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 getAbundances <- function(singleCellData,
                           Rs = c(200),
                           whichCellTypes = NULL,
@@ -312,18 +318,21 @@ getAbundances <- function(singleCellData,
 #'   A default value to replace missing marker intensities for classification.
 #'
 #' @examples
+#' library(dplyr)
 #' data("headSCE")
 #' intensitiesData <- data.frame(t(
 #'   SummarizedExperiment::assay(headSCE, "intensities")
 #' ))
-#' spatialData <- data.frame(colData(headSCE))
+#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
 #'   spatialData[rownames(intensitiesData), ], intensitiesData
 #' )
 #' singleCellData <- singleCellData %>%
-#'   mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
-#'   mutate_if(is.factor, as.character)
+#'   mutate(
+#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+#'   ) %>%
+#'   mutate(across(where(is.factor), as.character))
 #'
 #' singleCellDataDistancesContam <- randomForestContaminationCalculator(
 #'   singleCellData,
@@ -462,18 +471,21 @@ randomForestContaminationCalculator <- function(singleCellData,
 #' @param nCores Number of cores for parallel processing
 #'
 #' @examples
+#' library(dplyr)
 #' data("headSCE")
 #' intensitiesData <- data.frame(t(
 #'   SummarizedExperiment::assay(headSCE, "intensities")
 #' ))
-#' spatialData <- data.frame(colData(headSCE))
+#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
 #'   spatialData[rownames(intensitiesData), ], intensitiesData
 #' )
 #' singleCellData <- singleCellData %>%
-#'   mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
-#'   mutate_if(is.factor, as.character)
+#'   mutate(
+#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+#'   ) %>%
+#'   mutate(across(where(is.factor), as.character))
 #'
 #' singleCellDataDistances <- getDistances(singleCellData,
 #'   nCores = 1,
@@ -495,7 +507,7 @@ randomForestContaminationCalculator <- function(singleCellData,
 #' @importFrom dplyr
 #'   arrange group_by  summarise_at mutate_if mutate bind_rows left_join filter
 #' @importFrom tidyr gather
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 getStateChanges <- function(singleCellData,
                             markers,
                             typeAll = c("dist"),
@@ -550,7 +562,7 @@ getStateChanges <- function(singleCellData,
 #' @importFrom dplyr
 #'   arrange group_by  summarise_at mutate_if mutate bind_rows left_join
 #' @importFrom tidyr gather
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 calculateStateModels <- function(singleCellData,
                                  markers,
                                  type = "dist200_",
@@ -613,12 +625,13 @@ calculateStateModels <- function(singleCellData,
 }
 
 
-#' Third layer wrapper function to initiate building linear models measuring state changes on a cell type by cell type basis
+#' Third layer wrapper function to initiate building linear models measuring
+#' state changes on a cell type by cell type basis
 #'
 #' @noRd
 #'
 #' @importFrom dplyr group_by  group_modify ungroup
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 buildModelsByCellType <- function(subsettedSingleCellData,
                                   markers,
                                   type,
@@ -649,7 +662,7 @@ buildModelsByCellType <- function(subsettedSingleCellData,
 #'
 #' @importFrom dplyr bind_rows
 #' @importFrom stringr str_detect str_replace
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 modelsPerCellType <- function(cellTypeSplitData,
                               markers,
                               type,
@@ -737,7 +750,7 @@ modelsPerCellType <- function(cellTypeSplitData,
 #' @importFrom MASS rlm
 #' @importFrom sfsmisc f.robftest
 #' @importFrom performance check_singularity
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 fitStateModels <- function(x,
                            f,
                            covariates,
@@ -895,18 +908,21 @@ fitStateModels <- function(x,
 #'
 #'
 #' @examples
+#' library(dplyr)
 #' data("headSCE")
 #' intensitiesData <- data.frame(t(
 #'   SummarizedExperiment::assay(headSCE, "intensities")
 #' ))
-#' spatialData <- data.frame(colData(headSCE))
+#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
 #'   spatialData[rownames(intensitiesData), ], intensitiesData
 #' )
 #' singleCellData <- singleCellData %>%
-#'   mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
-#'   mutate_if(is.factor, as.character)
+#'   mutate(
+#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+#'   ) %>%
+#'   mutate(across(where(is.factor), as.character))
 #'
 #' singleCellDataDistances <- getDistances(singleCellData,
 #'   nCores = 1,
@@ -924,7 +940,7 @@ fitStateModels <- function(x,
 #' @rdname getStateChangesFast
 #' @importFrom dplyr bind_rows filter
 #' @importFrom BiocParallel bplapply MulticoreParam
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 getStateChangesFast <- function(singleCellData,
                                 markers,
                                 type = "dist",
@@ -967,7 +983,7 @@ getStateChangesFast <- function(singleCellData,
 #'   select starts_with all_of select_if mutate bind_rows relocate rename
 #' @importFrom stringr word
 #' @importFrom bigstatsr as_FBM big_univLinReg
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 calculateStateModelsFast <- function(singleCellData,
                                      type = "dist",
                                      markers,
@@ -1074,18 +1090,21 @@ calculateStateModelsFast <- function(singleCellData,
 #' @param replacementValue Numeric value to replace missing values
 #'
 #' @examples
+#' library(dplyr)
 #' data("headSCE")
 #' intensitiesData <- data.frame(t(
 #'   SummarizedExperiment::assay(headSCE, "intensities")
 #' ))
-#' spatialData <- data.frame(colData(headSCE))
+#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
 #'   spatialData[rownames(intensitiesData), ], intensitiesData
 #' )
 #' singleCellData <- singleCellData %>%
-#'   mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
-#'   mutate_if(is.factor, as.character)
+#'   mutate(
+#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+#'   ) %>%
+#'   mutate(across(where(is.factor), as.character))
 #'
 #' singleCellDataDistances <- getDistances(singleCellData,
 #'   nCores = 1,
@@ -1109,7 +1128,7 @@ calculateStateModelsFast <- function(singleCellData,
 #' @importFrom dplyr bind_rows mutate_if mutate rename select
 #' @importFrom stringr str_detect str_replace str_split
 #' @importFrom tidyr pivot_wider
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 imageModelsCVFormat <- function(imageModels,
                                 values_from = "tValue",
                                 removeColsThresh = 0.2,
@@ -1161,18 +1180,22 @@ imageModelsCVFormat <- function(imageModels,
 #'   String indicating the prefix of the independent metric corresponding to the potential state change inducing cell type. For example, values could include "abundance200_" or "dist200_"
 #'
 #' @examples
+#' \dontrun{
+#' library(dplyr)
 #' data("headSCE")
 #' intensitiesData <- data.frame(t(
 #'   SummarizedExperiment::assay(headSCE, "intensities")
 #' ))
-#' spatialData <- data.frame(colData(headSCE))
+#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
 #' markersToUse <- colnames(intensitiesData)
 #' singleCellData <- cbind(
 #'   spatialData[rownames(intensitiesData), ], intensitiesData
 #' )
 #' singleCellData <- singleCellData %>%
-#'   mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
-#'   mutate_if(is.factor, as.character)
+#'   mutate(
+#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+#'   ) %>%
+#'   mutate(across(where(is.factor), as.character))
 #'
 #' singleCellDataDistances <- getDistances(singleCellData,
 #'   nCores = 1,
@@ -1180,7 +1203,7 @@ imageModelsCVFormat <- function(imageModels,
 #'   whichCellTypes = c("MC2", "SC7")
 #' )
 #' visualiseImageRelationship(
-#'   singleCellData = singleCellDataDistances,
+#'   data = singleCellDataDistances,
 #'   imageID = "36",
 #'   mainCellType = "MC2",
 #'   interactingCellType = "SC7",
@@ -1189,7 +1212,7 @@ imageModelsCVFormat <- function(imageModels,
 #'   plotModelFit = FALSE,
 #'   method = "lm",
 #'   modelType = "dist200_"
-#' )
+#' )}
 #'
 #' @export
 #' @rdname visualiseImageRelationship
@@ -1198,7 +1221,7 @@ imageModelsCVFormat <- function(imageModels,
 #'   ggplot scale_fill_distiller stat_density_2d geom_point theme_classic
 #'   aes_string ggtitle facet_wrap aes xlab ylab ggtitle autoplot
 #' @importFrom plotly ggplotly
-#' @importFrom janitor %>%
+#' @importFrom magrittr %>%
 visualiseImageRelationship <- function(data,
                                        imageID,
                                        mainCellType,
