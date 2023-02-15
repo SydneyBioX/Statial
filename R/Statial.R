@@ -3,7 +3,9 @@
 #' Calculates the euclidean distance from each cell to the nearest cell of each
 #' type for a single image
 #'
-#' @noRd
+#' @param singleCellData the single cell data of interest
+#' @param maxRS Maximum distance between pairs of points to be counted as close
+#'   pairs.
 #'
 #' @export
 #' @rdname distanceCalculator
@@ -1087,7 +1089,7 @@ calculateStateModelsFast <- function(singleCellData,
 #' @param removeColsThresh
 #'   Threshold of missingness in which a relationship will not be included as
 #'   column in the cross validation ready output
-#' @param replacementValue Numeric value to replace missing values
+#' @param missingReplacement Numeric value to replace missing values
 #'
 #' @examples
 #' library(dplyr)
@@ -1154,7 +1156,7 @@ imageModelsCVFormat <- function(imageModels,
 #'
 #' Helper functions to visualise OLS model fits for image based state models
 #'
-#' @param singleCellData
+#' @param data
 #'   A dataframe with a imageID, cellType, and marker intensity column along
 #'   with covariates (e.g. distance or abundance of the nearest cell type) to
 #'   model cell state changes
