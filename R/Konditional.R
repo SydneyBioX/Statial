@@ -322,8 +322,16 @@ validateDf <- function(cells, cellType, imageID, spatialCoords) {
 
 
 
-#' @noRd
+#' Test whether an object is a konditionalResult
 #'
+#' @param konditionalResult a object to test
+#'
+#' @examples
+#' data = data.frame()
+#' if(!isKonditional(data)) print("Not a konditionalResult")
+#'
+#' @export isKonditional
+#' @rdname isKonditional
 #' @import tidyverse
 isKonditional <- function(konditionalResult){
     
