@@ -21,7 +21,7 @@ getStateChangesFast with the argument isMixed = FALSE}
 \item{removeColsThresh}{Threshold of missingness in which a relationship will not be included as
 column in the cross validation ready output}
 
-\item{replacementValue}{Numeric value to replace missing values}
+\item{missingReplacement}{Numeric value to replace missing values}
 }
 \description{
 Takes the output from the getStateChanges function for image based state

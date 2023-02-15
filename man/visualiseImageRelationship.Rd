@@ -19,6 +19,10 @@ visualiseImageRelationship(
 )
 }
 \arguments{
+\item{data}{A dataframe with a imageID, cellType, and marker intensity column along
+with covariates (e.g. distance or abundance of the nearest cell type) to
+model cell state changes}
+
 \item{imageID}{Identifier name of the image in the imageID column to be visualised}
 
 \item{mainCellType}{String indicating the name of the cell type (from the cellType column) whose cell state is being investigated in}
@@ -38,10 +42,6 @@ visualiseImageRelationship(
 \item{method}{The method to build the model with. Currently the only option is "lm". However, capabilities may be expanded in the future}
 
 \item{modelType}{String indicating the prefix of the independent metric corresponding to the potential state change inducing cell type. For example, values could include "abundance200_" or "dist200_"}
-
-\item{singleCellData}{A dataframe with a imageID, cellType, and marker intensity column along
-with covariates (e.g. distance or abundance of the nearest cell type) to
-model cell state changes}
 }
 \description{
 Helper functions to visualise OLS model fits for image based state models
