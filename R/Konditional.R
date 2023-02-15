@@ -222,8 +222,6 @@ Konditional <- function(cells,
       )
   }
   
-  #lValsClean <- methods::new("konditionalResult", lValsClean)
-  
   return(lValsClean)
 }
 
