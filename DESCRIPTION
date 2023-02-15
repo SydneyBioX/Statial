@@ -36,7 +36,6 @@ Imports:
     R.utils,
     SummarizedExperiment,
     bigstatsr,
-    janitor,
     lisaClust,
     lmerTest,
     parameters,
@@ -46,7 +45,6 @@ Imports:
     ranger,
     robustlmm,
     sfsmisc,
-    ggfortify,
     heatmaply,
     magrittr
 Suggests: 
