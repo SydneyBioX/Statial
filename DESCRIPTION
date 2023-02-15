@@ -46,7 +46,8 @@ Imports:
     ranger,
     robustlmm,
     sfsmisc,
-    ggfortify
+    ggfortify,
+    heatmaply
 Suggests: 
     BiocStyle,
     knitr,
