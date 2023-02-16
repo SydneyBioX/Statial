@@ -20,8 +20,8 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
     dplyr::select(-i) %>%
     tibble::rownames_to_column("cellIndex") %>%
     dplyr::mutate(cellIndex = as.numeric(cellIndex))
-
-
+  
+  
   ow <- spatstat.geom::owin(
     xrange = range(singleCellData$x),
     yrange = range(singleCellData$y)
@@ -32,15 +32,15 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
     window = ow,
     marks = singleCellData$cellType
   )
-
+  
   closePairData <- spatstat.geom::closepairs(pppData, rmax = maxRS)
   distanceData <- data.frame(
     cellIndexA = closePairData$i,
     cellIndexB = closePairData$j,
     d = closePairData$d
   )
-
-
+  
+  
   cellAInformation <- singleCellData %>%
     dplyr::select(
       cellIndexA = cellIndex,
@@ -49,7 +49,7 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
     )
   cellBInformation <- singleCellData %>%
     dplyr::select(cellIndexB = cellIndex, cellTypeB = cellType)
-
+  
   processedDistanceData <- distanceData %>%
     dplyr::inner_join(cellAInformation, by = "cellIndexA") %>%
     dplyr::inner_join(cellBInformation, by = "cellIndexB") %>%
@@ -65,8 +65,8 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
     tidyr::pivot_wider(names_from = cellTypeB, values_from = d) %>%
     dplyr::mutate(imageID = unique(singleCellData$imageID)) %>%
     dplyr::relocate(imageID)
-
-
+  
+  
   processedDistanceData <- processedDistanceData %>%
     dplyr::right_join(singleCellData, by = c("imageID", "cellID", "cellType"))
 }
@@ -116,7 +116,7 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #' @export
 #' @rdname getDistances
 #' @importFrom dplyr
-#'   bind_rows mutate_if mutate_at rename_with contains starts_with vars
+#'   bind_rows rename_with contains starts_with vars across
 #' @importFrom spatstat.geom owin ppp closepairs
 #' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom purrr reduce
@@ -129,7 +129,7 @@ getDistances <- function(singleCellData,
                          Rs = c(200),
                          whichCellTypes = NULL,
                          nCores = 1) {
-
+  
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
       singleCellData <- singleCellData %>%
@@ -141,20 +141,21 @@ getDistances <- function(singleCellData,
       )
     }
   }
-
+  
   singleCellDataDistances <- singleCellData %>%
     split(~imageID) %>%
     BiocParallel::bplapply(distanceCalculator,
-      maxRS = max(Rs),
-      BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
+                           maxRS = max(Rs),
+                           BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
     ) %>%
     dplyr::bind_rows() %>%
-    dplyr::mutate_if(is.numeric, function(x) ifelse(is.infinite(x), NA, x)) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.infinite(x), NA, x))) %>%
     lapply(Rs, function(x, rmax) {
       x %>%
-        dplyr::mutate_at(
-          dplyr::vars(dplyr::contains("dist_")),
+        dplyr::mutate(
+          dplyr::across(dplyr::contains("dist_"),
           function(x) ifelse(x <= rmax, x, NA)
+          )
         ) %>%
         dplyr::rename_with(
           function(x) {
@@ -214,7 +215,7 @@ getDistances <- function(singleCellData,
 #' @export
 #' @rdname getAbundances
 #' @importFrom tibble rownames_to_column
-#' @importFrom dplyr mutate_if bind_rows inner_join relocate contains mutate
+#' @importFrom dplyr across bind_rows inner_join relocate contains mutate
 #' @importFrom stringr word
 #' @importFrom SummarizedExperiment colData assayNames
 #' @importFrom BiocParallel bplapply MulticoreParam
@@ -223,8 +224,8 @@ getAbundances <- function(singleCellData,
                           Rs = c(200),
                           whichCellTypes = NULL,
                           nCores = 1) {
-
-
+  
+  
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
       singleCellData <- singleCellData %>%
@@ -236,9 +237,9 @@ getAbundances <- function(singleCellData,
       )
     }
   }
-
+  
   # Sourish: Make sure to have check to ensure rownames are not purely numbers
-
+  
   singleCellDataK <- singleCellData %>%
     split(~imageID) %>%
     BiocParallel::bplapply(
@@ -247,8 +248,8 @@ getAbundances <- function(singleCellData,
       BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
     ) %>%
     lapply(as.data.frame)
-
-
+  
+  
   # Correcting column names when Rs greater than max Rs of image
   # Nick: this is a nested nightmare 😨
   # Sourish: Haha, I think this is a bug from the output of inhomLocalK from the lisaClust package that I tried to fix
@@ -265,7 +266,7 @@ getAbundances <- function(singleCellData,
         )
       }
     )
-
+  
   cellTypeName <- singleCellDataK %>%
     lapply(function(x) word(colnames(x), 2, -1, sep = "_"))
   correctedColumnNames <- correctedRadius %>%
@@ -277,7 +278,7 @@ getAbundances <- function(singleCellData,
       cellTypeName = cellTypeName,
       SIMPLIFY = FALSE
     )
-
+  
   singleCellDataK <- singleCellDataK %>%
     mapply(
       function(x, newNames) x %>% purrr::set_names(newNames),
@@ -293,7 +294,7 @@ getAbundances <- function(singleCellData,
     ) %>%
     dplyr::bind_rows() %>%
     tibble::rownames_to_column("cellID") %>%
-    dplyr::mutate_if(is.numeric, function(x) ifelse(is.na(x), 0, x)) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.na(x), 0, x))) %>%
     dplyr::right_join(singleCellData, by = c("imageID", "cellID")) %>%
     dplyr::relocate(imageID)
 }
@@ -344,7 +345,7 @@ getAbundances <- function(singleCellData,
 #' @export
 #' @rdname randomForestContaminationCalculator
 #' @importFrom tibble rownames_to_column
-#' @importFrom dplyr mutate select bind_rows inner_join
+#' @importFrom dplyr mutate select bind_rows inner_join across
 #' @importFrom SummarizedExperiment colData assayNames
 #' @importFrom ranger ranger
 #' @importFrom tibble column_to_rownames rownames_to_column
@@ -362,7 +363,7 @@ randomForestContaminationCalculator <- function(singleCellData,
       dplyr::mutate(
         imageID = as.character(imageID), cellType = as.character(cellType)
       )
-
+    
     if ("intensities" %in% assayNames(singleCellData)) {
       singleCellDataNew <- singleCellDataNew %>%
         cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
@@ -372,15 +373,15 @@ randomForestContaminationCalculator <- function(singleCellData,
         )
       }
     }
-
-
+    
+    
     singleCellData <- singleCellDataNew
   }
-
+  
   rfData <- singleCellData %>%
     dplyr::select(cellType, markers) %>%
-    dplyr::mutate_at(markers, function(x) ifelse(is.nan(x) | is.na(x), 0, x))
-
+    dplyr::mutate(dplyr::across(markers, function(x) ifelse(is.nan(x) | is.na(x), 0, x)))
+  
   set.seed(seed)
   rfModel <- ranger::ranger(
     as.factor(cellType) ~ .,
@@ -388,15 +389,15 @@ randomForestContaminationCalculator <- function(singleCellData,
     num.trees = num.trees,
     probability = TRUE
   )
-
+  
   if (verbose == TRUE) {
     print(rfModel)
   }
-
+  
   predictions <- predict(rfModel, rfData)$predictions
-
+  
   maxn <- function(n) function(x) order(x, decreasing = TRUE)[!is.na(x)][n]
-
+  
   rfData <- cbind(rfData, predictions) %>%
     dplyr::mutate(
       rfMaxCellProb = apply(
@@ -422,10 +423,10 @@ randomForestContaminationCalculator <- function(singleCellData,
     dplyr::select(-colnames(predictions)) %>%
     tibble::rownames_to_column("cellID") %>%
     dplyr::mutate(cellID = stringr::str_replace(cellID, "cellID", ""))
-
+  
   singleCellData <- singleCellData %>%
     dplyr::left_join(rfData)
-
+  
   singleCellData
 }
 
@@ -507,7 +508,7 @@ randomForestContaminationCalculator <- function(singleCellData,
 #' @rdname getStateChanges
 #' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom dplyr
-#'   arrange group_by  summarise_at mutate_if mutate bind_rows left_join filter
+#'   arrange group_by  summarise_at mutate bind_rows left_join filter
 #' @importFrom tidyr gather
 #' @importFrom magrittr %>%
 getStateChanges <- function(singleCellData,
@@ -529,13 +530,13 @@ getStateChanges <- function(singleCellData,
     unlist() %>%
     unique() %>%
     paste0("_")
-
+  
   if (!is.null(cellTypesToModel)) {
     singleCellData <- singleCellData %>%
       dplyr::filter(cellType %in% cellTypesToModel)
   }
-
-
+  
+  
   allModels <- typeVector %>%
     mapply(calculateStateModels, type = ., MoreArgs = list(
       singleCellData = singleCellData,
@@ -562,7 +563,7 @@ getStateChanges <- function(singleCellData,
 #' @noRd
 #' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom dplyr
-#'   arrange group_by  summarise_at mutate_if mutate bind_rows left_join
+#'   arrange group_by  summarise_at across mutate bind_rows left_join
 #' @importFrom tidyr gather
 #' @importFrom magrittr %>%
 calculateStateModels <- function(singleCellData,
@@ -580,49 +581,49 @@ calculateStateModels <- function(singleCellData,
   } else {
     splitData <- split(singleCellData, ~imageID)
   }
-
+  
   CellInteractionModels <- splitData %>%
     BiocParallel::bplapply(buildModelsByCellType,
-      markers = markers,
-      covariates = covariates,
-      type = type,
-      method = method,
-      isMixed = isMixed,
-      randomIntercepts = randomIntercepts,
-      verbose = verbose,
-      timeout = timeout,
-      BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
+                           markers = markers,
+                           covariates = covariates,
+                           type = type,
+                           method = method,
+                           isMixed = isMixed,
+                           randomIntercepts = randomIntercepts,
+                           verbose = verbose,
+                           timeout = timeout,
+                           BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
     ) %>%
     bind_rows()
-
-
+  
+  
   CellInteractionModels <- CellInteractionModels %>%
     dplyr::arrange(pValue) %>%
     mutate(type = type) %>%
     mutate(covariates = covariates) %>%
     mutate(covariates = ifelse(is.null(covariates), "None", covariates))
-
+  
   relativeExpressionData <- singleCellData %>%
     dplyr::group_by(independent = cellType) %>%
     dplyr::summarise_at(markers, mean, na.rm = TRUE) %>%
-    dplyr::mutate_if(is.numeric, heatmaply::normalize) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), heatmaply::normalize)) %>%
     tidyr::gather(
       -independent,
       key = "dependent", value = "relativeExpression"
     ) %>%
     dplyr::mutate(interactingCell = independent) %>%
     dplyr::mutate(independent = paste0(type, independent))
-
+  
   CellInteractionModels <- CellInteractionModels %>%
     dplyr::mutate(interactingCell = str_replace(independent, type, "")) %>%
     dplyr::left_join(relativeExpressionData) %>%
     relocate(cellType, independent, dependent)
-
+  
   if (isMixed == FALSE) {
     CellInteractionModels <- CellInteractionModels %>%
       relocate(imageID)
   }
-
+  
   CellInteractionModels
 }
 
@@ -678,7 +679,7 @@ modelsPerCellType <- function(cellTypeSplitData,
     print(unique(cellTypeSplitData$imageID))
     print(unique(cellTypeSplitData$cellType))
   }
-
+  
   cells <- colnames(cellTypeSplitData)[
     Reduce(
       "|", mapply(
@@ -689,12 +690,12 @@ modelsPerCellType <- function(cellTypeSplitData,
       )
     )
   ]
-
+  
   # Univariate Models
   if (length(type) == 1) {
     formulas <- lapply(markers, function(x, c) paste(x, "~", c), c = cells) %>%
       unlist()
-
+    
     # Interaction Models - two types
   } else {
     for (i in type) {
@@ -717,19 +718,19 @@ modelsPerCellType <- function(cellTypeSplitData,
     formulas <- lapply(markers, function(x, c) paste(x, "~", c), c = cells) %>%
       unlist()
   }
-
+  
   modelOutputs <- formulas %>%
     mapply(fitStateModels,
-      f = .,
-      MoreArgs = list(
-        x = cellTypeSplitData,
-        covariates = covariates,
-        method = method,
-        isMixed = isMixed,
-        randomIntercepts = randomIntercepts,
-        timeout = timeout
-      ),
-      SIMPLIFY = FALSE
+           f = .,
+           MoreArgs = list(
+             x = cellTypeSplitData,
+             covariates = covariates,
+             method = method,
+             isMixed = isMixed,
+             randomIntercepts = randomIntercepts,
+             timeout = timeout
+           ),
+           SIMPLIFY = FALSE
     ) %>%
     dplyr::bind_rows()
 }
@@ -762,16 +763,16 @@ fitStateModels <- function(x,
                            timeout) {
   dependent <- stringr::str_split(f, " ~ ")[[1]][1]
   independent <- stringr::str_split(f, " ~ ")[[1]][2]
-
+  
   independentCheck <- stringr::str_split(independent, "\\:") %>%
     unlist() %>%
     stringr::str_split(" \\+ ") %>%
     unlist() %>%
     unique()
-
+  
   f <- paste(c(f, covariates), collapse = " + ")
   independentSplit <- unlist(stringr::str_split(independent, " \\+ "))
-
+  
   outputs <- try(
     {
       if (isMixed == TRUE) {
@@ -779,13 +780,13 @@ fitStateModels <- function(x,
           lapply(function(x) paste0("(1|", x, ")")) %>%
           unlist() %>%
           paste0(collapse = " + ")
-
+        
         if (method == "rlm") {
           model <- R.utils::withTimeout(
             {
               robustlmm::rlmer(formula(paste(f, "+", randomInterceptTerms)),
-                method = "DASvar",
-                data = x
+                               method = "DASvar",
+                               data = x
               )
             },
             timeout = timeout,
@@ -838,7 +839,7 @@ fitStateModels <- function(x,
           modelSummary <- summary(model)
         }
       }
-
+      
       beta <- coefs[independentSplit, 1]
       tValue <- coefs[independentSplit, 3]
       pValue <- coefs[independentSplit, 4]
@@ -863,20 +864,20 @@ fitStateModels <- function(x,
     },
     silent = TRUE
   )
-
+  
   if (any(class(outputs) == "try-error")) {
     outputs <- data.frame(
       independent = independentSplit,
       dependent = dependent,
       formula = f
     )
-
+    
     if (isMixed == FALSE) {
       outputs <- outputs %>%
         mutate(imageID = unique(x$imageID))
     }
   }
-
+  
   outputs
 }
 
@@ -954,7 +955,7 @@ getStateChangesFast <- function(singleCellData,
     singleCellData <- singleCellData %>%
       dplyr::filter(cellType %in% cellTypesToModel)
   }
-
+  
   imageModels <- BiocParallel::bplapply(
     split(singleCellData, ~ imageID + cellType),
     calculateStateModelsFast,
@@ -964,13 +965,13 @@ getStateChangesFast <- function(singleCellData,
     removeColsThresh = removeColsThresh,
     BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
   )
-
+  
   imageModels <- imageModels[unlist(lapply(
     imageModels,
     function(x) class(x) != "try-error"
   ))] %>%
     dplyr::bind_rows()
-
+  
   imageModels
 }
 
@@ -1000,20 +1001,20 @@ calculateStateModelsFast <- function(singleCellData,
         dplyr::all_of(markers),
         dplyr::all_of(covariates)
       )
-
+    
     singleCellData <- na.omit(singleCellData[, colSums(is.na(singleCellData)) < removeColsThresh * nrow(singleCellData)])
-
+    
     x.train.original <- singleCellData %>%
       dplyr::select(dplyr::starts_with(type))
     x.train <- bigstatsr::as_FBM(x.train.original)
     y.train <- singleCellData %>%
       dplyr::select(dplyr::all_of(markers)) %>%
       dplyr::select_if(~ length(unique(.)) > 1)
-
+    
     y.train <- apply(y.train, MARGIN = 2, function(x) x, simplify = FALSE)
     cov.train <- singleCellData %>%
       dplyr::select(dplyr::all_of(covariates))
-
+    
     model <- mapply(
       FUN = function(y.train) {
         bigstatsr::big_univLinReg(
@@ -1036,7 +1037,7 @@ calculateStateModelsFast <- function(singleCellData,
         SIMPLIFY = FALSE
       ) %>%
       dplyr::bind_rows()
-
+    
     model <- model %>%
       dplyr::mutate(sampleSize = nrow(x.train)) %>%
       dplyr::mutate(
@@ -1061,7 +1062,7 @@ calculateStateModelsFast <- function(singleCellData,
       data.frame() %>%
       dplyr::mutate(covariateType = covariates)
   })
-
+  
   model
 }
 
@@ -1127,7 +1128,7 @@ calculateStateModelsFast <- function(singleCellData,
 #' )
 #' @export
 #' @rdname imageModelsCVFormat
-#' @importFrom dplyr bind_rows mutate_if mutate rename select
+#' @importFrom dplyr bind_rows across mutate rename select
 #' @importFrom stringr str_detect str_replace str_split
 #' @importFrom tidyr pivot_wider
 #' @importFrom magrittr %>%
@@ -1136,17 +1137,17 @@ imageModelsCVFormat <- function(imageModels,
                                 removeColsThresh = 0.2,
                                 missingReplacement = 0) {
   cvData <- imageModels %>%
-    dplyr::mutate_if(is.numeric, function(x) ifelse(is.finite(x), x, NA)) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.finite(x), x, NA))) %>%
     dplyr::mutate(
       relationship = paste0(cellType, "_", dependent, "_", independent)
     ) %>%
     dplyr::rename(values_from = values_from) %>%
     dplyr::select(imageID, relationship, values_from) %>%
     tidyr::pivot_wider(names_from = relationship, values_from = values_from)
-
+  
   cvData <- cvData[, colSums(is.na(cvData)) < nrow(cvData) * removeColsThresh]
   cvData[is.na(cvData)] <- missingReplacement
-
+  
   cvData
 }
 
@@ -1238,28 +1239,28 @@ visualiseImageRelationship <- function(data,
   data <- data[data$imageID == imageID, ]
   data$OriginalMarker <- data[, depedentMarker, drop = TRUE]
   data$fittedValues <- NA
-
+  
   relationshipFormula <- paste0(
     depedentMarker, "~", paste0(modelType, interactingCellType)
   )
   modelData <- data[data$cellType == mainCellType, ]
   model <- lm(formula(relationshipFormula), modelData)
-
-
+  
+  
   data[data$cellType == mainCellType, "fittedValues"] <- predict(
     model,
     data[data$cellType == mainCellType, ]
   )
-
-
+  
+  
   if (plotModelFit == TRUE) {
     data[data$cellType == mainCellType, depedentMarker] <- predict(
       model, data[data$cellType == mainCellType, ]
     )
   }
-
-
-
+  
+  
+  
   g1 <- ggplot2::ggplot() +
     ggplot2::stat_density_2d(
       data = data[data$cellType == interactingCellType, ],
@@ -1286,8 +1287,8 @@ visualiseImageRelationship <- function(data,
       "Model Fit:", plotModelFit
     )) +
     ggplot2::facet_wrap(~imageID, scales = "free")
-
-
+  
+  
   g2 <- data %>%
     dplyr::filter(cellType == mainCellType) %>%
     ggplot2::ggplot(
@@ -1300,9 +1301,9 @@ visualiseImageRelationship <- function(data,
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
     ggplot2::ylab(depedentMarker)
-
-
-
+  
+  
+  
   g3 <- data %>%
     dplyr::filter(cellType == mainCellType) %>%
     ggplot2::ggplot(ggplot2::aes_string(
@@ -1314,14 +1315,14 @@ visualiseImageRelationship <- function(data,
     ggplot2::xlab("True Values") +
     ggplot2::ylab("Fitted Values") +
     ggplot2::ggtitle("Predicted vs Real Values")
-
+  
   g4 <- ggplot2::autoplot(model) + ggplot2::theme_classic()
-
+  
   if (interactive == TRUE) {
     g1 <- plotly::ggplotly(g1)
     g2 <- plotly::ggplotly(g2)
     g3 <- plotly::ggplotly(g3)
   }
-
+  
   list(g1, g2, g3, g4)
 }
