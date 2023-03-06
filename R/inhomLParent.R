@@ -12,7 +12,8 @@ inhomLParent <- function(data,
                          inhom = TRUE,
                          edgeCorrect = TRUE,
                          includeZeroCells = TRUE,
-                         closePairs = NULL) {
+                         closePairs = NULL,
+                         original = FALSE) {
   if (is(data, "ppp")) {
     data <- PPPdf(data)
   }
@@ -37,7 +38,6 @@ inhomLParent <- function(data,
       marks = data$cellType
     )
 
-
   Y <- X
   if (!is.null(parent)) Y <- Y[Y$marks %in% parent, ]
 
@@ -49,7 +49,7 @@ inhomLParent <- function(data,
     den <-
       spatstat.explore::density.ppp(Y, sigma = sigma, kernel = "disc")
     den <- den / max(den)
-    # den$v <- pmax(den$v, minLambda)
+    #den$v <- pmax(den$v, 0.05)
     Area <- area(X) * mean(den) # area of the parent
   }
 
@@ -101,13 +101,19 @@ inhomLParent <- function(data,
     np <- spatstat.geom::nearest.valid.pixel(X$x, X$y, den)
     w <- den$v[cbind(np$row, np$col)]
     names(w) <- data$cellID
-    invWeight <- 1 / w[as.character(p$i)]
+    invWeight <- 1 / w[as.character(p$i)] 
     p$wt <- pmin(invWeight, quantile(invWeight, weightQuantile))
   }
-
+  
   num <- tapply(w, data$cellType, length)
   # weights of each cell type
   lam <- tapply(w, data$cellType, sum) / Area
+  
+  #original
+  if(original) {
+      lam <- table(data$cellType) / spatstat.geom::area(X)
+  }
+  
   # sum of the weights
   if (inhom) {
     num <- tapply(pmin(1 / w, quantile(1 / w, weightQuantile)), data$cellType, sum)
@@ -139,6 +145,7 @@ inhomLParent <- function(data,
 
   use <- p$cellTypeI %in% from & p$cellTypeJ %in% to
   p <- p[use, ]
+ 
 
   r <- inhomL(p, lam, X, Rs, num, Area)
 

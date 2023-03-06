@@ -278,6 +278,7 @@ KonditionalCore <- function(image,
       edgeCorrect = edge,
       inhom = inhom,
       weightQuantile = 1,
+      original = TRUE,
       ...
     )
 
