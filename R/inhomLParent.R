@@ -126,12 +126,13 @@ inhomLParent <- function(data,
 
   if (edgeCorrect) {
     edge <- borderEdge(X, Rs[-1])
-    edge <- do.call("cbind", edge)
+    #edge <- do.call("cbind", edge)
     edge <- as.data.frame(edge)
     colnames(edge) <- Rs[-1]
     edge$i <- data$cellID
-    # edge$i <- factor(data$cellID, levels = data$cellID)
+    edge$i <- factor(data$cellID, levels = data$cellID)
     edge <- tidyr::pivot_longer(edge, -i, "d")
+    edge$d <- as.factor(edge$d)
     p <- dplyr::left_join(as.data.frame(p), edge, c("i", "d"))
   } else {
     p <- as.data.frame(p)
@@ -176,7 +177,7 @@ inhomL <-
     r <- data.table::as.data.table(p)
 
     r$wt <-
-      (r$wt) / as.numeric(lam[r$cellTypeJ]) / (as.numeric(num[r$cellTypeI]))
+      (r$wt) / r$value / as.numeric(lam[r$cellTypeJ]) / (as.numeric(num[r$cellTypeI]))
 
     r <- r[, j := NULL]
     r <- r[, value := NULL]
