@@ -131,7 +131,6 @@ inhomLParent <- function(data,
     colnames(edge) <- Rs[-1]
     edge$i <- data$cellID
     edge$i <- factor(data$cellID, levels = data$cellID)
-    browser()
     edge <- tidyr::pivot_longer(edge, -i, names_to = "d")
     edge$d <- as.factor(edge$d)
     p <- dplyr::left_join(as.data.frame(p), edge, c("i", "d"))
