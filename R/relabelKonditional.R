@@ -51,7 +51,36 @@ relabelKonditional <- function(cells,
                                inhom = TRUE,
                                edge = FALSE,
                                cores = 1,
+                               spatialCoords = c("x", "y"),
+                               cellType = "cellType",
+                               imageID = "imageID",
                                ...) {
+    
+    
+    if (is(cells, "SingleCellExperiment")) {
+        cells <- cells |>
+            SingleCellExperiment::colData() |>
+            data.frame()
+    }
+    
+    if (is(cells, "SpatialExperiment")) {
+        cells <- cbind(colData(cells), spatialCoords(cells)) |>
+            data.frame()
+    }
+    
+    if (is(cells, "data.frame")) {
+        cells <- validateDf(
+            cells,
+            imageID = imageID,
+            cellType = cellType,
+            spatialCoords = spatialCoords
+        )
+    }
+    
+    if (!is(cells, "data.frame")) {
+        stop("Cells must be one of the following: SingleCellExperiment, SpatialExperiment, or a list of data.frames with imageID, cellType, and x and y columns")
+    }
+
   imageArray <- replicate(nSim, cells, simplify = FALSE)
 
 
