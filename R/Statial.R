@@ -243,7 +243,7 @@ getAbundances <- function(singleCellData,
   singleCellDataK <- singleCellData %>%
     split(~imageID) %>%
     BiocParallel::bplapply(
-      lisaClust:::inhomLocalK,
+      lisaClust::inhomLocalK,
       Rs = Rs,
       BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
     ) %>%
