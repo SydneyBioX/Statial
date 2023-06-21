@@ -104,6 +104,7 @@ imageModels <- getStateChanges(
 
 
 ```{r}
+#TODO: boundary (singular) fit
 mixedModels <- getStateChanges(
   singleCellData = singleCellDataDistancesCounts,
   markers = markersToUse,
@@ -119,7 +120,8 @@ mixedModels
 ```
 
 
-```{r}
+```{r, eval=FALSE}
+#TODO: This is broken due to NAs.
 visualiseImageRelationship(
   singleCellDataDistances, "36", "MC2", "SC7", "Podoplanin",
   interactive = FALSE,
