@@ -17,6 +17,12 @@
 #' @param inhom A logical value indicating whether to account for inhomogeneity.
 #' @param edge A logical value indicating whether to perform edge correction.
 #' @param cores Number of cores for parallel processing.
+#' @param spatialCoords A character vector containing the names of the two
+#'     spatial dimansions in the data. Defaults to `c("x", "y")`.
+#' @param cellType The name of the cell type field in the data. Defualts to
+#'     "cellType".
+#' @param imageID The name of the image ID field in the data. Defualts to
+#'     "imageID".
 #' @param ... Any arguments passed into \code{\link[Statial]{Konditional}}
 #' @return A data frame containing Konditional value for each randomised image.
 #' If `returnImages = TRUE` function will return a list with Konditional values
