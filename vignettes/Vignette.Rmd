@@ -1,11 +1,30 @@
 ---
-title: "Vignette Draft"
-output: html_document
-date: "2022-12-19"
+title: "Statial draft"
+date: "`r BiocStyle::doc_date()`"
+params:
+  test: FALSE
+author:
+- name: Farhan Ameen
+  affiliation:  
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Sourish Iyengar
+  affiliation:
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Ellis Patrick
+  affiliation:
+  - &WIMR Westmead Institute for Medical Research, University of Sydney, Australia
+  - School of Mathematics and Statistics, University of Sydney, Australia
+vignette: >
+  %\VignetteIndexEntry{"Statial draft"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output: 
+  BiocStyle::html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(BiocStyle)
 ```
 
 
@@ -13,11 +32,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r warning=FALSE, message=FALSE}
 # load required packages
-
-source("Statial.R")
-.libPaths("/dora/nobackup/biostat/Rpackages/v4")
-
-library(BiocStyle)
+library(Statial)
 library(ggplot2)
 library(spicyR)
 library(tidyverse)
@@ -31,135 +46,135 @@ library(SingleCellExperiment)
 # cellExp = readRDS("Head and Neck/cellExp.RDS")
 # intensities = data.frame(t(data.frame(cellMarks(cellExp))))
 # colnames(intensities) =  paste0("cellID", cellSummary(cellExp)$cellID)
-# 
+#
 # spatialMeasurements = data.frame(cellSummary(cellExp))
 # rownames(spatialMeasurements) = paste0("cellID", cellSummary(cellExp)$cellID)
-# 
-# clinicalHeadData = imagePheno(cellExp) %>% 
+#
+# clinicalHeadData = imagePheno(cellExp) %>%
 #   select(subject, imageID, condition)
-# 
-# 
+#
+#
 # headSCE = SingleCellExperiment(list(intensities = intensities),
 #                            colData = c(spatialMeasurements))
-# 
+#
 # save(headSCE, clinicalHeadData, file = "headSCE.rda")
 ```
 
 
 ```{r}
-load("headSCE.rda")
-intensitiesData = data.frame(t(assay(headSCE, "intensities")))
-spatialData = data.frame(colData(headSCE))
-markersToUse = colnames(intensitiesData)
+data(headSCE)
+intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+spatialData <- data.frame(colData(headSCE))
+markersToUse <- colnames(intensitiesData)
 
-singleCellData = cbind(spatialData[rownames(intensitiesData),], intensitiesData)
-singleCellData = singleCellData %>%
-    mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
-    mutate_if(is.factor, as.character)
+singleCellData <- cbind(spatialData[rownames(intensitiesData), ], intensitiesData)
+singleCellData <- singleCellData %>%
+  mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
+  mutate_if(is.factor, as.character)
 ```
 
 
 ```{r}
-singleCellDataDistances = getDistances(singleCellData, 
-                                       nCores = 1, 
-                                       Rs = c(200),
-                                       whichCellTypes = c("MC2", "SC7")
-                                       )
+singleCellDataDistances <- getDistances(singleCellData,
+  nCores = 1,
+  Rs = c(200),
+  whichCellTypes = c("MC2", "SC7")
+)
 ```
 
 
 ```{r}
-singleCellDataDistancesCounts = getAbundances(singleCellDataDistances, 
-                                              nCores = 1, 
-                                              Rs = c(200),
-                                              whichCellTypes = c("MC2", "SC7")
-                                      )
+singleCellDataDistancesCounts <- getAbundances(singleCellDataDistances,
+  nCores = 1,
+  Rs = c(200),
+  whichCellTypes = c("MC2", "SC7")
+)
+```
+
+
+```{r, message=FALSE}
+imageModels <- getStateChanges(
+  singleCellData = singleCellDataDistancesCounts,
+  markers = markersToUse,
+  typeAll = c("dist200", "abundance200"),
+  cellTypesToModel = "MC2",
+  nCores = 1
+)
 ```
 
 
 ```{r}
-imageModels = getStateChanges(singleCellData = singleCellDataDistancesCounts,
-                               markers = markersToUse,
-                               typeAll = c("dist200", "abundance200"),
-                               cellTypesToModel = "MC2",
-                               nCores = 1
-                              )
-
-
-
-
-```
-
-
-```{r}
-mixedModels = getStateChanges(singleCellData = singleCellDataDistancesCounts,
-                               markers = markersToUse,
-                               typeAll = c("dist"),
-                               method = "lm", 
-                               isMixed = TRUE,
-                               randomIntercepts = c("imageID"),
-                               cellTypesToModel = "MC2",
-                               nCores = 1)
+mixedModels <- getStateChanges(
+  singleCellData = singleCellDataDistancesCounts,
+  markers = markersToUse,
+  typeAll = c("dist"),
+  method = "lm",
+  isMixed = TRUE,
+  randomIntercepts = c("imageID"),
+  cellTypesToModel = "MC2",
+  nCores = 1
+)
 
 mixedModels
 ```
 
 
 ```{r}
-visualiseImageRelationship(singleCellData = singleCellDataDistances,
-                          imageID = "36",
-                          mainCellType = "MC2",
-                          interactingCellType = "SC7",
-                          depedentMarker = "Podoplanin",
-                          interactive = FALSE,
-                          plotModelFit = FALSE,
-                          method = "lm",
-                          modelType = "dist200_")[[1]]
+visualiseImageRelationship(
+  singleCellDataDistances, "36", "MC2", "SC7", "Podoplanin",
+  interactive = FALSE,
+  plotModelFit = FALSE,
+  method = "lm",
+  modelType = "dist200_"
+)[[1]]
 ```
 
 ```{r}
-imageModelsFast = getStateChangesFast(singleCellData = singleCellDataDistancesCounts,
-                               markers = markersToUse,
-                               type = c("dist200"),
-                               nCores = 1
-                              )
-
+imageModelsFast <- getStateChangesFast(
+  singleCellData = singleCellDataDistancesCounts,
+  markers = markersToUse,
+  type = c("dist200"),
+  nCores = 1
+)
 ```
 
 
 ## Cross Validation
-```{r}
-subsetImages = clinicalHeadData %>% 
+```{r, eval=FALSE}
+subsetImages <- clinicalHeadData %>%
   group_by(subject) %>%
-  group_modify(~ tail(.x, 1)) %>% 
+  group_modify(~ tail(.x, 1)) %>%
   ungroup() %>%
   pull(imageID)
 
-crossValidationData = imageModelsCVFormat(imageModelsFast,
-                                          values_from = "tValue",
-                                          removeColsThresh = 0.2,
-                                          missingReplacement = 0)
+crossValidationData <- imageModelsCVFormat(imageModelsFast,
+  values_from = "tValue",
+  removeColsThresh = 0.2,
+  missingReplacement = 0
+)
 
-crossValidationData = crossValidationData[crossValidationData$imageID %in% subsetImages, ]
-crossValidationData = crossValidationData %>% 
+crossValidationData <- crossValidationData[crossValidationData$imageID %in% subsetImages, ]
+crossValidationData <- crossValidationData %>%
   column_to_rownames("imageID")
 
 
 
-outcome = clinicalHeadData[rownames(crossValidationData), "condition"]
-outcome = factor(outcome)
-names(outcome) = rownames(crossValidationData)
+outcome <- clinicalHeadData[rownames(crossValidationData), "condition"]
+outcome <- factor(outcome)
+names(outcome) <- rownames(crossValidationData)
 
-stateChangeProgressionCV = ClassifyR::crossValidate(measurements = crossValidationData,
-                                            outcome = outcome,
-                                            nFeatures = 10,
-                                            selectionMethod = "t-test",
-                                            classifier = "XGB",
-                                            nRepeats = 10,
-                                            nCores = 10,
-                                            characteristicsLabel = "XGB_Model")
+stateChangeProgressionCV <- ClassifyR::crossValidate(
+  measurements = crossValidationData,
+  outcome = outcome,
+  nFeatures = 10,
+  selectionMethod = "t-test",
+  classifier = "XGB",
+  nRepeats = 10,
+  nCores = 10,
+  characteristicsLabel = "XGB_Model"
+)
 
-stateChangeProgressionCV %>% 
+stateChangeProgressionCV %>%
   performancePlot()
 ```
 
@@ -168,6 +183,6 @@ stateChangeProgressionCV %>%
 
 ## Session Info
 ```{r}
-# sessionInfo()
+sessionInfo()
 ```
 
