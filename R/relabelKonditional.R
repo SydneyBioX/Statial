@@ -32,7 +32,7 @@
 #'   from = "p53",
 #'   to = "Immune",
 #'   parent = c("p53", "Keratin+Tumour"),
-#'   cores = 40
+#'   cores = 2
 #' )
 #'
 #' @export
