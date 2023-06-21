@@ -46,6 +46,15 @@ return the randomised images along with the Konditional values.}
 
 \item{cores}{Number of cores for parallel processing.}
 
+\item{spatialCoords}{A character vector containing the names of the two
+spatial dimansions in the data. Defaults to `c("x", "y")`.}
+
+\item{cellType}{The name of the cell type field in the data. Defualts to
+"cellType".}
+
+\item{imageID}{The name of the image ID field in the data. Defualts to
+"imageID".}
+
 \item{...}{Any arguments passed into \code{\link[Statial]{Konditional}}}
 
 \item{image}{A single image from a Single Cell Experiment object.}
