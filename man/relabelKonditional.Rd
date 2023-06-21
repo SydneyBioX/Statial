@@ -16,6 +16,9 @@ relabelKonditional(
   inhom = TRUE,
   edge = FALSE,
   cores = 1,
+  spatialCoords = c("x", "y"),
+  cellType = "cellType",
+  imageID = "imageID",
   ...
 )
 

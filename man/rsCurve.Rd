@@ -19,7 +19,7 @@ rsCurve(
 )
 }
 \arguments{
-\item{cells}{A single image data frame from a SingleCellExperiment object}
+\item{cells}{A single image from a SingleCellExperiment object}
 
 \item{from}{The first cell type to be evaluated in the pairwise relationship.}
 
