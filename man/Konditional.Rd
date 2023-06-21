@@ -84,7 +84,7 @@ CD4_Konditional <- Konditional(
   from = "TC_CD4",
   to = "SC5",
   parent = c("TC_CD4", "TC_CD8"),
-  cores = 40
+  cores = 2
 )
 
 

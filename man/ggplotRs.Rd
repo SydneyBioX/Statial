@@ -29,7 +29,7 @@ rsDf <- rsCurve(
   to = "Immune",
   parent = c("p53", "Keratin+Tumour"),
   rs = seq(10, 510, 100),
-  cores = 40
+  cores = 2
 )
 
 ggplotRs(rsDf)
