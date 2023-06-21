@@ -50,7 +50,8 @@ Imports:
 Suggests: 
     BiocStyle,
     knitr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    ClassifyR
 Description: Statial is a suite of functions for identifying changes in cell 
     state. The functionality provided by Statial provides robust quantification 
     of cell type localisation which are invariant to changes in tissue 
