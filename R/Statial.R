@@ -1241,7 +1241,7 @@ visualiseImageRelationship <- function(data,
   data$fittedValues <- NA
   
   relationshipFormula <- paste0(
-    depedentMarker, "~", paste0(modelType, interactingCellType)
+    depedentMarker, "~", paste0(modelType, interactingCellType) 
   )
   modelData <- data[data$cellType == mainCellType, ]
   model <- lm(formula(relationshipFormula), modelData)
@@ -1316,13 +1316,13 @@ visualiseImageRelationship <- function(data,
     ggplot2::ylab("Fitted Values") +
     ggplot2::ggtitle("Predicted vs Real Values")
   
-  g4 <- ggplot2::autoplot(model) + ggplot2::theme_classic()
+  # g4 <- ggplot2::autoplot(model) + ggplot2::theme_classic()
   
   if (interactive == TRUE) {
     g1 <- plotly::ggplotly(g1)
     g2 <- plotly::ggplotly(g2)
     g3 <- plotly::ggplotly(g3)
   }
-  
-  list(g1, g2, g3, g4)
+  list(g1, g2, g3)
+  # list(g1, g2, g3, g4)
 }
