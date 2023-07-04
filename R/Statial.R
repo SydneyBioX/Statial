@@ -243,7 +243,7 @@ getAbundances <- function(singleCellData,
   singleCellDataK <- singleCellData %>%
     split(~imageID) %>%
     BiocParallel::bplapply(
-      lisaClust::inhomLocalK,
+      lisaClust:::inhomLocalK,
       Rs = Rs,
       BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
     ) %>%
@@ -436,7 +436,7 @@ randomForestContaminationCalculator <- function(singleCellData,
 
 
 
-
+### Section 1: LM Calculations ##############################################################
 
 
 #' First layer wrapper function to build linear models measuring state changes
@@ -881,7 +881,7 @@ fitStateModels <- function(x,
   outputs
 }
 
-
+### Section 2:Fast Version LM ##############################################################
 
 
 #' Wrapper function to quickly build ordinary linear models measuring state
@@ -1069,6 +1069,7 @@ calculateStateModelsFast <- function(singleCellData,
 
 
 
+### Section 3: Cross Validation ############################################################## 
 
 
 
@@ -1151,7 +1152,7 @@ imageModelsCVFormat <- function(imageModels,
   cvData
 }
 
-
+### Section 4:Visualise Image ##############################################################
 
 #' Visualise Cell-Cell Marker Relationships
 #'
@@ -1236,6 +1237,13 @@ visualiseImageRelationship <- function(data,
                                        plotModelFit = FALSE,
                                        method = "lm",
                                        modelType = "dist200_") {
+  if(!depedentMarker %in% colnames(data)) {
+    stop("The argument depedentMarker needs to exist in the data")
+  }
+  if(!imageID %in% data$imageID) {
+    stop("The argument imageID needs to exist in the data")
+  }
+  
   data <- data[data$imageID == imageID, ]
   data$OriginalMarker <- data[, depedentMarker, drop = TRUE]
   data$fittedValues <- NA
@@ -1317,7 +1325,7 @@ visualiseImageRelationship <- function(data,
     ggplot2::ggtitle("Predicted vs Real Values")
   
   # g4 <- ggplot2::autoplot(model) + ggplot2::theme_classic()
-  
+    
   if (interactive == TRUE) {
     g1 <- plotly::ggplotly(g1)
     g2 <- plotly::ggplotly(g2)
@@ -1326,3 +1334,5 @@ visualiseImageRelationship <- function(data,
   list(g1, g2, g3)
   # list(g1, g2, g3, g4)
 }
+
+
