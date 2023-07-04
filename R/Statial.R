@@ -1306,6 +1306,7 @@ visualiseImageRelationship <- function(data,
       )
     ) +
     ggplot2::geom_point() +
+    ggplot2::geom_smooth(method = lm) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
     ggplot2::ylab(depedentMarker)
@@ -1319,6 +1320,7 @@ visualiseImageRelationship <- function(data,
       y = "fittedValues"
     )) +
     ggplot2::geom_point() +
+    ggplot2::geom_smooth(method = lm) +
     ggplot2::theme_classic() +
     ggplot2::xlab("True Values") +
     ggplot2::ylab("Fitted Values") +
