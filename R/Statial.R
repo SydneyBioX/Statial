@@ -1,3 +1,31 @@
+#' @noRd
+#'
+#' @import tidyverse
+preProcessing <- function(SCE) {
+  intensitiesData <- data.frame(t(assay(SCE, "intensities")))
+  # spatialData <- data.frame(colData(SCE))
+  
+  # singleCellData <- cbind(spatialData[rownames(intensitiesData), ], intensitiesData)
+  intensitiesData <- intensitiesData %>%
+    mutate_all(~ ifelse(is.na(.), 0, .)) %>% #replace NAs with 0
+    mutate_if(is.factor, as.character)
+  intensitiesData <- intensitiesData[match(rownames(colData(SCE)), rownames(intensitiesData)), ]
+  if (any(is.na(intensitiesData))) {
+    stop("Number of cells in Intensities assay does not match number of cells in SCE")
+  }
+  intensitiesData <- DataFrame(intensitiesData)
+  colData(SCE) <- cbind(colData(SCE), intensitiesData)
+  
+  # Identify factor columns
+  factor_cols <- which(sapply(colData(SCE), is.factor))
+  
+  # Convert factor columns to characters in colData
+  colData(SCE)[, factor_cols] <- lapply(colData(SCE)[, factor_cols], as.character)
+  
+  return(SCE)
+}
+
+
 #' Calculate pairwise distance between cell types
 #'
 #' Calculates the euclidean distance from each cell to the nearest cell of each
@@ -129,6 +157,10 @@ getDistances <- function(singleCellData,
                          Rs = c(200),
                          whichCellTypes = NULL,
                          nCores = 1) {
+  singleCellDataClean <- singleCellData %>%
+    preProcessing()
+
+  singleCellData <- as.data.frame(colData(singleCellDataClean))
   
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
@@ -167,6 +199,19 @@ getDistances <- function(singleCellData,
     x = .
     ) %>%
     purrr::reduce(full_join)
+  
+  
+  metadata(singleCellDataClean) <- singleCellDataDistances
+  # # Identify overlapping column names
+  # overlap_cols <- intersect(names(singleCellDataDistances), colnames(colData(singleCellDataClean)))
+  # 
+  # # Remove overlapping columns from the new data frame
+  # singleCellDataDistances <- singleCellDataDistances[, !names(singleCellDataDistances) %in% overlap_cols]
+  # 
+  # # Append singleCellDataDistances to colData slot in SCE
+  # colData(singleCellDataClean) <- cbind(colData(singleCellDataClean), singleCellDataDistances)
+  # 
+  return(singleCellDataClean)
 }
 
 
@@ -337,20 +382,20 @@ getAbundances <- function(singleCellData,
 #'   ) %>%
 #'   mutate(across(where(is.factor), as.character))
 #'
-#' singleCellDataDistancesContam <- randomForestContaminationCalculator(
+#' singleCellDataDistancesContam <- calcContamination(
 #'   singleCellData,
 #'   markers = markersToUse
 #' )
 #'
 #' @export
-#' @rdname randomForestContaminationCalculator
+#' @rdname calcContamination
 #' @importFrom tibble rownames_to_column
 #' @importFrom dplyr mutate select bind_rows inner_join across
 #' @importFrom SummarizedExperiment colData assayNames
 #' @importFrom ranger ranger
 #' @importFrom tibble column_to_rownames rownames_to_column
 #' @importFrom stringr str_replace
-randomForestContaminationCalculator <- function(singleCellData,
+calcContamination <- function(singleCellData,
                                                 markers,
                                                 seed = 2022,
                                                 num.trees = 100,
