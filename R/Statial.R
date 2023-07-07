@@ -157,9 +157,16 @@ getDistances <- function(singleCellData,
                          Rs = c(200),
                          whichCellTypes = NULL,
                          nCores = 1) {
-  singleCellDataClean <- singleCellData %>%
-    preProcessing()
-
+  intensitiesData <- data.frame(t(assay(singleCellData, "intensities")))
+  markersToUse <- colnames(intensitiesData)
+  
+  if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
+    singleCellDataClean <- singleCellData %>%
+      preProcessing()
+  } else {
+    singleCellDataClean <- singleCellData
+  }
+  
   singleCellData <- as.data.frame(colData(singleCellDataClean))
   
   if (!is.null(whichCellTypes)) {
@@ -186,7 +193,7 @@ getDistances <- function(singleCellData,
       x %>%
         dplyr::mutate(
           dplyr::across(dplyr::contains("dist_"),
-          function(x) ifelse(x <= rmax, x, NA)
+                        function(x) ifelse(x <= rmax, x, NA)
           )
         ) %>%
         dplyr::rename_with(
@@ -200,9 +207,10 @@ getDistances <- function(singleCellData,
     ) %>%
     purrr::reduce(full_join)
   
-  
-  metadata(singleCellDataClean) <- singleCellDataDistances
+  metadata_name <- paste0("dist", Rs, "")
+  metadata(singleCellDataClean)[[metadata_name]] <- singleCellDataDistances
   # # Identify overlapping column names
+  # metadata(singleCellDataClean) <- append(metadata(singleCellDataClean), list(singleCellDataDistances))
   # overlap_cols <- intersect(names(singleCellDataDistances), colnames(colData(singleCellDataClean)))
   # 
   # # Remove overlapping columns from the new data frame
@@ -270,6 +278,10 @@ getAbundances <- function(singleCellData,
                           whichCellTypes = NULL,
                           nCores = 1) {
   
+  metadata_name <- paste0("dist", Rs, "")
+  
+  SCE <- singleCellData 
+  singleCellData <- metadata(SCE)[[metadata_name]]
   
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
@@ -342,6 +354,9 @@ getAbundances <- function(singleCellData,
     dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.na(x), 0, x))) %>%
     dplyr::right_join(singleCellData, by = c("imageID", "cellID")) %>%
     dplyr::relocate(imageID)
+  
+  metadata(SCE)[[metadata_name]] <- singleCellDataK
+  return(SCE)
 }
 
 
@@ -396,11 +411,11 @@ getAbundances <- function(singleCellData,
 #' @importFrom tibble column_to_rownames rownames_to_column
 #' @importFrom stringr str_replace
 calcContamination <- function(singleCellData,
-                                                markers,
-                                                seed = 2022,
-                                                num.trees = 100,
-                                                verbose = FALSE,
-                                                missingReplacement = 0) {
+                              markers,
+                              seed = 2022,
+                              num.trees = 100,
+                              verbose = FALSE,
+                              missingReplacement = 0) {
   if ("SingleCellExperiment" %in% class(singleCellData)) {
     singleCellDataNew <- data.frame(
       SummarizedExperiment::colData(singleCellData)
@@ -558,6 +573,7 @@ calcContamination <- function(singleCellData,
 #' @importFrom magrittr %>%
 getStateChanges <- function(singleCellData,
                             markers,
+                            Rs,
                             typeAll = c("dist"),
                             covariates = NULL,
                             method = "lm",
@@ -567,6 +583,12 @@ getStateChanges <- function(singleCellData,
                             verbose = FALSE,
                             timeout = 10,
                             nCores = 1) {
+  
+  metadata_name <- paste0("dist", Rs, "")
+  
+  SCE <- singleCellData 
+  singleCellData <- metadata(SCE)[[metadata_name]]
+  
   typeVector <- singleCellData %>%
     dplyr::select(contains(typeAll)) %>%
     colnames(.) %>%
@@ -1272,6 +1294,7 @@ imageModelsCVFormat <- function(imageModels,
 #' @importFrom plotly ggplotly
 #' @importFrom magrittr %>%
 visualiseImageRelationship <- function(data,
+                                       Rs,
                                        imageID,
                                        mainCellType,
                                        interactingCellType,
@@ -1282,6 +1305,12 @@ visualiseImageRelationship <- function(data,
                                        plotModelFit = FALSE,
                                        method = "lm",
                                        modelType = "dist200_") {
+  
+  metadata_name <- paste0("dist", Rs, "")
+  
+  SCE <- data 
+  data <- metadata(SCE)[[metadata_name]]
+  
   if(!depedentMarker %in% colnames(data)) {
     stop("The argument depedentMarker needs to exist in the data")
   }
@@ -1372,7 +1401,7 @@ visualiseImageRelationship <- function(data,
     ggplot2::ggtitle("Predicted vs Real Values")
   
   # g4 <- ggplot2::autoplot(model) + ggplot2::theme_classic()
-    
+  
   if (interactive == TRUE) {
     g1 <- plotly::ggplotly(g1)
     g2 <- plotly::ggplotly(g2)
