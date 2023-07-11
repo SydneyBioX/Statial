@@ -14,7 +14,7 @@ preProcessing <- function(SCE) {
     stop("Number of cells in Intensities assay does not match number of cells in SCE")
   }
   intensitiesData <- DataFrame(intensitiesData)
-  colData(SCE) <- cbind(colData(SCE), intensitiesData)
+  colData(SCE) <- cbind(colData(SCE), intensitiesData) 
   
   # Identify factor columns
   factor_cols <- which(sapply(colData(SCE), is.factor))
@@ -416,27 +416,29 @@ calcContamination <- function(singleCellData,
                               num.trees = 100,
                               verbose = FALSE,
                               missingReplacement = 0) {
-  if ("SingleCellExperiment" %in% class(singleCellData)) {
-    singleCellDataNew <- data.frame(
-      SummarizedExperiment::colData(singleCellData)
-    ) %>%
-      dplyr::mutate(
-        imageID = as.character(imageID), cellType = as.character(cellType)
-      )
-    
-    if ("intensities" %in% assayNames(singleCellData)) {
-      singleCellDataNew <- singleCellDataNew %>%
-        cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
-      if (is.null(markers)) {
-        markers <- rownames(
-          SummarizedExperiment::assay(singleCellData, "intensities")
-        )
-      }
-    }
-    
-    
-    singleCellData <- singleCellDataNew
-  }
+  # if ("SingleCellExperiment" %in% class(singleCellData)) {
+  #   singleCellDataNew <- data.frame(
+  #     SummarizedExperiment::colData(singleCellData)
+  #   ) %>%
+  #     dplyr::mutate(
+  #       imageID = as.character(imageID), cellType = as.character(cellType)
+  #     )
+  # 
+  #   if ("intensities" %in% assayNames(singleCellData)) {
+  #     singleCellDataNew <- singleCellDataNew %>%
+  #       cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
+  #     if (is.null(markers)) {
+  #       markers <- rownames(
+  #         SummarizedExperiment::assay(singleCellData, "intensities")
+  #       )
+  #     }
+  #   }
+  # 
+  # 
+  #   singleCellData <- singleCellDataNew
+  # }
+  SCE <- singleCellData
+  singleCellData <- as.data.frame(colData(SCE))
   
   rfData <- singleCellData %>%
     dplyr::select(cellType, markers) %>%
