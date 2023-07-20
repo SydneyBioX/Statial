@@ -69,11 +69,11 @@ markersToUse <- colnames(intensitiesData)
 
 singleCellData <- cbind(spatialData[rownames(intensitiesData), ], intensitiesData)
 singleCellData <- singleCellData %>%
-  mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>%
+  mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>% #replace NAs with 0
   mutate_if(is.factor, as.character)
 ```
 
-
+Measures distances between the two cell types mentioned?
 ```{r}
 singleCellDataDistances <- getDistances(singleCellData,
   nCores = 1,
@@ -82,7 +82,7 @@ singleCellDataDistances <- getDistances(singleCellData,
 )
 ```
 
-
+Generates some sort of number that encodes how many cells of each type are within the radius of a cell
 ```{r}
 singleCellDataDistancesCounts <- getAbundances(singleCellDataDistances,
   nCores = 1,
@@ -91,7 +91,7 @@ singleCellDataDistancesCounts <- getAbundances(singleCellDataDistances,
 )
 ```
 
-
+Looks at correlation (+whether significant) between dist200 and abundance200 with changes in marker expression
 ```{r, message=FALSE}
 imageModels <- getStateChanges(
   singleCellData = singleCellDataDistancesCounts,
@@ -102,16 +102,16 @@ imageModels <- getStateChanges(
 )
 ```
 
-
+Batch effect removal with ImageID
 ```{r}
 #TODO: boundary (singular) fit
 mixedModels <- getStateChanges(
   singleCellData = singleCellDataDistancesCounts,
   markers = markersToUse,
   typeAll = c("dist"),
-  method = "lm",
-  isMixed = TRUE,
-  randomIntercepts = c("imageID"),
+  method = "rlm",
+  # isMixed = TRUE,
+  #randomIntercepts = c("imageID"),
   cellTypesToModel = "MC2",
   nCores = 1
 )
@@ -123,12 +123,54 @@ mixedModels
 ```{r, eval=FALSE}
 #TODO: This is broken due to NAs.
 visualiseImageRelationship(
-  singleCellDataDistances, "36", "MC2", "SC7", "Podoplanin",
+  data = singleCellDataDistances, 
+  imageID = "8", 
+  mainCellType = "MC2", 
+  interactingCellType = "SC7", 
+  depedentMarker = "Podoplanin",
   interactive = FALSE,
   plotModelFit = FALSE,
   method = "lm",
   modelType = "dist200_"
 )[[1]]
+
+  # relationshipFormula <- paste0(
+  #   depedentMarker, "~", paste0(modelType, interactingCellType) 
+  # )
+# Podoplanin ~ dist200_SC7
+```
+
+```{r}
+modelData <- singleCellDataDistances[singleCellDataDistances$cellType == "MC2", ]
+modelData
+
+any(is.na(modelData$Podoplanin))
+any(is.na(modelData$dist200_SC7))
+
+model <- lm(formula(Podoplanin ~ dist200_SC7), modelData)
+
+
+```
+
+```{r}
+data = singleCellDataDistances
+imageID = "36"
+mainCellType = "MC2"
+interactingCellType = "SC7"
+depedentMarker = "Podoplanin"
+method = "lm"
+modelType = "dist200_"
+
+data <- data[data$imageID == 36, ]
+data$OriginalMarker <- data[, depedentMarker, drop = TRUE]
+data$fittedValues <- NA
+
+relationshipFormula <- paste0(
+  depedentMarker, "~", paste0(modelType, interactingCellType) 
+)
+modelData <- data[data$cellType == mainCellType, ]
+model <- lm(formula(Podoplanin ~ dist200_SC7), modelData)
+
 ```
 
 ```{r}
@@ -178,6 +220,11 @@ stateChangeProgressionCV <- ClassifyR::crossValidate(
 
 stateChangeProgressionCV %>%
   performancePlot()
+```
+
+```{r}
+
+
 ```
 
 

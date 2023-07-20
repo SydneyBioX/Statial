@@ -1,3 +1,31 @@
+#' @noRd
+#'
+#' @import tidyverse
+preProcessing <- function(SCE) {
+  intensitiesData <- data.frame(t(assay(SCE, "intensities")))
+  # spatialData <- data.frame(colData(SCE))
+  
+  # singleCellData <- cbind(spatialData[rownames(intensitiesData), ], intensitiesData)
+  intensitiesData <- intensitiesData %>%
+    mutate_all(~ ifelse(is.na(.), 0, .)) %>% #replace NAs with 0
+    mutate_if(is.factor, as.character)
+  intensitiesData <- intensitiesData[match(rownames(colData(SCE)), rownames(intensitiesData)), ]
+  if (any(is.na(intensitiesData))) {
+    stop("Number of cells in Intensities assay does not match number of cells in SCE")
+  }
+  intensitiesData <- DataFrame(intensitiesData)
+  colData(SCE) <- cbind(colData(SCE), intensitiesData) 
+  
+  # Identify factor columns
+  factor_cols <- which(sapply(colData(SCE), is.factor))
+  
+  # Convert factor columns to characters in colData
+  colData(SCE)[, factor_cols] <- lapply(colData(SCE)[, factor_cols], as.character)
+  
+  return(SCE)
+}
+
+
 #' Calculate pairwise distance between cell types
 #'
 #' Calculates the euclidean distance from each cell to the nearest cell of each
@@ -129,6 +157,17 @@ getDistances <- function(singleCellData,
                          Rs = c(200),
                          whichCellTypes = NULL,
                          nCores = 1) {
+  intensitiesData <- data.frame(t(assay(singleCellData, "intensities")))
+  markersToUse <- colnames(intensitiesData)
+  
+  if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
+    singleCellDataClean <- singleCellData %>%
+      preProcessing()
+  } else {
+    singleCellDataClean <- singleCellData
+  }
+  
+  singleCellData <- as.data.frame(colData(singleCellDataClean))
   
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
@@ -154,7 +193,7 @@ getDistances <- function(singleCellData,
       x %>%
         dplyr::mutate(
           dplyr::across(dplyr::contains("dist_"),
-          function(x) ifelse(x <= rmax, x, NA)
+                        function(x) ifelse(x <= rmax, x, NA)
           )
         ) %>%
         dplyr::rename_with(
@@ -167,6 +206,20 @@ getDistances <- function(singleCellData,
     x = .
     ) %>%
     purrr::reduce(full_join)
+  
+  metadata_name <- paste0("dist", Rs, "")
+  metadata(singleCellDataClean)[[metadata_name]] <- singleCellDataDistances
+  # # Identify overlapping column names
+  # metadata(singleCellDataClean) <- append(metadata(singleCellDataClean), list(singleCellDataDistances))
+  # overlap_cols <- intersect(names(singleCellDataDistances), colnames(colData(singleCellDataClean)))
+  # 
+  # # Remove overlapping columns from the new data frame
+  # singleCellDataDistances <- singleCellDataDistances[, !names(singleCellDataDistances) %in% overlap_cols]
+  # 
+  # # Append singleCellDataDistances to colData slot in SCE
+  # colData(singleCellDataClean) <- cbind(colData(singleCellDataClean), singleCellDataDistances)
+  # 
+  return(singleCellDataClean)
 }
 
 
@@ -225,6 +278,10 @@ getAbundances <- function(singleCellData,
                           whichCellTypes = NULL,
                           nCores = 1) {
   
+  metadata_name <- paste0("dist", Rs, "")
+  
+  SCE <- singleCellData 
+  singleCellData <- metadata(SCE)[[metadata_name]]
   
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
@@ -243,7 +300,7 @@ getAbundances <- function(singleCellData,
   singleCellDataK <- singleCellData %>%
     split(~imageID) %>%
     BiocParallel::bplapply(
-      lisaClust::inhomLocalK,
+      lisaClust:::inhomLocalK,
       Rs = Rs,
       BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
     ) %>%
@@ -297,6 +354,9 @@ getAbundances <- function(singleCellData,
     dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.na(x), 0, x))) %>%
     dplyr::right_join(singleCellData, by = c("imageID", "cellID")) %>%
     dplyr::relocate(imageID)
+  
+  metadata(SCE)[[metadata_name]] <- singleCellDataK
+  return(SCE)
 }
 
 
@@ -337,46 +397,49 @@ getAbundances <- function(singleCellData,
 #'   ) %>%
 #'   mutate(across(where(is.factor), as.character))
 #'
-#' singleCellDataDistancesContam <- randomForestContaminationCalculator(
+#' singleCellDataDistancesContam <- calcContamination(
 #'   singleCellData,
 #'   markers = markersToUse
 #' )
 #'
 #' @export
-#' @rdname randomForestContaminationCalculator
+#' @rdname calcContamination
 #' @importFrom tibble rownames_to_column
 #' @importFrom dplyr mutate select bind_rows inner_join across
 #' @importFrom SummarizedExperiment colData assayNames
 #' @importFrom ranger ranger
 #' @importFrom tibble column_to_rownames rownames_to_column
 #' @importFrom stringr str_replace
-randomForestContaminationCalculator <- function(singleCellData,
-                                                markers,
-                                                seed = 2022,
-                                                num.trees = 100,
-                                                verbose = FALSE,
-                                                missingReplacement = 0) {
-  if ("SingleCellExperiment" %in% class(singleCellData)) {
-    singleCellDataNew <- data.frame(
-      SummarizedExperiment::colData(singleCellData)
-    ) %>%
-      dplyr::mutate(
-        imageID = as.character(imageID), cellType = as.character(cellType)
-      )
-    
-    if ("intensities" %in% assayNames(singleCellData)) {
-      singleCellDataNew <- singleCellDataNew %>%
-        cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
-      if (is.null(markers)) {
-        markers <- rownames(
-          SummarizedExperiment::assay(singleCellData, "intensities")
-        )
-      }
-    }
-    
-    
-    singleCellData <- singleCellDataNew
-  }
+calcContamination <- function(singleCellData,
+                              Rs = c(200),
+                              markers,
+                              seed = 2022,
+                              num.trees = 100,
+                              verbose = FALSE,
+                              missingReplacement = 0) {
+  # if ("SingleCellExperiment" %in% class(singleCellData)) {
+  #   singleCellDataNew <- data.frame(
+  #     SummarizedExperiment::colData(singleCellData)
+  #   ) %>%
+  #     dplyr::mutate(
+  #       imageID = as.character(imageID), cellType = as.character(cellType)
+  #     )
+  # 
+  #   if ("intensities" %in% assayNames(singleCellData)) {
+  #     singleCellDataNew <- singleCellDataNew %>%
+  #       cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
+  #     if (is.null(markers)) {
+  #       markers <- rownames(
+  #         SummarizedExperiment::assay(singleCellData, "intensities")
+  #       )
+  #     }
+  #   }
+  # 
+  # 
+  #   singleCellData <- singleCellDataNew
+  # }
+  SCE <- singleCellData
+  singleCellData <- as.data.frame(colData(SCE))
   
   rfData <- singleCellData %>%
     dplyr::select(cellType, all_of(markers)) %>%
@@ -428,7 +491,20 @@ randomForestContaminationCalculator <- function(singleCellData,
   singleCellData2 <- singleCellData %>%
     dplyr::left_join(rfData, by = c("cellID"))
   
+<<<<<<< HEAD
   singleCellData2
+=======
+  metadata_name <- paste0("dist", Rs, "")
+  
+  distData <- metadata(SCE)[[metadata_name]]
+  
+  distData <- distData %>%
+    dplyr::left_join(singleCellData)
+
+  metadata(SCE)[[metadata_name]] <- distData
+  
+  return(SCE)
+>>>>>>> a50e156338da16faf67f6e58cc45060396af253b
 }
 
 
@@ -437,7 +513,7 @@ randomForestContaminationCalculator <- function(singleCellData,
 
 
 
-
+### Section 1: LM Calculations ##############################################################
 
 
 #' First layer wrapper function to build linear models measuring state changes
@@ -514,6 +590,7 @@ randomForestContaminationCalculator <- function(singleCellData,
 #' @importFrom magrittr %>%
 getStateChanges <- function(singleCellData,
                             markers,
+                            Rs,
                             typeAll = c("dist"),
                             covariates = NULL,
                             method = "lm",
@@ -523,6 +600,12 @@ getStateChanges <- function(singleCellData,
                             verbose = FALSE,
                             timeout = 10,
                             nCores = 1) {
+  
+  metadata_name <- paste0("dist", Rs, "")
+  
+  SCE <- singleCellData 
+  singleCellData <- metadata(SCE)[[metadata_name]]
+  
   typeVector <- singleCellData %>%
     dplyr::select(contains(typeAll)) %>%
     colnames(.) %>%
@@ -882,7 +965,7 @@ fitStateModels <- function(x,
   outputs
 }
 
-
+### Section 2:Fast Version LM ##############################################################
 
 
 #' Wrapper function to quickly build ordinary linear models measuring state
@@ -1070,6 +1153,7 @@ calculateStateModelsFast <- function(singleCellData,
 
 
 
+### Section 3: Cross Validation ############################################################## 
 
 
 
@@ -1137,6 +1221,8 @@ imageModelsCVFormat <- function(imageModels,
                                 values_from = "tValue",
                                 removeColsThresh = 0.2,
                                 missingReplacement = 0) {
+  imageModels 
+  
   cvData <- imageModels %>%
     dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.finite(x), x, NA))) %>%
     dplyr::mutate(
@@ -1152,7 +1238,7 @@ imageModelsCVFormat <- function(imageModels,
   cvData
 }
 
-
+### Section 4:Visualise Image ##############################################################
 
 #' Visualise Cell-Cell Marker Relationships
 #'
@@ -1227,6 +1313,7 @@ imageModelsCVFormat <- function(imageModels,
 #' @importFrom plotly ggplotly
 #' @importFrom magrittr %>%
 visualiseImageRelationship <- function(data,
+                                       Rs,
                                        imageID,
                                        mainCellType,
                                        interactingCellType,
@@ -1237,12 +1324,25 @@ visualiseImageRelationship <- function(data,
                                        plotModelFit = FALSE,
                                        method = "lm",
                                        modelType = "dist200_") {
+  
+  metadata_name <- paste0("dist", Rs, "")
+  
+  SCE <- data 
+  data <- metadata(SCE)[[metadata_name]]
+  
+  if(!depedentMarker %in% colnames(data)) {
+    stop("The argument depedentMarker needs to exist in the data")
+  }
+  if(!imageID %in% data$imageID) {
+    stop("The argument imageID needs to exist in the data")
+  }
+  
   data <- data[data$imageID == imageID, ]
   data$OriginalMarker <- data[, depedentMarker, drop = TRUE]
   data$fittedValues <- NA
   
   relationshipFormula <- paste0(
-    depedentMarker, "~", paste0(modelType, interactingCellType)
+    depedentMarker, "~", paste0(modelType, interactingCellType) 
   )
   modelData <- data[data$cellType == mainCellType, ]
   model <- lm(formula(relationshipFormula), modelData)
@@ -1299,6 +1399,7 @@ visualiseImageRelationship <- function(data,
       )
     ) +
     ggplot2::geom_point() +
+    ggplot2::geom_smooth(method = lm) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
     ggplot2::ylab(depedentMarker)
@@ -1312,18 +1413,21 @@ visualiseImageRelationship <- function(data,
       y = "fittedValues"
     )) +
     ggplot2::geom_point() +
+    ggplot2::geom_smooth(method = lm) +
     ggplot2::theme_classic() +
     ggplot2::xlab("True Values") +
     ggplot2::ylab("Fitted Values") +
     ggplot2::ggtitle("Predicted vs Real Values")
   
-  g4 <- ggplot2::autoplot(model) + ggplot2::theme_classic()
+  # g4 <- ggplot2::autoplot(model) + ggplot2::theme_classic()
   
   if (interactive == TRUE) {
     g1 <- plotly::ggplotly(g1)
     g2 <- plotly::ggplotly(g2)
     g3 <- plotly::ggplotly(g3)
   }
-  
-  list(g1, g2, g3, g4)
+  list(g1, g2, g3)
+  # list(g1, g2, g3, g4)
 }
+
+
