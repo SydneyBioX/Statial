@@ -1,0 +1,310 @@
+
+
+```{r}
+#TODO: Add these functionalities into getDistances
+data(headSCE)
+intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
+spatialData <- data.frame(colData(headSCE))
+markersToUse <- colnames(intensitiesData)
+
+# all(!markersToUse %in% colnames(colData(SCE)))
+# 
+# singleCellData <- cbind(spatialData[rownames(intensitiesData), ], intensitiesData)
+# singleCellData <- singleCellData %>%
+#   mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>% #replace NAs with 0
+#   mutate_if(is.factor, as.character)
+```
+
+
+```{r}
+# Rs = c(200)
+# 
+# singleCellDataDistances <- singleCellData %>%
+#     split(~imageID) %>%
+#     BiocParallel::bplapply(distanceCalculator,
+#                            maxRS = max(Rs)
+#     )
+
+```
+
+
+```{r}
+data(headSCE)
+SCE <- getDistances(headSCE, Rs = c(200), 
+                    # whichCellTypes = c("MC2", "SC7")
+                    )
+# tmp <- SCE@metadata[["dist200"]]
+
+# ttmp <- left_join(tmp, contams)
+
+# tmp <- SCE@metadata$dist200_
+SCE <- getDistances(SCE, Rs = c(100), 
+                    # whichCellTypes = c("MC2", "EC1")
+                    )
+SCE <- getAbundances(SCE, Rs = c(200), 
+                     # whichCellTypes = c("MC2", "SC7")
+                     )
+SCE <- calcContamination(SCE,
+                         Rs = c(200),
+                         markers = markersToUse)
+# tmp <- as.data.frame(colData(SCE))
+
+# visualiseImageRelationship(
+#   data = SCE, 
+#   Rs = c(200),
+#   imageID = "8", 
+#   mainCellType = "MC2", 
+#   interactingCellType = "SC7", 
+#   depedentMarker = "DNA2",
+#   interactive = FALSE,
+#   plotModelFit = FALSE,
+#   method = "rlm",
+#   modelType = "dist200_"
+# )
+
+imageModelsNew <- getStateChanges(
+  singleCellData = SCE,
+  markers = markersToUse,
+  Rs = c(200),
+  typeAll = c("dist200", "abundance200"),
+  covariates = c("rfMainCellProb"),
+  method = "lm",
+  # cellTypesToModel = "MC2",
+  nCores = 1)
+# imageModelsNewNoContam <- getStateChanges(
+#   singleCellData = SCE,
+#   markers = markersToUse,
+#   Rs = c(200),
+#   typeAll = c("dist200", "abundance200"),
+#   method = "lm",
+#   # cellTypesToModel = "MC2",
+#   nCores = 40)
+
+crossValidateInteractionsData <- imageModelsCVFormat(imageModelsNew, 
+                                                     values_from = "tValue",
+                                                     removeColsThresh = 0.2,
+                                                     missingReplacement = 0)
+
+
+crossValidateInteractionsDataModifiedd <- imageModelsNew %>%
+  filter(sampleSize >= 10) %>%
+  split(~ covariates + type) %>%
+  bplapply(function(x) imageModelsCVFormat(x,
+                                     values_from = "tValue",
+                                     removeColsThresh = 0.2,
+                                     missingReplacement = 0), BPPARAM = BiocParallel::MulticoreParam(workers = 1)) %>%
+  mapply(function(x, dataset) x %>% mutate(dataset = dataset),
+       x = .,
+       dataset = names(.),
+       SIMPLIFY = FALSE )
+
+
+# REMOVE ALL ROWS WITH FEWER THAN 2 COLUMNS
+crossValidateInteractionsData = crossValidateInteractionsData[unlist(lapply(crossValidateInteractionsData,
+                                                                     function(x) ncol(x) > 2))]
+
+
+#SPECIFY FEATURES - HERE IT IS NON PROGRESSIVE AND PROGRESSIVE. THESE ARE NOT FOUND IN HEADSCE.
+classificationDataKeep <- factor(x = c("NP", "NP", "NP", "P", "P"))
+
+#PREPROCESSING - TO BE ADDED INTO IMAGEMODELSCVFORMAT FUNCTION
+modellingData = crossValidateInteractionsData %>% 
+  lapply(function(x, imageSubset) x %>%
+           filter(imageID %in% imageSubset) %>% 
+           column_to_rownames("imageID") %>% 
+           dplyr::select(!contains(c("dataset", "type"))), 
+         imageSubset = names(classificationDataKeep))
+
+#RUN CLASSIFICATION
+interactionsResults =  seq(1, length(modellingData)) %>%
+  bplapply(function(x) 
+    {
+    print(x)
+    try({
+    interactionsResults = ClassifyR::crossValidate(measurements = modellingData[[x]],
+                                            outcome = classificationDataKeep,
+                                            nFeatures = 10,
+                                            selectionMethod = "t-test",
+                                            classifier = "XGB",
+                                            nRepeats = 50,
+                                            nCores = 1,
+                                            characteristicsLabel = names(modellingData)[[x]])
+    })
+    
+  }, BPPARAM = BiocParallel::MulticoreParam(workers = 1))
+
+
+names(interactionsResults) = names(modellingData)
+interactionsResults = interactionsResults[unlist(lapply(interactionsResults,class)) != "try-error"]
+
+#PLOT BOXPLOT OF ACCURACY
+interactionsResults %>%
+  lapply(function(x) ClassifyR::calcCVperformance(x, performanceType  = "Balanced Accuracy")@performance) %>% 
+  lapply(data.frame) %>% 
+  mapply(FUN = function(x, name) x %>% set_names(name), x = .,
+         name = names(interactionsResults), SIMPLIFY = FALSE) %>% 
+  bind_cols() %>% 
+  gather() %>% 
+  mutate(key = str_replace_all(key, "_", " ")) %>% 
+  mutate(key = str_replace_all(key, "\\.", " ")) %>% 
+  mutate(key = str_replace_all(key, "None", "Simple")) %>% 
+  mutate(key = str_replace_all(key, "count", "abundance")) %>% 
+  mutate(key = str_to_title(key)) %>% 
+  ggplot(aes(x = reorder(key, value, median), y = value)) + 
+  geom_boxplot() +
+  labs(y = "Balanced Accuracy", x = "Assay Name") +
+  geom_hline(yintercept = 0.5, lty = "dashed") +
+  theme(axis.text=element_text(size = 7)) +
+  coord_flip()  +
+  ggtitle("Head and Neck Data (XGB)")
+
+#PLOT INDIVIDUAL PATIENT HEATMAP
+interactionsResults %>% 
+  lapply(function(x) ClassifyR::calcCVperformance(x, performanceType  = "Sample Accuracy")) %>% 
+  lapply(function(x) data.frame(x@performance)) %>% 
+  mapply(FUN = function(x, name) x %>% set_names(name), x = .,
+         name = names(interactionsResults), SIMPLIFY = FALSE) %>% 
+  bind_cols() %>% 
+  heatmaply::heatmaply(show_dendrogram = c(FALSE, FALSE)) 
+
+
+#ROC PLOT
+interactionsResults %>% 
+  ROCplot() +
+  ggthemes::scale_colour_tableau() +
+  labs(colour = "Model")
+
+#Accessing Chosen Features (if Feature Selection was used)
+interactionsResults$rfMainCellProb.dist200_@chosenFeatures
+
+
+#SHAPLY PLOT
+dataX <- MatrixModels::model.Matrix(~ 0 + ., data = modellingData$rfMainCellProb.dist200_[, interactionsResults$rfMainCellProb.dist200_@rankedFeatures[[41]] ], sparse = TRUE)
+mod = interactionsResults$rfMainCellProb.dist200_@models[[41]]
+shp = shapviz(mod, X_pred = data.matrix(dataX[, mod$feature_names]), which_class =  2)
+
+sv_importance(shp, kind = "beeswarm", show_numbers = TRUE) +
+  ggtitle("Shapley Feature Importance Plot") 
+
+ggsave("shapleyPlot.png", dpi = 1000, width = 10, height = 8)
+
+```
+
+```{r}
+# tmpz <- SCE
+# markers <- markersToUse
+# seed = 2022
+# num.trees = 100
+# verbose = FALSE
+# missingReplacement = 0
+# 
+# if ("SingleCellExperiment" %in% class(tmpz)) {
+#   tmpzNew <- data.frame(
+#     SummarizedExperiment::colData(tmpz)
+#   ) %>%
+#     dplyr::mutate(
+#       imageID = as.character(imageID), cellType = as.character(cellType)
+#     )
+# 
+#   if ("intensities" %in% assayNames(tmpz)) {
+#     tmpzNew <- tmpzNew %>%
+#       cbind(t(SummarizedExperiment::assay(tmpz, "intensities")))
+#     if (is.null(markers)) {
+#       markers <- rownames(
+#         SummarizedExperiment::assay(tmpz, "intensities")
+#       )
+#     }
+#   }
+# 
+# 
+#   tmpz <- as.data.frame(colData(SCE))
+# }
+# 
+# any(is.na(tmp))
+
+```
+
+```{r}
+# 
+# tmp <- headSCE
+# markers <- markersToUse
+# seed = 2022
+# num.trees = 100
+# verbose = FALSE
+# missingReplacement = 0
+# 
+# if ("SingleCellExperiment" %in% class(tmp)) {
+#   tmpNew <- data.frame(
+#     SummarizedExperiment::colData(tmp)
+#   ) %>%
+#     dplyr::mutate(
+#       imageID = as.character(imageID), cellType = as.character(cellType)
+#     )
+# 
+#   if ("intensities" %in% assayNames(tmp)) {
+#     tmpNew <- tmpNew %>%
+#       cbind(t(SummarizedExperiment::assay(tmp, "intensities")))
+#     if (is.null(markers)) {
+#       markers <- rownames(
+#         SummarizedExperiment::assay(tmp, "intensities")
+#       )
+#     }
+#   }
+# 
+# 
+#   tmp <- as.data.frame(colData(SCE))
+# }
+# 
+# rfData <- tmp %>%
+#   dplyr::select(cellType, markers) %>%
+#   dplyr::mutate(dplyr::across(markers, function(x) ifelse(is.nan(x) | is.na(x), 0, x)))
+# 
+# set.seed(seed)
+# rfModel <- ranger::ranger(
+#   as.factor(cellType) ~ .,
+#   data = rfData,
+#   num.trees = num.trees,
+#   probability = TRUE
+# )
+# 
+# if (verbose == TRUE) {
+#   print(rfModel)
+# }
+# 
+# predictions <- predict(rfModel, rfData)$predictions
+# 
+# maxn <- function(n) function(x) order(x, decreasing = TRUE)[!is.na(x)][n]
+# 
+# rfData <- cbind(rfData, predictions) %>%
+#     dplyr::mutate(
+#       rfMaxCellProb = apply(
+#         .[colnames(predictions)],
+#         1,
+#         function(x) x[maxn(1)(x)]
+#       )
+#     ) %>%
+#     dplyr::mutate(
+#       rfSecondLargestCellProb = apply(
+#         .[colnames(predictions)],
+#         1,
+#         function(x) x[maxn(2)(x)]
+#       )
+#     ) %>%
+#     dplyr::mutate(
+#       rfMainCellProb = apply(
+#         .[c("cellType", colnames(predictions))],
+#         1,
+#         function(x) as.numeric(x[x["cellType"]])
+#       )
+#     ) %>%
+#     dplyr::select(-colnames(predictions)) %>%
+#     tibble::rownames_to_column("cellID") %>%
+#     dplyr::mutate(cellID = stringr::str_replace(cellID, "cellID", ""))
+#   
+#   tmpz <- tmp %>%
+#     dplyr::left_join(rfData)
+#   
+#   tmpz
+
+
+```
