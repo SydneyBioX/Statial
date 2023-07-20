@@ -411,6 +411,7 @@ getAbundances <- function(singleCellData,
 #' @importFrom tibble column_to_rownames rownames_to_column
 #' @importFrom stringr str_replace
 calcContamination <- function(singleCellData,
+                              Rs = c(200),
                               markers,
                               seed = 2022,
                               num.trees = 100,
@@ -489,7 +490,16 @@ calcContamination <- function(singleCellData,
   singleCellData <- singleCellData %>%
     dplyr::left_join(rfData)
   
-  singleCellData
+  metadata_name <- paste0("dist", Rs, "")
+  
+  distData <- metadata(SCE)[[metadata_name]]
+  
+  distData <- distData %>%
+    dplyr::left_join(singleCellData)
+
+  metadata(SCE)[[metadata_name]] <- distData
+  
+  return(SCE)
 }
 
 
@@ -1206,6 +1216,8 @@ imageModelsCVFormat <- function(imageModels,
                                 values_from = "tValue",
                                 removeColsThresh = 0.2,
                                 missingReplacement = 0) {
+  imageModels 
+  
   cvData <- imageModels %>%
     dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.finite(x), x, NA))) %>%
     dplyr::mutate(
