@@ -490,10 +490,7 @@ calcContamination <- function(singleCellData,
   
   singleCellData2 <- singleCellData %>%
     dplyr::left_join(rfData, by = c("cellID"))
-  
-<<<<<<< HEAD
-  singleCellData2
-=======
+
   metadata_name <- paste0("dist", Rs, "")
   
   distData <- metadata(SCE)[[metadata_name]]
@@ -504,7 +501,6 @@ calcContamination <- function(singleCellData,
   metadata(SCE)[[metadata_name]] <- distData
   
   return(SCE)
->>>>>>> a50e156338da16faf67f6e58cc45060396af253b
 }
 
 
