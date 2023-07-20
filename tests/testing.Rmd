@@ -86,7 +86,7 @@ crossValidateInteractionsData <- imageModelsCVFormat(imageModelsNew,
                                                      missingReplacement = 0)
 
 
-crossValidateInteractionsDataModifiedd <- imageModelsNew %>%
+crossValidateInteractionsData <- imageModelsNew %>%
   filter(sampleSize >= 10) %>%
   split(~ covariates + type) %>%
   bplapply(function(x) imageModelsCVFormat(x,
@@ -105,7 +105,7 @@ crossValidateInteractionsData = crossValidateInteractionsData[unlist(lapply(cros
 
 
 #SPECIFY FEATURES - HERE IT IS NON PROGRESSIVE AND PROGRESSIVE. THESE ARE NOT FOUND IN HEADSCE.
-classificationDataKeep <- factor(x = c("NP", "NP", "NP", "P", "P"))
+classificationDataKeep <- factor(x = c("NP", "NP", "NP", "P", "P")) %>% set_names(c("1", "5", "6", "7", "8"))
 
 #PREPROCESSING - TO BE ADDED INTO IMAGEMODELSCVFORMAT FUNCTION
 modellingData = crossValidateInteractionsData %>% 
