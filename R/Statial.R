@@ -157,8 +157,9 @@ getDistances <- function(singleCellData,
                          Rs = c(200),
                          whichCellTypes = NULL,
                          nCores = 1) {
-  intensitiesData <- data.frame(t(assay(singleCellData, "intensities")))
-  markersToUse <- colnames(intensitiesData)
+  BPPARAM <- .generateBPParam(cores = nCores)
+  
+  markersToUse <- rownames(intensitiesData)
   
   if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
     singleCellDataClean <- singleCellData %>%
@@ -185,7 +186,7 @@ getDistances <- function(singleCellData,
     split(~imageID) %>%
     BiocParallel::bplapply(distanceCalculator,
                            maxRS = max(Rs),
-                           BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
+                           BPPARAM = BPPARAM
     ) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.infinite(x), NA, x))) %>%
@@ -278,6 +279,8 @@ getAbundances <- function(singleCellData,
                           whichCellTypes = NULL,
                           nCores = 1) {
   
+  BPPARAM <- .generateBPParam(cores = nCores)
+  
   metadata_name <- paste0("dist", Rs, "")
   
   SCE <- singleCellData 
@@ -302,7 +305,7 @@ getAbundances <- function(singleCellData,
     BiocParallel::bplapply(
       lisaClust:::inhomLocalK,
       Rs = Rs,
-      BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
+      BPPARAM = BPPARAM
     ) %>%
     lapply(as.data.frame)
   
@@ -367,9 +370,6 @@ getAbundances <- function(singleCellData,
 #' @param singleCellData
 #'   A dataframe with a cellType column as well as marker intensity information
 #'   corresponding to each cell. The dataframe must contain a imageID column.
-#' @param markers
-#'   A string vector of marker intensities to use to classify cell types and
-#'   detect contamination
 #' @param seed
 #'   A numeric value to allow for replicable results from the random forest
 #'   classification algorithm
@@ -412,7 +412,6 @@ getAbundances <- function(singleCellData,
 #' @importFrom stringr str_replace
 calcContamination <- function(singleCellData,
                               Rs = c(200),
-                              markers,
                               seed = 2022,
                               num.trees = 100,
                               verbose = FALSE,
@@ -438,6 +437,9 @@ calcContamination <- function(singleCellData,
   # 
   #   singleCellData <- singleCellDataNew
   # }
+  
+  markers <- rownames(singleCellData)
+  
   SCE <- singleCellData
   singleCellData <- as.data.frame(colData(SCE))
   
@@ -521,7 +523,6 @@ calcContamination <- function(singleCellData,
 #'   A dataframe with a imageID, cellType, and marker intensity column along
 #'   with covariates (e.g. distance or abundance of the nearest cell type) to
 #'   model cell state changes
-#' @param markers A string list of markers that proxy a cell's state
 #' @param typeAll
 #'   A prefix that appears on the column names of all cell state modelling
 #'   covariates. The default value is "dist"
@@ -584,7 +585,6 @@ calcContamination <- function(singleCellData,
 #' @importFrom tidyr gather
 #' @importFrom magrittr %>%
 getStateChanges <- function(singleCellData,
-                            markers,
                             Rs,
                             typeAll = c("dist"),
                             covariates = NULL,
@@ -595,6 +595,8 @@ getStateChanges <- function(singleCellData,
                             verbose = FALSE,
                             timeout = 10,
                             nCores = 1) {
+  
+  markers = rownames(singleCellData)
   
   metadata_name <- paste0("dist", Rs, "")
   
@@ -655,6 +657,8 @@ calculateStateModels <- function(singleCellData,
                                  verbose = TRUE,
                                  timeout = 10,
                                  nCores = 1) {
+  BPPARAM <- .generateBPParam(cores = nCores)
+  
   if (isMixed == TRUE) {
     splitData <- split(singleCellData, ~cellType)
   } else {
@@ -671,7 +675,7 @@ calculateStateModels <- function(singleCellData,
                            randomIntercepts = randomIntercepts,
                            verbose = verbose,
                            timeout = timeout,
-                           BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
+                           BPPARAM = BPPARAM
     ) %>%
     bind_rows()
   
@@ -679,7 +683,7 @@ calculateStateModels <- function(singleCellData,
   CellInteractionModels <- CellInteractionModels %>%
     dplyr::arrange(pValue) %>%
     mutate(type = type) %>%
-    mutate(covariates = covariates) %>%
+    mutate(covariates = paste(covariates, collapse = " + ")) %>%
     mutate(covariates = ifelse(is.null(covariates), "None", covariates))
   
   relativeExpressionData <- singleCellData %>%
@@ -1030,6 +1034,9 @@ getStateChangesFast <- function(singleCellData,
                                 removeColsThresh = 0.1,
                                 cellTypesToModel = NULL,
                                 nCores = 1) {
+  
+  BPPARAM <- .generateBPParam(cores = nCores)
+  
   if (!is.null(cellTypesToModel)) {
     singleCellData <- singleCellData %>%
       dplyr::filter(cellType %in% cellTypesToModel)
@@ -1042,7 +1049,7 @@ getStateChangesFast <- function(singleCellData,
     markers = markers,
     covariates = covariates,
     removeColsThresh = removeColsThresh,
-    BPPARAM = BiocParallel::MulticoreParam(workers = nCores)
+    BPPARAM = BPPARAM
   )
   
   imageModels <- imageModels[unlist(lapply(
@@ -1216,7 +1223,6 @@ imageModelsCVFormat <- function(imageModels,
                                 values_from = "tValue",
                                 removeColsThresh = 0.2,
                                 missingReplacement = 0) {
-  imageModels 
   
   cvData <- imageModels %>%
     dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.finite(x), x, NA))) %>%
@@ -1231,6 +1237,93 @@ imageModelsCVFormat <- function(imageModels,
   cvData[is.na(cvData)] <- missingReplacement
   
   cvData
+}
+
+#' Convert Image Model Output to Cross-Validation Format
+#'
+#' Takes the output from the getStateChanges function for image based state
+#' models and converts it in a convenient format for cross validation
+#'
+#' @param imageModels
+#'   A dataframe with the output from the function getStateChanges or
+#'   getStateChangesFast with the argument isMixed = FALSE
+#' @param classificationData
+#'   A level of factors with the classification conditions to be predicted 
+#'   and the imageID as names.
+#' @param values_from
+#'   Column to use from imageModels for cross validation. The default is
+#'   "tValue" but "beta" can be choosen as well
+#' @param removeColsThresh
+#'   Threshold of missingness in which a relationship will not be included as
+#'   column in the cross validation ready output
+#' @param missingReplacement Numeric value to replace missing values
+#'
+#' @examples
+#' library(dplyr)
+#' data("headSCE")
+#' intensitiesData <- data.frame(t(
+#'   SummarizedExperiment::assay(headSCE, "intensities")
+#' ))
+#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
+#' markersToUse <- colnames(intensitiesData)
+#' singleCellData <- cbind(
+#'   spatialData[rownames(intensitiesData), ], intensitiesData
+#' )
+#' singleCellData <- singleCellData %>%
+#'   mutate(
+#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+#'   ) %>%
+#'   mutate(across(where(is.factor), as.character))
+#'
+#' singleCellDataDistances <- getDistances(singleCellData,
+#'   nCores = 1,
+#'   Rs = c(200),
+#'   whichCellTypes = c("MC2", "SC7")
+#' )
+#'
+#' imageModelsFast <- getStateChangesFast(
+#'   singleCellData = singleCellDataDistances,
+#'   markers = markersToUse,
+#'   type = c("dist200"),
+#'   nCores = 1
+#' )
+#' crossValidationData <- imageModelsCVFormat(imageModelsFast,
+#'   values_from = "tValue",
+#'   removeColsThresh = 0.2,
+#'   missingReplacement = 0
+#' )
+#' @export
+#' @rdname imageModelsCVFormat
+#' @importFrom dplyr bind_rows across mutate rename select
+#' @importFrom stringr str_detect str_replace str_split
+#' @importFrom tidyr pivot_wider
+#' @importFrom magrittr %>%
+listImageModelsCVFormat <- function(imageModels,
+                                classificationData,
+                                values_from = "tValue",
+                                removeColsThresh = 0.2,
+                                missingReplacement = 0) {
+  
+  crossValidateInteractionsData <- imageModels %>%
+    filter(sampleSize >= 10) %>%
+    split(~ covariates + type) %>% bplapply(function(x) imageModelsCVFormat(x,
+                                                                            values_from = values_from,
+                                                                            removeColsThresh = removeColsThresh,
+                                                                            missingReplacement = missingReplacement)) %>%
+    mapply(function(x, dataset) x %>% mutate(dataset = dataset),
+           x = .,
+           dataset = names(.),
+           SIMPLIFY = FALSE )
+  crossValidateInteractionsData <- crossValidateInteractionsData[unlist(lapply(crossValidateInteractionsData,
+                                                                              function(x) ncol(x) > 2))]
+  modellingData <- crossValidateInteractionsData %>% 
+    lapply(function(x, imageSubset) x %>%
+             filter(imageID %in% imageSubset) %>% 
+             column_to_rownames("imageID") %>% 
+             dplyr::select(!contains(c("dataset", "type"))), 
+           imageSubset = names(classificationDataKeep))
+  
+  return(modellingData)
 }
 
 ### Section 4:Visualise Image ##############################################################
