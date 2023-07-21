@@ -2,7 +2,7 @@
 % Please edit documentation in R/rsCurve.R
 \name{rsCurve}
 \alias{rsCurve}
-\title{Evaluation of Konditional over a range of radii.}
+\title{Evaluation of Kontextual over a range of radii.}
 \usage{
 rsCurve(
   cells,
@@ -27,24 +27,24 @@ rsCurve(
 
 \item{parent}{The parent population of the from cell type (must include from cell type).}
 
-\item{rs}{A vector of radii to evaluate konditional over.}
+\item{rs}{A vector of radii to evaluate kontextual over.}
 
 \item{inhom}{A logical value indicating whether to perform an inhomogeneous L function.}
 
 \item{edge}{A logical value indicating whether to perform edge correction.}
 
 \item{se}{A logical value to indicate if the standard deviation of
-konditional should be calculated to construct error bars.}
+kontextual should be calculated to construct error bars.}
 
-\item{nSim}{Number of randomisations to perform using \code{\link[Statial]{relabelKonditional}},
+\item{nSim}{Number of randomisations to perform using \code{\link[Statial]{relabelKontextual}},
 which will be used to calculated the SE.}
 
 \item{cores}{Number of cores for parallel processing.}
 
-\item{...}{Any arguments passed into \code{\link[Statial]{Konditional}}.}
+\item{...}{Any arguments passed into \code{\link[Statial]{Kontextual}}.}
 }
 \value{
-A data frame of original L values and Konditional values evaluated
+A data frame of original L values and Kontextual values evaluated
 over a range of radii.
 }
 \description{

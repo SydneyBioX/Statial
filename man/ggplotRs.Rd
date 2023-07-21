@@ -2,7 +2,7 @@
 % Please edit documentation in R/rsCurve.R
 \name{ggplotRs}
 \alias{ggplotRs}
-\title{Plotting the original and konditional L values over a range of radii.}
+\title{Plotting the original and kontextual L values over a range of radii.}
 \usage{
 ggplotRs(rsDf)
 }
@@ -10,7 +10,7 @@ ggplotRs(rsDf)
 \item{rsDf}{A data frame from \code{\link[Statial]{rsCurve}}.}
 }
 \value{
-A ggplotly object showing the original and konditional L function
+A ggplotly object showing the original and kontextual L function
  values over a range of radii
 }
 \description{

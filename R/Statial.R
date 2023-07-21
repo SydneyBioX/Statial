@@ -444,7 +444,7 @@ calcContamination <- function(singleCellData,
   singleCellData <- as.data.frame(colData(SCE))
   
   rfData <- singleCellData %>%
-    dplyr::select(cellType, markers) %>%
+    dplyr::select(cellType, all_of(markers)) %>%
     dplyr::mutate(dplyr::across(markers, function(x) ifelse(is.nan(x) | is.na(x), 0, x)))
   
   set.seed(seed)
@@ -485,13 +485,14 @@ calcContamination <- function(singleCellData,
         function(x) as.numeric(x[x["cellType"]])
       )
     ) %>%
-    dplyr::select(-colnames(predictions)) %>%
+    #dplyr::select(-colnames(predictions)) %>%
     tibble::rownames_to_column("cellID") %>%
-    dplyr::mutate(cellID = stringr::str_replace(cellID, "cellID", ""))
+    dplyr::mutate(cellID = stringr::str_replace(cellID, "cellID", "")) %>%
+    select(-any_of(markers))
   
-  singleCellData <- singleCellData %>%
-    dplyr::left_join(rfData)
-  
+  singleCellData2 <- singleCellData %>%
+    dplyr::left_join(rfData, by = c("cellID"))
+
   metadata_name <- paste0("dist", Rs, "")
   
   distData <- metadata(SCE)[[metadata_name]]
