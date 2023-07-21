@@ -7,6 +7,8 @@ intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
 spatialData <- data.frame(colData(headSCE))
 markersToUse <- colnames(intensitiesData)
 
+rownames(SCE)
+
 # all(!markersToUse %in% colnames(colData(SCE)))
 # 
 # singleCellData <- cbind(spatialData[rownames(intensitiesData), ], intensitiesData)
@@ -30,8 +32,9 @@ markersToUse <- colnames(intensitiesData)
 
 ```{r}
 data(headSCE)
+
 SCE <- getDistances(headSCE, Rs = c(200), 
-                    # whichCellTypes = c("MC2", "SC7")
+                    whichCellTypes = c("MC2", "SC7")
                     )
 # tmp <- SCE@metadata[["dist200"]]
 
@@ -45,31 +48,39 @@ SCE <- getAbundances(SCE, Rs = c(200),
                      # whichCellTypes = c("MC2", "SC7")
                      )
 SCE <- calcContamination(SCE,
-                         Rs = c(200),
-                         markers = markersToUse)
+                         Rs = c(200))
 # tmp <- as.data.frame(colData(SCE))
 
-# visualiseImageRelationship(
-#   data = SCE, 
-#   Rs = c(200),
-#   imageID = "8", 
-#   mainCellType = "MC2", 
-#   interactingCellType = "SC7", 
-#   depedentMarker = "DNA2",
-#   interactive = FALSE,
-#   plotModelFit = FALSE,
-#   method = "rlm",
-#   modelType = "dist200_"
-# )
-
-imageModelsNew <- getStateChanges(
-  singleCellData = SCE,
-  markers = markersToUse,
+visualiseImageRelationship(
+  data = SCE,
   Rs = c(200),
-  typeAll = c("dist200", "abundance200"),
+  imageID = "8",
+  mainCellType = "MC2",
+  interactingCellType = "SC7",
+  depedentMarker = "DNA2",
+  interactive = FALSE,
+  plotModelFit = FALSE,
+  method = "rlm",
+  modelType = "dist200_"
+)
+imageModels <- getStateChanges(
+  singleCellData = SCE,
+  Rs = c(200),
+  typeAll = c("dist200"),
   covariates = c("rfMainCellProb"),
   method = "lm",
-  # cellTypesToModel = "MC2",
+  isMixed = TRUE,
+  cellTypesToModel = "MC2",
+  nCores = 1)
+
+imageModelsTest <- getStateChanges(
+  singleCellData = SCE,
+  Rs = c(200),
+  typeAll = c("dist200"),
+  covariates = c("rfMainCellProb", "rfSecondLargestCellProb"),
+  method = "lm",
+  isMixed = TRUE,
+  cellTypesToModel = "MC2",
   nCores = 1)
 # imageModelsNewNoContam <- getStateChanges(
 #   singleCellData = SCE,
@@ -80,40 +91,14 @@ imageModelsNew <- getStateChanges(
 #   # cellTypesToModel = "MC2",
 #   nCores = 40)
 
-crossValidateInteractionsData <- imageModelsCVFormat(imageModelsNew, 
-                                                     values_from = "tValue",
-                                                     removeColsThresh = 0.2,
-                                                     missingReplacement = 0)
-
-
-crossValidateInteractionsData <- imageModelsNew %>%
-  filter(sampleSize >= 10) %>%
-  split(~ covariates + type) %>%
-  bplapply(function(x) imageModelsCVFormat(x,
-                                     values_from = "tValue",
-                                     removeColsThresh = 0.2,
-                                     missingReplacement = 0), BPPARAM = BiocParallel::MulticoreParam(workers = 1)) %>%
-  mapply(function(x, dataset) x %>% mutate(dataset = dataset),
-       x = .,
-       dataset = names(.),
-       SIMPLIFY = FALSE )
-
-
-# REMOVE ALL ROWS WITH FEWER THAN 2 COLUMNS
-crossValidateInteractionsData = crossValidateInteractionsData[unlist(lapply(crossValidateInteractionsData,
-                                                                     function(x) ncol(x) > 2))]
-
-
 #SPECIFY FEATURES - HERE IT IS NON PROGRESSIVE AND PROGRESSIVE. THESE ARE NOT FOUND IN HEADSCE.
 classificationDataKeep <- factor(x = c("NP", "NP", "NP", "P", "P")) %>% set_names(c("1", "5", "6", "7", "8"))
 
-#PREPROCESSING - TO BE ADDED INTO IMAGEMODELSCVFORMAT FUNCTION
-modellingData = crossValidateInteractionsData %>% 
-  lapply(function(x, imageSubset) x %>%
-           filter(imageID %in% imageSubset) %>% 
-           column_to_rownames("imageID") %>% 
-           dplyr::select(!contains(c("dataset", "type"))), 
-         imageSubset = names(classificationDataKeep))
+
+
+modellingData <- listImageModelsCVFormat(imageModelsNew, classificationDataKeep, values_from = "tValue",
+                                     removeColsThresh = 0.2,
+                                     missingReplacement = 0)
 
 #RUN CLASSIFICATION
 interactionsResults =  seq(1, length(modellingData)) %>%
