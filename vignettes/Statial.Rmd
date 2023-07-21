@@ -57,9 +57,9 @@ There are over 37 trillion cells in the human body, each taking up different for
 
 # Evaluating cell localisation 
 
-`Konditional` is a method to evaluate the localisation relationship between two cell types in an image. `Konditional` builds on the L-function by contextualising the relationship between two cell types in reference to the typical spatial behaviour of a  $3^{rd}$ cell type/population. By taking this approach, `Konditional` is invariant to changes in the window of the image as well as tissue structures which may be present. 
+`Kontextual` is a method to evaluate the localisation relationship between two cell types in an image. `Kontextual` builds on the L-function by contextualising the relationship between two cell types in reference to the typical spatial behaviour of a  $3^{rd}$ cell type/population. By taking this approach, `Kontextual` is invariant to changes in the window of the image as well as tissue structures which may be present. 
 
-The definitions of cell types and cell states are somewhat ambiguous, cell types imply well defined groups of cells that serve different roles from one another, on the other hand cell states imply that cells are a dynamic entity which cannot be discretised, and thus exist in a continuum. For the purposes of using `Konditional` we treat cell states as identified clusters of cells, where larger clusters represent a "parent" cell population, and finer sub-clusters representing a "child" cell population. For example a CD4 T cell may be considered a child to a larger parent population of Immune cells. `Konditional` thus aims to see how a child population of cells deviate from the spatial behaviour of their parent population, and how that influences the localisation between the child cell state and another cell state.
+The definitions of cell types and cell states are somewhat ambiguous, cell types imply well defined groups of cells that serve different roles from one another, on the other hand cell states imply that cells are a dynamic entity which cannot be discretised, and thus exist in a continuum. For the purposes of using `Kontextual` we treat cell states as identified clusters of cells, where larger clusters represent a "parent" cell population, and finer sub-clusters representing a "child" cell population. For example a CD4 T cell may be considered a child to a larger parent population of Immune cells. `Kontextual` thus aims to see how a child population of cells deviate from the spatial behaviour of their parent population, and how that influences the localisation between the child cell state and another cell state.
 
 # Loading example data
 
@@ -89,15 +89,15 @@ all <- c(tumour, tissue, immune, "Undefined")
 ```
 
 
-# Konditional
+# Kontextual
 
-`Konditional` accepts a `SingleCellExperiment` object, or a single image, or list of images from a `SingleCellExperiment` object, this gets passed into the `cells` argument. The two cell types which will be evaluated are specified in the `to` and `from` arguments. A parent population must also be specified in the `parent` argument, note the parent cell population must include the `to` cell type.  The argument `r` will specify the radius which the cell relationship will be evaluated on. `Konditional` supports parallel processing, the number of cores can be specified using the `cores` argument. `Konditional` can take a single value or multiple values for each argument and will test all combinations of the arguments specified. 
+`Kontextual` accepts a `SingleCellExperiment` object, or a single image, or list of images from a `SingleCellExperiment` object, this gets passed into the `cells` argument. The two cell types which will be evaluated are specified in the `to` and `from` arguments. A parent population must also be specified in the `parent` argument, note the parent cell population must include the `to` cell type.  The argument `r` will specify the radius which the cell relationship will be evaluated on. `Kontextual` supports parallel processing, the number of cores can be specified using the `cores` argument. `Kontextual` can take a single value or multiple values for each argument and will test all combinations of the arguments specified. 
 
 
-Here we test the relationship between CD4 T cells (`TC_CD4`) and one type of Tumour cell (`SC1`) with all immune cells being our parent population. The output is a data frame with the `original` L-function values and `konditional` values as well as the values for the arguments specified. Where a negative `original` or `konditional` value represents dispersion between `TC_CD4` and `SC1` and a positive value indicates localisation. 
+Here we test the relationship between CD4 T cells (`TC_CD4`) and one type of Tumour cell (`SC1`) with all immune cells being our parent population. The output is a data frame with the `original` L-function values and `kontextual` values as well as the values for the arguments specified. Where a negative `original` or `kontextual` value represents dispersion between `TC_CD4` and `SC1` and a positive value indicates localisation. 
 
 ```{r}
-CD4_Konditional <- Konditional(
+CD4_Kontextual <- Kontextual(
   cells = headSCE,
   r = 50,
   from = "TC_CD4",
@@ -106,14 +106,14 @@ CD4_Konditional <- Konditional(
   cores = 1
 )
 
-head(CD4_Konditional)
+head(CD4_Kontextual)
 ```
 
-The `original` and `konditional` values can be compared in a scatter plot to identify relationships which have been identified differently between the functions. The dashed red line represents the expected pattern of the data, i.e. where there exists no relationship between the two cell types. The top left quadrant therefore represents values where `Konditional` has identified localisation between `CD4` and `SC1` and the original L-function has identified dispersion, the opposite is true for the bottom right quadrant.
+The `original` and `kontextual` values can be compared in a scatter plot to identify relationships which have been identified differently between the functions. The dashed red line represents the expected pattern of the data, i.e. where there exists no relationship between the two cell types. The top left quadrant therefore represents values where `Kontextual` has identified localisation between `CD4` and `SC1` and the original L-function has identified dispersion, the opposite is true for the bottom right quadrant.
 
 ```{r fig.wide = TRUE}
 
-ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) +
+ggplot(CD4_Kontextual, aes(x = original, y = kontextual, col = imageID)) +
   geom_point(size = 2) +
   geom_hline(yintercept = 0, col = "red", linetype = "dashed") +
   geom_vline(xintercept = 0, col = "red", linetype = "dashed") +
@@ -125,7 +125,7 @@ ggplot(CD4_Konditional, aes(x = original, y = konditional, col = imageID)) +
   )
 ```
 
-Alternatively all pairwise cell relationships and their corresponding parent in the dataset can be tested. A data frame with all pairwise combinations can be creating using the `parentCombinations` function. This function takes in a vector of all the cells, as well as all the parent vectors set up earlier. As shown below the output is a data frame specifying the `to`, `from`, and `parent` arguments for `Konditional`.
+Alternatively all pairwise cell relationships and their corresponding parent in the dataset can be tested. A data frame with all pairwise combinations can be creating using the `parentCombinations` function. This function takes in a vector of all the cells, as well as all the parent vectors set up earlier. As shown below the output is a data frame specifying the `to`, `from`, and `parent` arguments for `Kontextual`.
 
 ```{r}
 # Get all relationships between cell types and their parents
@@ -144,7 +144,7 @@ head(parentDf)
 ```
 
 
-Rather than specifying `to`, `from`, and `parent` in Konditional, the output from `parentCombinations` can be inputed into `Konditional` using the `parentDf` argument. Here we will test the first 20 pairwise cell relationships in `parentCombinations` on the first image of the dataset.
+Rather than specifying `to`, `from`, and `parent` in Kontextual, the output from `parentCombinations` can be inputed into `Kontextual` using the `parentDf` argument. Here we will test the first 20 pairwise cell relationships in `parentCombinations` on the first image of the dataset.
 ```{r}
 # Selecting Image 1 as an example
 image_1 <- headSCE |>
@@ -153,14 +153,14 @@ image_1 <- headSCE |>
   filter(imageID == "1")
 
 
-image1_Konditional <- Konditional(
+image1_Kontextual <- Kontextual(
   cells = image_1,
   parentDf = parentDf[1:20, ],
   r = 50,
   cores = 1
 )
 
-head(image1_Konditional)
+head(image1_Kontextual)
 ```
 
 
@@ -181,7 +181,7 @@ kerenImage |>
 ```
 
 
-The `rsCurve` function plots the L-function value and Konditional values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Konditional is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii.
+The `rsCurve` function plots the L-function value and Kontextual values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Kontextual is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii.
 
 ```{r}
 rsDf <- rsCurve(

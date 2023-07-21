@@ -1,9 +1,9 @@
 
-#' Cell permutation for Konditional
+#' Cell permutation for Kontextual
 #' 
 #' @description 
 #' Function which randomises specified cells in an image and calculates
-#' the `Konditional` value. This can be used to estimate the null distribution, 
+#' the `Kontextual` value. This can be used to estimate the null distribution, 
 #' of the parent cell population for significance testing.
 #'
 #' @param cells A single image data frame from a SingleCellExperiment object
@@ -13,7 +13,7 @@
 #' @param to The second cell type to be evaluated in the pairwise relationship.
 #' @param parent The parent population of the from cell type (must include from cell type).
 #' @param returnImages A logical value to indicate whether the function should
-#' return the randomised images along with the Konditional values.
+#' return the randomised images along with the Kontextual values.
 #' @param inhom A logical value indicating whether to account for inhomogeneity.
 #' @param edge A logical value indicating whether to perform edge correction.
 #' @param cores Number of cores for parallel processing.
@@ -23,15 +23,15 @@
 #'     "cellType".
 #' @param imageID The name of the image ID field in the data. Defualts to
 #'     "imageID".
-#' @param ... Any arguments passed into \code{\link[Statial]{Konditional}}
-#' @return A data frame containing Konditional value for each randomised image.
-#' If `returnImages = TRUE` function will return a list with Konditional values
+#' @param ... Any arguments passed into \code{\link[Statial]{Kontextual}}
+#' @return A data frame containing Kontextual value for each randomised image.
+#' If `returnImages = TRUE` function will return a list with Kontextual values
 #' and the randomised images.
 #'
 #' @examples
 #' data("kerenImage")
 #'
-#' relabelResult <- relabelKonditional(
+#' relabelResult <- relabelKontextual(
 #'   cells = kerenImage,
 #'   nSim = 5,
 #'   r = 250,
@@ -42,12 +42,12 @@
 #' )
 #'
 #' @export
-#' @rdname relabelKonditional
+#' @rdname relabelKontextual
 #' @import dplyr
 #' @import BiocParallel
 #' @import tidyverse
 
-relabelKonditional <- function(cells,
+relabelKontextual <- function(cells,
                                nSim = 1,
                                r,
                                from,
@@ -107,7 +107,7 @@ relabelKonditional <- function(cells,
   )
 
   # Calculated the child and parent values for the relabeled images
-  relabeledDf <- Konditional(
+  relabeledDf <- Kontextual(
     cells = relabeled,
     r = r,
     parentDf = parentDf,
@@ -118,7 +118,7 @@ relabelKonditional <- function(cells,
   )
 
   relabeledDf <- relabeledDf |>
-    select("imageID", "original", "konditional", "r") |>
+    select("imageID", "original", "kontextual", "r") |>
     mutate(type = ifelse(imageID == 1, "original", "randomised"))
 
   if (returnImages) {
@@ -151,7 +151,7 @@ relabelKonditional <- function(cells,
 #' plot(relabeledImage)
 #'
 #' @export
-#' @rdname relabelKonditional
+#' @rdname relabelKontextual
 #' @import dplyr
 #'
 relabel <- function(image, labels = NULL) {

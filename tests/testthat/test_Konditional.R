@@ -4,7 +4,7 @@ test_that("Expecting an error when parentDf or to, from, parent is NULL", {
   data("headSCE")
 
   testthat::expect_error(
-    Konditional(
+    Kontextual(
       cells = headSCE,
       r = 50,
       parentDf = NULL,
@@ -16,13 +16,13 @@ test_that("Expecting an error when parentDf or to, from, parent is NULL", {
 })
 
 
-# test_that("Konditional values from headSCE are the same as the saved ones", {
+# test_that("Kontextual values from headSCE are the same as the saved ones", {
 #   data("headSCE")
 # 
-#   expected_data <- readRDS("CD4_Konditional.rds")
+#   expected_data <- readRDS("CD4_Kontextual.rds")
 # 
-#   CD4_Konditional <-
-#     Konditional(
+#   CD4_Kontextual <-
+#     Kontextual(
 #       cells = headSCE,
 #       r = 50,
 #       from = "TC_CD4",
@@ -38,7 +38,7 @@ test_that("Expecting an error when parentDf or to, from, parent is NULL", {
 #     )
 # 
 #   testthat::expect_equal(
-#     CD4_Konditional,
+#     CD4_Kontextual,
 #     expected_data
 #   )
 # })
@@ -52,7 +52,7 @@ test_that("Expecting an error when dataset contains wrong column names", {
     rename("imageName" = "imageID")
 
   testthat::expect_error(
-    suppressWarnings(Konditional(
+    suppressWarnings(Kontextual(
       cells = renamedSCE,
       r = 50,
       from = "TC_CD4",
@@ -67,7 +67,7 @@ test_that("Fail on invalid input", {
   wrong_input <- c("wrong", "input")
 
   testthat::expect_error(
-    Konditional(
+    Kontextual(
       cells = wrong_input,
       r = 50,
       from = "TC_CD4",

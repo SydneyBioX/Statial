@@ -7,7 +7,7 @@
 parentCombinations(all, ...)
 }
 \arguments{
-\item{all}{A list of all the `to` cell types Konditional is evaluated over}
+\item{all}{A list of all the `to` cell types Kontextual is evaluated over}
 
 \item{...}{Vectors of each parent population}
 }
@@ -18,7 +18,7 @@ corresponding parent
 \description{
 This function takes in named vectors of all the parent populations in the 
 dataset, and creates a data frame containing all pairwise cell relationships,
-this data frame can be inputed into the `parentDf` argument in `Konditional`.
+this data frame can be inputed into the `parentDf` argument in `Kontextual`.
 }
 \examples{
 tcells <- c("CD4", "CD8")

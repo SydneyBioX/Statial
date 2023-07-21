@@ -1,4 +1,4 @@
-#' Evaluation of Konditional over a range of radii.
+#' Evaluation of Kontextual over a range of radii.
 #' 
 #' @description 
 #' This function obtains `Kondtional` values over a range of radii, standard 
@@ -10,17 +10,17 @@
 #' @param from The first cell type to be evaluated in the pairwise relationship.
 #' @param to The second cell type to be evaluated in the pairwise relationship.
 #' @param parent The parent population of the from cell type (must include from cell type).
-#' @param rs A vector of radii to evaluate konditional over.
+#' @param rs A vector of radii to evaluate kontextual over.
 #' @param inhom A logical value indicating whether to perform an inhomogeneous L function.
 #' @param edge A logical value indicating whether to perform edge correction.
 #' @param se A logical value to indicate if the standard deviation of
-#' konditional should be calculated to construct error bars.
-#' @param nSim Number of randomisations to perform using \code{\link[Statial]{relabelKonditional}},
+#' kontextual should be calculated to construct error bars.
+#' @param nSim Number of randomisations to perform using \code{\link[Statial]{relabelKontextual}},
 #'  which will be used to calculated the SE.
 #' @param cores Number of cores for parallel processing.
-#' @param ... Any arguments passed into \code{\link[Statial]{Konditional}}.
+#' @param ... Any arguments passed into \code{\link[Statial]{Kontextual}}.
 #'
-#' @return A data frame of original L values and Konditional values evaluated
+#' @return A data frame of original L values and Kontextual values evaluated
 #' over a range of radii.
 #'
 #' @examples
@@ -53,7 +53,7 @@ rsCurve <- function(cells,
                     nSim = 20,
                     cores = 1,
                     ...) {
-  konditionalVals <- Konditional(
+  kontextualVals <- Kontextual(
     cells = cells,
     from = from,
     to = to,
@@ -66,12 +66,12 @@ rsCurve <- function(cells,
     ...
   )
 
-  rsDf <- konditionalVals |>
-    select("r", "original", "konditional")
+  rsDf <- kontextualVals |>
+    select("r", "original", "kontextual")
 
 
   if (se == TRUE) {
-    seDf <- relabelKonditional(
+    seDf <- relabelKontextual(
       cells = cells,
       nSim = nSim,
       r = rs,
@@ -87,11 +87,11 @@ rsCurve <- function(cells,
 
     seDf <- seDf |>
       filter(type != "original") |>
-      select("r", "original", "konditional") |>
+      select("r", "original", "kontextual") |>
       group_by(r) |>
       summarise(
         "originalSd" = sd(original),
-        "konditionalSd" = sd(konditional)
+        "kontextualSd" = sd(kontextual)
       )
 
     rsDf <- merge(rsDf, seDf, by = "r")
@@ -102,7 +102,7 @@ rsCurve <- function(cells,
 
 
 
-#' Plotting the original and konditional L values over a range of radii.
+#' Plotting the original and kontextual L values over a range of radii.
 #'
 #' @description 
 #' This function takes outputs from \code{\link[Statial]{rsCurve}} and plots
@@ -113,7 +113,7 @@ rsCurve <- function(cells,
 #'
 #' @param rsDf A data frame from \code{\link[Statial]{rsCurve}}.
 #'
-#' @return A ggplotly object showing the original and konditional L function
+#' @return A ggplotly object showing the original and kontextual L function
 #'  values over a range of radii
 #'
 #' @examples
@@ -140,14 +140,14 @@ rsCurve <- function(cells,
 
 ggplotRs <- function(rsDf) {
   if (str_detect(names(rsDf), "Sd") |> any()) {
-    konditional <- rsDf |>
-      select(r, starts_with("konditional")) |>
+    kontextual <- rsDf |>
+      select(r, starts_with("kontextual")) |>
       mutate(
-        "lower" = konditional - konditionalSd,
-        "upper" = konditional + konditionalSd
+        "lower" = kontextual - kontextualSd,
+        "upper" = kontextual + kontextualSd
       ) |>
-      select(-"konditionalSd") |>
-      pivot_longer(konditional)
+      select(-"kontextualSd") |>
+      pivot_longer(kontextual)
 
 
     original <- rsDf |>
@@ -159,7 +159,7 @@ ggplotRs <- function(rsDf) {
       select(-"originalSd") |>
       pivot_longer(original)
 
-    seDf <- rbind(konditional, original)
+    seDf <- rbind(kontextual, original)
 
 
     p <- ggplot(seDf, aes(x = r, y = value, col = name)) +

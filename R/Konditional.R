@@ -1,7 +1,7 @@
 #' Evaluation of pairwise cell relationships, conditional on a 3rd population.
 #' 
 #' @description 
-#' Konditional identifies the relationship between two cell types which are 
+#' Kontextual identifies the relationship between two cell types which are 
 #' conditional on the spatial behaviour of a 3rd cell population, for a 
 #' particular radius (r).
 #' 
@@ -25,18 +25,18 @@
 #' @param includeZeroCells A logical value indicating whether to include cells
 #' with zero counts in the pairwise association calculation.
 #' @param includeOriginal A logical value to return the original L function
-#' values along with the konditional values.
+#' values along with the kontextual values.
 #' @param spatialCoords The columns which contain the x and y spatial coordinates.
 #' @param cellType The column which contains the cell types.
 #' @param imageID The column which contains image identifiers.
 #' @param cores Number of cores for parallel processing.
-#' @return A konditionalResult object
+#' @return A kontextualResult object
 #'
 #' @examples
 #' # Load data
 #' data("headSCE")
 #'
-#' CD4_Konditional <- Konditional(
+#' CD4_Kontextual <- Kontextual(
 #'   cells = headSCE,
 #'   r = 50,
 #'   from = "TC_CD4",
@@ -46,10 +46,10 @@
 #' )
 #'
 #'
-#' head(CD4_Konditional)
+#' head(CD4_Kontextual)
 #'
-#' @export Konditional
-#' @rdname Konditional
+#' @export Kontextual
+#' @rdname Kontextual
 #' @import dplyr
 #' @import tidyr
 #' @import BiocParallel
@@ -58,7 +58,7 @@
 #' @importFrom methods is
 #' @importFrom stats runif
 
-Konditional <- function(cells,
+Kontextual <- function(cells,
                         parentDf = NULL,
                         r,
                         from = NULL,
@@ -151,11 +151,11 @@ Konditional <- function(cells,
   )
 
   # Create data frame for mapply
-  konditionalDf <- merge(imagesInfo, allCombinations, all = TRUE) |>
+  kontextualDf <- merge(imagesInfo, allCombinations, all = TRUE) |>
     mutate("test" = paste(from, "__", to, sep = ""))
 
-  if ("parent_name" %in% names(konditionalDf)) {
-    konditionalDf <- mutate(konditionalDf, "test" = paste(test, "__", parent_name, sep = ""))
+  if ("parent_name" %in% names(kontextualDf)) {
+    kontextualDf <- mutate(kontextualDf, "test" = paste(test, "__", parent_name, sep = ""))
   }
 
   x <- runif(1) # nolint
@@ -164,18 +164,18 @@ Konditional <- function(cells,
 
   # Calculate conditional L values
   lVals <- bpmapply(
-    KonditionalCore,
-    image = konditionalDf$images,
-    r = konditionalDf$r,
-    from = konditionalDf$from,
-    to = konditionalDf$to,
-    parent = konditionalDf$parent,
-    inhom = konditionalDf$inhom,
-    edge = konditionalDf$edge,
-    window = konditionalDf$window,
-    window.length = konditionalDf$window.length,
-    weightQuantile = konditionalDf$weightQuantile,
-    includeZeroCells = konditionalDf$includeZeroCells,
+    KontextualCore,
+    image = kontextualDf$images,
+    r = kontextualDf$r,
+    from = kontextualDf$from,
+    to = kontextualDf$to,
+    parent = kontextualDf$parent,
+    inhom = kontextualDf$inhom,
+    edge = kontextualDf$edge,
+    window = kontextualDf$window,
+    window.length = kontextualDf$window.length,
+    weightQuantile = kontextualDf$weightQuantile,
+    includeZeroCells = kontextualDf$includeZeroCells,
     SIMPLIFY = FALSE,
     MoreArgs = list(includeOriginal = includeOriginal),
     BPPARAM = BPPARAM
@@ -185,7 +185,7 @@ Konditional <- function(cells,
   lVals <- lVals |>
     bind_rows()
 
-  lValsClean <- konditionalDf |>
+  lValsClean <- kontextualDf |>
     mutate("parent_name" = "") |>
     select(-c("images", "from", "to", "parent_name", "parent")) |>
     cbind(lVals) |>
@@ -196,7 +196,7 @@ Konditional <- function(cells,
       select(
         "imageID",
         "test",
-        "konditional",
+        "kontextual",
         "r",
         "weightQuantile",
         "inhom",
@@ -211,7 +211,7 @@ Konditional <- function(cells,
         "imageID",
         "test",
         "original",
-        "konditional",
+        "kontextual",
         "r",
         "weightQuantile",
         "inhom",
@@ -231,7 +231,7 @@ Konditional <- function(cells,
 #' @noRd
 #'
 #' @import tidyverse
-KonditionalCore <- function(image,
+KontextualCore <- function(image,
                             r,
                             from,
                             to,
@@ -243,13 +243,13 @@ KonditionalCore <- function(image,
                             ...) {
   # Returns NA if to and from cell types not in image
   if (!(c(to, from) %in% unique(image$cellType) |> all())) {
-    condL <- data.frame(original = NA, konditional = NA)
+    condL <- data.frame(original = NA, kontextual = NA)
     rownames(condL) <- paste(from, "__", to)
     return(condL)
   }
 
   # Calculated the child and parent values for the image
-  konditionalVal <-
+  kontextualVal <-
     inhomLParent(
       image,
       Rs = r,
@@ -264,7 +264,7 @@ KonditionalCore <- function(image,
 
 
   if (includeOriginal == FALSE) {
-    condL <- data.frame(konditional = konditionalVal)
+    condL <- data.frame(kontextual = kontextualVal)
     return(condL)
   }
 
@@ -282,10 +282,10 @@ KonditionalCore <- function(image,
       ...
     )
 
-  # return data frame of original and konditional values.
+  # return data frame of original and kontextual values.
   condL <- data.frame(
     original = originalVal,
-    konditional = konditionalVal
+    kontextual = kontextualVal
   )
 
   return(condL)
@@ -323,24 +323,24 @@ validateDf <- function(cells, cellType, imageID, spatialCoords) {
 
 
 
-#' Test whether an object is a konditionalResult
+#' Test whether an object is a kontextualResult
 #'
-#' @param konditionalResult a object to test
+#' @param kontextualResult a object to test
 #'
 #' @examples
 #' data = data.frame()
-#' if(!isKonditional(data)) print("Not a konditionalResult")
+#' if(!isKontextual(data)) print("Not a kontextualResult")
 #'
-#' @export isKonditional
-#' @rdname isKonditional
+#' @export isKontextual
+#' @rdname isKontextual
 #' @import tidyverse
-isKonditional <- function(konditionalResult){
+isKontextual <- function(kontextualResult){
     
     colNames = c(
         "imageID",
         "test",
         "original",
-        "konditional",
+        "kontextual",
         "r",
         "weightQuantile",
         "inhom",
@@ -350,5 +350,5 @@ isKonditional <- function(konditionalResult){
         "window.length"
     )
     
-    return(all(colNames %in% names(konditionalResult)))
+    return(all(colNames %in% names(kontextualResult)))
 }

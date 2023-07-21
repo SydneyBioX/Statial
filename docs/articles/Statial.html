@@ -117,24 +117,24 @@ will provide a step-by-step overview of some key functions within
 <div class="section level2">
 <h2 id="evaluating-cell-localisation">Evaluating cell localisation<a class="anchor" aria-label="anchor" href="#evaluating-cell-localisation"></a>
 </h2>
-<p><code>Konditional</code> is a method to evaluate the localisation
+<p><code>Kontextual</code> is a method to evaluate the localisation
 relationship between two cell types in an image.
-<code>Konditional</code> builds on the L-function by contextualising the
+<code>Kontextual</code> builds on the L-function by contextualising the
 relationship between two cell types in reference to the typical spatial
 behaviour of a <span class="math inline">\(3^{rd}\)</span> cell
-type/population. By taking this approach, <code>Konditional</code> is
+type/population. By taking this approach, <code>Kontextual</code> is
 invariant to changes in the window of the image as well as tissue
 structures which may be present.</p>
 <p>The definitions of cell types and cell states are somewhat ambiguous,
 cell types imply well defined groups of cells that serve different roles
 from one another, on the other hand cell states imply that cells are a
 dynamic entity which cannot be discretised, and thus exist in a
-continuum. For the purposes of using <code>Konditional</code> we treat
+continuum. For the purposes of using <code>Kontextual</code> we treat
 cell states as identified clusters of cells, where larger clusters
 represent a “parent” cell population, and finer sub-clusters
 representing a “child” cell population. For example a CD4 T cell may be
 considered a child to a larger parent population of Immune cells.
-<code>Konditional</code> thus aims to see how a child population of
+<code>Kontextual</code> thus aims to see how a child population of
 cells deviate from the spatial behaviour of their parent population, and
 how that influences the localisation between the child cell state and
 another cell state.</p>
@@ -175,9 +175,9 @@ put in a vector called bcells.</p>
 <span><span class="va">all</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">tumour</span>, <span class="va">tissue</span>, <span class="va">immune</span>, <span class="st">"Undefined"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="konditional">Konditional<a class="anchor" aria-label="anchor" href="#konditional"></a>
+<h2 id="kontextual">Kontextual<a class="anchor" aria-label="anchor" href="#kontextual"></a>
 </h2>
-<p><code>Konditional</code> accepts a <code>SingleCellExperiment</code>
+<p><code>Kontextual</code> accepts a <code>SingleCellExperiment</code>
 object, or a single image, or list of images from a
 <code>SingleCellExperiment</code> object, this gets passed into the
 <code>cells</code> argument. The two cell types which will be evaluated
@@ -186,22 +186,22 @@ parent population must also be specified in the <code>parent</code>
 argument, note the parent cell population must include the
 <code>to</code> cell type. The argument <code>r</code> will specify the
 radius which the cell relationship will be evaluated on.
-<code>Konditional</code> supports parallel processing, the number of
+<code>Kontextual</code> supports parallel processing, the number of
 cores can be specified using the <code>cores</code> argument.
-<code>Konditional</code> can take a single value or multiple values for
+<code>Kontextual</code> can take a single value or multiple values for
 each argument and will test all combinations of the arguments
 specified.</p>
 <p>Here we test the relationship between CD4 T cells
 (<code>TC_CD4</code>) and one type of Tumour cell (<code>SC1</code>)
 with all immune cells being our parent population. The output is a data
 frame with the <code>original</code> L-function values and
-<code>konditional</code> values as well as the values for the arguments
+<code>kontextual</code> values as well as the values for the arguments
 specified. Where a negative <code>original</code> or
-<code>konditional</code> value represents dispersion between
+<code>kontextual</code> value represents dispersion between
 <code>TC_CD4</code> and <code>SC1</code> and a positive value indicates
 localisation.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">CD4_Konditional</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Konditional.html">Konditional</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">CD4_Kontextual</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Kontextual.html">Kontextual</a></span><span class="op">(</span></span>
 <span>  cells <span class="op">=</span> <span class="va">headSCE</span>,</span>
 <span>  r <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>  from <span class="op">=</span> <span class="st">"TC_CD4"</span>,</span>
@@ -210,8 +210,8 @@ localisation.</p>
 <span>  cores <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">CD4_Konditional</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   imageID        test  original konditional  r weightQuantile inhom  edge</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">CD4_Kontextual</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   imageID        test  original kontextual  r weightQuantile inhom  edge</span></span>
 <span><span class="co">#&gt; 1       1 TC_CD4__SC1 -4.990157 -4.87036888 50            0.8  TRUE FALSE</span></span>
 <span><span class="co">#&gt; 2       5 TC_CD4__SC1 -5.122654 -0.02746783 50            0.8  TRUE FALSE</span></span>
 <span><span class="co">#&gt; 3       6 TC_CD4__SC1 -7.945885 -4.75753347 50            0.8  TRUE FALSE</span></span>
@@ -223,18 +223,18 @@ localisation.</p>
 <span><span class="co">#&gt; 3             TRUE convex            NA</span></span>
 <span><span class="co">#&gt; 4             TRUE convex            NA</span></span>
 <span><span class="co">#&gt; 5             TRUE convex            NA</span></span></code></pre></div>
-<p>The <code>original</code> and <code>konditional</code> values can be
+<p>The <code>original</code> and <code>kontextual</code> values can be
 compared in a scatter plot to identify relationships which have been
 identified differently between the functions. The dashed red line
 represents the expected pattern of the data, i.e. where there exists no
 relationship between the two cell types. The top left quadrant therefore
-represents values where <code>Konditional</code> has identified
+represents values where <code>Kontextual</code> has identified
 localisation between <code>CD4</code> and <code>SC1</code> and the
 original L-function has identified dispersion, the opposite is true for
 the bottom right quadrant.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">CD4_Konditional</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">original</span>, y <span class="op">=</span> <span class="va">konditional</span>, col <span class="op">=</span> <span class="va">imageID</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">CD4_Kontextual</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">original</span>, y <span class="op">=</span> <span class="va">kontextual</span>, col <span class="op">=</span> <span class="va">imageID</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>, col <span class="op">=</span> <span class="st">"red"</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">0</span>, col <span class="op">=</span> <span class="st">"red"</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -251,7 +251,7 @@ combinations can be creating using the <code>parentCombinations</code>
 function. This function takes in a vector of all the cells, as well as
 all the parent vectors set up earlier. As shown below the output is a
 data frame specifying the <code>to</code>, <code>from</code>, and
-<code>parent</code> arguments for <code>Konditional</code>.</p>
+<code>parent</code> arguments for <code>Kontextual</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get all relationships between cell types and their parents</span></span>
 <span><span class="va">parentDf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/parentCombinations.html">parentCombinations</a></span><span class="op">(</span></span>
@@ -274,9 +274,9 @@ data frame specifying the <code>to</code>, <code>from</code>, and
 <span><span class="co">#&gt; 5  BC1 SC5 BC1, BC2....      bcells</span></span>
 <span><span class="co">#&gt; 6  BC1 SC6 BC1, BC2....      bcells</span></span></code></pre></div>
 <p>Rather than specifying <code>to</code>, <code>from</code>, and
-<code>parent</code> in Konditional, the output from
+<code>parent</code> in Kontextual, the output from
 <code>parentCombinations</code> can be inputed into
-<code>Konditional</code> using the <code>parentDf</code> argument. Here
+<code>Kontextual</code> using the <code>parentDf</code> argument. Here
 we will test the first 20 pairwise cell relationships in
 <code>parentCombinations</code> on the first image of the dataset.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -287,15 +287,15 @@ we will test the first 20 pairwise cell relationships in
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">imageID</span> <span class="op">==</span> <span class="st">"1"</span><span class="op">)</span></span>
 <span></span>
 <span></span>
-<span><span class="va">image1_Konditional</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Konditional.html">Konditional</a></span><span class="op">(</span></span>
+<span><span class="va">image1_Kontextual</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Kontextual.html">Kontextual</a></span><span class="op">(</span></span>
 <span>  cells <span class="op">=</span> <span class="va">image_1</span>,</span>
 <span>  parentDf <span class="op">=</span> <span class="va">parentDf</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="op">]</span>,</span>
 <span>  r <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>  cores <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">image1_Konditional</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   imageID             test   original konditional  r weightQuantile inhom  edge</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">image1_Kontextual</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   imageID             test   original kontextual  r weightQuantile inhom  edge</span></span>
 <span><span class="co">#&gt; 1       1 BC1__SC1__bcells  0.5812206    4.630450 50            0.8  TRUE FALSE</span></span>
 <span><span class="co">#&gt; 2       1 BC1__SC2__bcells -7.1248136   -8.571246 50            0.8  TRUE FALSE</span></span>
 <span><span class="co">#&gt; 3       1 BC1__SC3__bcells -9.0872476  -10.469486 50            0.8  TRUE FALSE</span></span>
@@ -329,10 +329,10 @@ now appear localised.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_colour_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#505050"</span>, <span class="st">"#D6D6D6"</span>, <span class="st">"#64BC46"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Statial_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>The <code>rsCurve</code> function plots the L-function value and
-Konditional values over a range of radii. If the points lie above the
+Kontextual values over a range of radii. If the points lie above the
 red line (expected pattern) then localisation is indicated for that
 radius, if the points lie below the red line then dispersion is
-indicated. As seen in the following plot Konditional is able to
+indicated. As seen in the following plot Kontextual is able to
 correctly identify localisation between <code>p53</code> and
 <code>Immune</code> in the example image for a certain range of radii.
 When the radius gets too large the overall relationship between
