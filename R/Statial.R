@@ -490,15 +490,15 @@ calcContamination <- function(singleCellData,
     dplyr::mutate(cellID = stringr::str_replace(cellID, "cellID", "")) %>%
     select(-any_of(markers))
   
-  singleCellData2 <- singleCellData %>%
-    dplyr::left_join(rfData, by = c("cellID"))
+  # singleCellData2 <- singleCellData %>%
+  #   dplyr::left_join(rfData, by = c("cellID"))
 
   metadata_name <- paste0("dist", Rs, "")
   
   distData <- metadata(SCE)[[metadata_name]]
   
   distData <- distData %>%
-    dplyr::left_join(singleCellData)
+    dplyr::left_join(rfData)
 
   metadata(SCE)[[metadata_name]] <- distData
   
@@ -817,6 +817,8 @@ modelsPerCellType <- function(cellTypeSplitData,
            SIMPLIFY = FALSE
     ) %>%
     dplyr::bind_rows()
+  
+  modelOutputs
 }
 
 
