@@ -33,6 +33,34 @@ rownames(SCE)
 ```{r}
 data(headSCE)
 
+SCE_complete <- getDistances(headSCE,
+                             Rs = c(200)
+                             )
+
+SCE_complete <- getAbundances(SCE_complete,
+                             Rs = c(200)
+                             )
+
+SCE_complete <- calcContamination(SCE_complete,
+                                  Rs = c(200)
+                                  )
+
+imageModelsTest <- getStateChanges(
+  singleCellData = SCE_complete,
+  Rs = c(200),
+  typeAll = c("dist200", "abundance200"),
+  covariates = c("rfMainCellProb"),
+  method = "lm",
+  isMixed = TRUE,
+  nCores = 1)
+
+
+```
+
+
+```{r}
+data(headSCE)
+
 SCE <- getDistances(headSCE, Rs = c(200), 
                     whichCellTypes = c("MC2", "SC7")
                     )
@@ -44,7 +72,7 @@ SCE <- getDistances(headSCE, Rs = c(200),
 SCE <- getDistances(SCE, Rs = c(100), 
                     # whichCellTypes = c("MC2", "EC1")
                     )
-SCE <- getAbundances(SCE, Rs = c(200), 
+SCE <- getAbundances(headSCE, Rs = c(200), 
                      # whichCellTypes = c("MC2", "SC7")
                      )
 SCE <- calcContamination(SCE,
@@ -63,7 +91,7 @@ visualiseImageRelationship(
   method = "rlm",
   modelType = "dist200_"
 )
-imageModels <- getStateChanges(
+profvis::profvis(imageModels <- getStateChanges(
   singleCellData = SCE,
   Rs = c(200),
   typeAll = c("dist200"),
@@ -71,9 +99,9 @@ imageModels <- getStateChanges(
   method = "lm",
   isMixed = TRUE,
   cellTypesToModel = "MC2",
-  nCores = 1)
+  nCores = 1))
 
-imageModelsTest <- getStateChanges(
+imageModels <- getStateChanges(
   singleCellData = SCE,
   Rs = c(200),
   typeAll = c("dist200"),
@@ -94,7 +122,11 @@ imageModelsTest <- getStateChanges(
 #SPECIFY FEATURES - HERE IT IS NON PROGRESSIVE AND PROGRESSIVE. THESE ARE NOT FOUND IN HEADSCE.
 classificationDataKeep <- factor(x = c("NP", "NP", "NP", "P", "P")) %>% set_names(c("1", "5", "6", "7", "8"))
 
-
+metadata(SCE)$dist200 <- metadata(SCE)$dist200 %>% mutate(condition = case_when(
+  imageID %in% c("1", "5", "6") ~ "NP",
+  imageID %in% c("7", "8") ~ "P",
+  TRUE ~ "P"
+))
 
 modellingData <- listImageModelsCVFormat(imageModelsNew, classificationDataKeep, values_from = "tValue",
                                      removeColsThresh = 0.2,
