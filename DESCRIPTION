@@ -35,6 +35,7 @@ Imports:
     MuMIn,
     R.utils,
     SummarizedExperiment,
+    S4Vectors,
     bigstatsr,
     lisaClust,
     lmerTest,

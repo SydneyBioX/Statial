@@ -1008,7 +1008,8 @@ fitStateModels <- function(x,
 #'   A dataframe with a imageID, cellType, and marker intensity column along
 #'   with covariates (e.g. distance or abundance of the nearest cell type) to
 #'   model cell state changes
-#' @param markers A string list of markers that proxy a cell's state
+#' @param Rs Radius to calculate pairwise distances between cells (can be a numeric or
+#'   vector of radii)
 #' @param type
 #'   A prefix that appears on the column names of all cell state modelling
 #'   covariates. The default value is "dist"
@@ -1026,21 +1027,8 @@ fitStateModels <- function(x,
 #' @examples
 #' library(dplyr)
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(
-#'   SummarizedExperiment::assay(headSCE, "intensities")
-#' ))
-#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-#' markersToUse <- colnames(intensitiesData)
-#' singleCellData <- cbind(
-#'   spatialData[rownames(intensitiesData), ], intensitiesData
-#' )
-#' singleCellData <- singleCellData %>%
-#'   mutate(
-#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-#'   ) %>%
-#'   mutate(across(where(is.factor), as.character))
 #'
-#' singleCellDataDistances <- getDistances(singleCellData,
+#' singleCellDataDistances <- getDistances(headSCE,
 #'   nCores = 1,
 #'   Rs = c(200),
 #'   whichCellTypes = c("MC2", "SC7")
@@ -1048,7 +1036,7 @@ fitStateModels <- function(x,
 #'
 #' imageModelsFast <- getStateChangesFast(
 #'   singleCellData = singleCellDataDistances,
-#'   markers = markersToUse,
+#'   Rs = c(200),
 #'   type = c("dist200"),
 #'   nCores = 1
 #' )
@@ -1058,7 +1046,7 @@ fitStateModels <- function(x,
 #' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom magrittr %>%
 getStateChangesFast <- function(singleCellData,
-                                markers,
+                                Rs,
                                 type = "dist",
                                 covariates = NULL,
                                 removeColsThresh = 0.1,
@@ -1066,6 +1054,13 @@ getStateChangesFast <- function(singleCellData,
                                 nCores = 1) {
   
   BPPARAM <- .generateBPParam(cores = nCores)
+  
+  markers = rownames(singleCellData)
+  
+  metadata_name <- paste0("Rs", Rs, "")
+  
+  SCE <- singleCellData 
+  singleCellData <- metadata(SCE)[[metadata_name]]
   
   if (!is.null(cellTypesToModel)) {
     singleCellData <- singleCellData %>%
@@ -1190,61 +1185,8 @@ calculateStateModelsFast <- function(singleCellData,
 
 
 
-
-
-
-#' Convert Image Model Output to Cross-Validation Format
-#'
-#' Takes the output from the getStateChanges function for image based state
-#' models and converts it in a convenient format for cross validation
-#'
-#' @param imageModels
-#'   A dataframe with the output from the function getStateChanges or
-#'   getStateChangesFast with the argument isMixed = FALSE
-#' @param values_from
-#'   Column to use from imageModels for cross validation. The default is
-#'   "tValue" but "beta" can be choosen as well
-#' @param removeColsThresh
-#'   Threshold of missingness in which a relationship will not be included as
-#'   column in the cross validation ready output
-#' @param missingReplacement Numeric value to replace missing values
-#'
-#' @examples
-#' library(dplyr)
-#' data("headSCE")
-#' intensitiesData <- data.frame(t(
-#'   SummarizedExperiment::assay(headSCE, "intensities")
-#' ))
-#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-#' markersToUse <- colnames(intensitiesData)
-#' singleCellData <- cbind(
-#'   spatialData[rownames(intensitiesData), ], intensitiesData
-#' )
-#' singleCellData <- singleCellData %>%
-#'   mutate(
-#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-#'   ) %>%
-#'   mutate(across(where(is.factor), as.character))
-#'
-#' singleCellDataDistances <- getDistances(singleCellData,
-#'   nCores = 1,
-#'   Rs = c(200),
-#'   whichCellTypes = c("MC2", "SC7")
-#' )
-#'
-#' imageModelsFast <- getStateChangesFast(
-#'   singleCellData = singleCellDataDistances,
-#'   markers = markersToUse,
-#'   type = c("dist200"),
-#'   nCores = 1
-#' )
-#' crossValidationData <- imageModelsCVFormat(imageModelsFast,
-#'   values_from = "tValue",
-#'   removeColsThresh = 0.2,
-#'   missingReplacement = 0
-#' )
-#' @export
-#' @rdname imageModelsCVFormat
+#' @noRd
+#' 
 #' @importFrom dplyr bind_rows across mutate rename select
 #' @importFrom stringr str_detect str_replace str_split
 #' @importFrom tidyr pivot_wider
@@ -1292,7 +1234,7 @@ imageModelsCVFormat <- function(imageModels,
 #' library(dplyr)
 #' data("headSCE")
 #'
-#' singleCellDataDistances <- getDistances(singleCellData,
+#' singleCellDataDistances <- getDistances(headSCE,
 #'   nCores = 1,
 #'   Rs = c(200),
 #'   whichCellTypes = c("MC2", "SC7")
@@ -1304,7 +1246,12 @@ imageModelsCVFormat <- function(imageModels,
 #'   type = c("dist200"),
 #'   nCores = 1
 #' )
-#' crossValidationData <- listimageModelsCVFormat(imageModels,
+#' 
+#' classificationDataKeep <- factor(x = c("NP", "NP", "NP", "P", "P")) %>% 
+#' purrr::set_names(c("1", "5", "6", "7", "8"))
+#' 
+#' crossValidationData <- listImageModelsCVFormat(imageModels,
+#'   classificationData = classificationDataKeep,
 #'   values_from = "tValue",
 #'   removeColsThresh = 0.2,
 #'   missingReplacement = 0
@@ -1315,6 +1262,7 @@ imageModelsCVFormat <- function(imageModels,
 #' @importFrom stringr str_detect str_replace str_split
 #' @importFrom tidyr pivot_wider
 #' @importFrom magrittr %>%
+#' @importFrom purrr set_names
 listImageModelsCVFormat <- function(imageModels,
                                 classificationData,
                                 values_from = "tValue",

@@ -7,7 +7,7 @@ changes on a image basis}
 \usage{
 getStateChangesFast(
   singleCellData,
-  markers,
+  Rs,
   type = "dist",
   covariates = NULL,
   removeColsThresh = 0.1,
@@ -20,7 +20,8 @@ getStateChangesFast(
 with covariates (e.g. distance or abundance of the nearest cell type) to
 model cell state changes}
 
-\item{markers}{A string list of markers that proxy a cell's state}
+\item{Rs}{Radius to calculate pairwise distances between cells (can be a numeric or
+vector of radii)}
 
 \item{type}{A prefix that appears on the column names of all cell state modelling
 covariates. The default value is "dist"}
@@ -43,21 +44,8 @@ provides the option to build OLS models
 \examples{
 library(dplyr)
 data("headSCE")
-intensitiesData <- data.frame(t(
-  SummarizedExperiment::assay(headSCE, "intensities")
-))
-spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-markersToUse <- colnames(intensitiesData)
-singleCellData <- cbind(
-  spatialData[rownames(intensitiesData), ], intensitiesData
-)
-singleCellData <- singleCellData \%>\%
-  mutate(
-    across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-  ) \%>\%
-  mutate(across(where(is.factor), as.character))
 
-singleCellDataDistances <- getDistances(singleCellData,
+singleCellDataDistances <- getDistances(headSCE,
   nCores = 1,
   Rs = c(200),
   whichCellTypes = c("MC2", "SC7")
@@ -65,7 +53,7 @@ singleCellDataDistances <- getDistances(singleCellData,
 
 imageModelsFast <- getStateChangesFast(
   singleCellData = singleCellDataDistances,
-  markers = markersToUse,
+  Rs = c(200),
   type = c("dist200"),
   nCores = 1
 )
