@@ -6,7 +6,7 @@
 \usage{
 calcContamination(
   singleCellData,
-  markers,
+  Rs = c(200),
   seed = 2022,
   num.trees = 100,
   verbose = FALSE,
@@ -16,9 +16,6 @@ calcContamination(
 \arguments{
 \item{singleCellData}{A dataframe with a cellType column as well as marker intensity information
 corresponding to each cell. The dataframe must contain a imageID column.}
-
-\item{markers}{A string vector of marker intensities to use to classify cell types and
-detect contamination}
 
 \item{seed}{A numeric value to allow for replicable results from the random forest
 classification algorithm}
