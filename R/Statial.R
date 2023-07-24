@@ -121,21 +121,8 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #' @examples
 #' library(dplyr)
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(
-#'   SummarizedExperiment::assay(headSCE, "intensities")
-#' ))
-#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-#' markersToUse <- colnames(intensitiesData)
-#' singleCellData <- cbind(
-#'   spatialData[rownames(intensitiesData), ], intensitiesData
-#' )
-#' singleCellData <- singleCellData %>%
-#'   mutate(
-#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-#'   ) %>%
-#'   mutate(across(where(is.factor), as.character))
 #'
-#' singleCellDataDistances <- getDistances(singleCellData,
+#' singleCellDataDistances <- getDistances(headSCE,
 #'   nCores = 1,
 #'   Rs = c(200),
 #'   whichCellTypes = c("MC2", "SC7")
@@ -255,21 +242,8 @@ getDistances <- function(singleCellData,
 #' @examples
 #' library(dplyr)
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(
-#'   SummarizedExperiment::assay(headSCE, "intensities")
-#' ))
-#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-#' markersToUse <- colnames(intensitiesData)
-#' singleCellData <- cbind(
-#'   spatialData[rownames(intensitiesData), ], intensitiesData
-#' )
-#' singleCellData <- singleCellData %>%
-#'   mutate(
-#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-#'   ) %>%
-#'   mutate(across(where(is.factor), as.character))
-#'
-#' singleCellDataCounts <- getAbundances(singleCellData,
+#' 
+#' singleCellDataCounts <- getAbundances(headSCE,
 #'   nCores = 1,
 #'   Rs = c(200),
 #'   whichCellTypes = c("MC2", "SC7")
@@ -394,6 +368,9 @@ getAbundances <- function(singleCellData,
 #' @param singleCellData
 #'   A dataframe with a cellType column as well as marker intensity information
 #'   corresponding to each cell. The dataframe must contain a imageID column.
+#' @param Rs
+#'   Radius to calculate pairwise distances between cells (can be a numeric or
+#'   vector of radii)
 #' @param seed
 #'   A numeric value to allow for replicable results from the random forest
 #'   classification algorithm
@@ -407,23 +384,10 @@ getAbundances <- function(singleCellData,
 #' @examples
 #' library(dplyr)
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(
-#'   SummarizedExperiment::assay(headSCE, "intensities")
-#' ))
-#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-#' markersToUse <- colnames(intensitiesData)
-#' singleCellData <- cbind(
-#'   spatialData[rownames(intensitiesData), ], intensitiesData
-#' )
-#' singleCellData <- singleCellData %>%
-#'   mutate(
-#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-#'   ) %>%
-#'   mutate(across(where(is.factor), as.character))
 #'
 #' singleCellDataDistancesContam <- calcContamination(
-#'   singleCellData,
-#'   markers = markersToUse
+#'   headSCE,
+#'   Rs = c(200)
 #' )
 #'
 #' @export
@@ -576,6 +540,9 @@ calcContamination <- function(singleCellData,
 #'   A dataframe with a imageID, cellType, and marker intensity column along
 #'   with covariates (e.g. distance or abundance of the nearest cell type) to
 #'   model cell state changes
+#' @param Rs
+#'   Radius to calculate pairwise distances between cells (can be a numeric or
+#'   vector of radii)
 #' @param typeAll
 #'   A prefix that appears on the column names of all cell state modelling
 #'   covariates. The default value is "dist"
@@ -604,21 +571,8 @@ calcContamination <- function(singleCellData,
 #' @examples
 #' library(dplyr)
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(
-#'   SummarizedExperiment::assay(headSCE, "intensities")
-#' ))
-#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-#' markersToUse <- colnames(intensitiesData)
-#' singleCellData <- cbind(
-#'   spatialData[rownames(intensitiesData), ], intensitiesData
-#' )
-#' singleCellData <- singleCellData %>%
-#'   mutate(
-#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-#'   ) %>%
-#'   mutate(across(where(is.factor), as.character))
 #'
-#' singleCellDataDistances <- getDistances(singleCellData,
+#' singleCellDataDistances <- getDistances(headSCE,
 #'   nCores = 1,
 #'   Rs = c(200),
 #'   whichCellTypes = c("MC2", "SC7")
@@ -626,7 +580,7 @@ calcContamination <- function(singleCellData,
 #'
 #' imageModels <- getStateChanges(
 #'   singleCellData = singleCellDataDistances,
-#'   markers = markersToUse,
+#'   Rs = c(200),
 #'   typeAll = c("dist200"),
 #'   cellTypesToModel = "MC2",
 #'   nCores = 1
@@ -1326,19 +1280,6 @@ imageModelsCVFormat <- function(imageModels,
 #' @examples
 #' library(dplyr)
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(
-#'   SummarizedExperiment::assay(headSCE, "intensities")
-#' ))
-#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-#' markersToUse <- colnames(intensitiesData)
-#' singleCellData <- cbind(
-#'   spatialData[rownames(intensitiesData), ], intensitiesData
-#' )
-#' singleCellData <- singleCellData %>%
-#'   mutate(
-#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-#'   ) %>%
-#'   mutate(across(where(is.factor), as.character))
 #'
 #' singleCellDataDistances <- getDistances(singleCellData,
 #'   nCores = 1,
@@ -1346,13 +1287,13 @@ imageModelsCVFormat <- function(imageModels,
 #'   whichCellTypes = c("MC2", "SC7")
 #' )
 #'
-#' imageModelsFast <- getStateChangesFast(
+#' imageModels <- getStateChanges(
 #'   singleCellData = singleCellDataDistances,
-#'   markers = markersToUse,
+#'   Rs = c(200),
 #'   type = c("dist200"),
 #'   nCores = 1
 #' )
-#' crossValidationData <- imageModelsCVFormat(imageModelsFast,
+#' crossValidationData <- listimageModelsCVFormat(imageModels,
 #'   values_from = "tValue",
 #'   removeColsThresh = 0.2,
 #'   missingReplacement = 0
@@ -1401,6 +1342,9 @@ listImageModelsCVFormat <- function(imageModels,
 #'   A dataframe with a imageID, cellType, and marker intensity column along
 #'   with covariates (e.g. distance or abundance of the nearest cell type) to
 #'   model cell state changes
+#' @param Rs
+#'   Radius to calculate pairwise distances between cells (can be a numeric or
+#'   vector of radii)
 #' @param imageID
 #'   Identifier name of the image in the imageID column to be visualised
 #' @param mainCellType
@@ -1426,27 +1370,15 @@ listImageModelsCVFormat <- function(imageModels,
 #' \dontrun{
 #' library(dplyr)
 #' data("headSCE")
-#' intensitiesData <- data.frame(t(
-#'   SummarizedExperiment::assay(headSCE, "intensities")
-#' ))
-#' spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-#' markersToUse <- colnames(intensitiesData)
-#' singleCellData <- cbind(
-#'   spatialData[rownames(intensitiesData), ], intensitiesData
-#' )
-#' singleCellData <- singleCellData %>%
-#'   mutate(
-#'     across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-#'   ) %>%
-#'   mutate(across(where(is.factor), as.character))
 #'
-#' singleCellDataDistances <- getDistances(singleCellData,
+#' singleCellDataDistances <- getDistances(headSCE,
 #'   nCores = 1,
 #'   Rs = c(200),
 #'   whichCellTypes = c("MC2", "SC7")
 #' )
 #' visualiseImageRelationship(
 #'   data = singleCellDataDistances,
+#'   Rs = c(200),
 #'   imageID = "36",
 #'   mainCellType = "MC2",
 #'   interactingCellType = "SC7",
