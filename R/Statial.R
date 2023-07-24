@@ -529,6 +529,8 @@ calcContamination <- function(singleCellData,
 #'   covariates. The default value is "dist"
 #' @param covariates
 #'   A list of additional covariates to be included in the model being built.
+#' @param condition
+#'   A list of additional conditions to be included in the model being built.
 #' @param method
 #'  The type of linear model to be built. Current options include "lm", "rlm".
 #' @param isMixed
@@ -589,6 +591,7 @@ getStateChanges <- function(singleCellData,
                             Rs,
                             typeAll = c("dist"),
                             covariates = NULL,
+                            condition = NULL,
                             method = "lm",
                             isMixed = FALSE,
                             randomIntercepts = c("imageID"),
@@ -624,6 +627,7 @@ getStateChanges <- function(singleCellData,
       singleCellData = singleCellData,
       markers = markers,
       covariates = covariates,
+      condition = condition,
       method = method,
       isMixed = isMixed,
       randomIntercepts = randomIntercepts,
@@ -652,6 +656,7 @@ calculateStateModels <- function(singleCellData,
                                  markers,
                                  type = "dist200_",
                                  covariates = NULL,
+                                 condition = NULL,
                                  method = "lm",
                                  isMixed = FALSE,
                                  randomIntercepts = c("imageID"),
@@ -670,6 +675,7 @@ calculateStateModels <- function(singleCellData,
     BiocParallel::bplapply(buildModelsByCellType,
                            markers = markers,
                            covariates = covariates,
+                           condition = condition,
                            type = type,
                            method = method,
                            isMixed = isMixed,
@@ -723,6 +729,7 @@ buildModelsByCellType <- function(subsettedSingleCellData,
                                   markers,
                                   type,
                                   covariates,
+                                  condition,
                                   method,
                                   isMixed,
                                   randomIntercepts,
@@ -732,7 +739,7 @@ buildModelsByCellType <- function(subsettedSingleCellData,
     dplyr::group_by(cellType) %>%
     dplyr::group_modify(
       ~ .x %>% modelsPerCellType(
-        markers, type, covariates, method, isMixed,
+        markers, type, covariates, condition, method, isMixed,
         randomIntercepts, verbose, timeout
       )
     ) %>%
@@ -754,6 +761,7 @@ modelsPerCellType <- function(cellTypeSplitData,
                               markers,
                               type,
                               covariates,
+                              condition,
                               method,
                               isMixed,
                               randomIntercepts,
@@ -779,6 +787,8 @@ modelsPerCellType <- function(cellTypeSplitData,
   if (length(type) == 1) {
     formulas <- lapply(markers, function(x, c) paste(x, "~", c), c = cells) %>%
       unlist()
+    
+    formulas <- formulas %>% lapply(function(x, c) paste(x, "*", c), c = condition) %>% unlist()
     
     # Interaction Models - two types
   } else {
@@ -857,7 +867,7 @@ fitStateModels <- function(x,
     unique()
   
   f <- paste(c(f, covariates), collapse = " + ")
-  independentSplit <- unlist(stringr::str_split(independent, " \\+ "))
+  independentSplit <- unlist(stringr::str_split(independent, " \\* "))
   
   outputs <- try(
     {
@@ -926,16 +936,16 @@ fitStateModels <- function(x,
         }
       }
       
-      beta <- coefs[independentSplit, 1]
-      tValue <- coefs[independentSplit, 3]
-      pValue <- coefs[independentSplit, 4]
+      beta <- coefs[independentSplit[1], 1]
+      tValue <- coefs[independentSplit[1], 3]
+      pValue <- coefs[independentSplit[1], 4]
       rValue <- modelSummary$r.squared
       sampleSize <- length(modelSummary$residuals)
       outputs <- data.frame(
         beta = beta,
         tValue = tValue,
         pValue = pValue,
-        independent = independentSplit,
+        independent = paste0(independentSplit, collapse = ", "),
         dependent = dependent,
         rValue = rValue,
         sampleSize = sampleSize,
@@ -953,7 +963,7 @@ fitStateModels <- function(x,
   
   if (any(class(outputs) == "try-error")) {
     outputs <- data.frame(
-      independent = independentSplit,
+      independent = paste0(independentSplit, collapse = ", "),
       dependent = dependent,
       formula = f
     )
