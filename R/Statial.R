@@ -161,14 +161,23 @@ getDistances <- function(singleCellData,
   
   markersToUse <- rownames(singleCellData)
   
-  if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
-    singleCellDataClean <- singleCellData %>%
-      preProcessing()
+  metadata_name <- paste0("Rs", Rs, "")
+  
+  if(!metadata_name %in% names(metadata(singleCellData))) {
+    
+    if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
+      
+      singleCellDataClean <- singleCellData %>%
+        preProcessing()
+      
+      singleCellData <- as.data.frame(colData(singleCellDataClean))
+      
+    }
+    
   } else {
     singleCellDataClean <- singleCellData
+    singleCellData <- metadata(singleCellDataClean)[[metadata_name]]
   }
-  
-  singleCellData <- as.data.frame(colData(singleCellDataClean))
   
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
@@ -297,8 +306,8 @@ getAbundances <- function(singleCellData,
     }
     
   } else {
-    SCE <- singleCellData
-    singleCellData <- metadata(SCE)[[metadata_name]]
+    singleCellDataClean <- singleCellData
+    singleCellData <- metadata(singleCellDataClean)[[metadata_name]]
   }
   
   if (!is.null(whichCellTypes)) {
@@ -373,8 +382,8 @@ getAbundances <- function(singleCellData,
     dplyr::right_join(singleCellData, by = c("imageID", "cellID")) %>%
     dplyr::relocate(imageID)
   
-  metadata(SCE)[[metadata_name]] <- singleCellDataK
-  return(SCE)
+  metadata(singleCellDataClean)[[metadata_name]] <- singleCellDataK
+  return(singleCellDataClean)
 }
 
 
@@ -453,10 +462,26 @@ calcContamination <- function(singleCellData,
   #   singleCellData <- singleCellDataNew
   # }
   
+  
   markers <- rownames(singleCellData)
   
-  SCE <- singleCellData
-  singleCellData <- as.data.frame(colData(SCE))
+  metadata_name <- paste0("Rs", Rs, "")
+  
+  if(!all(markers %in% colnames(colData(singleCellData)))) {
+    
+    singleCellDataClean <- singleCellData %>%
+      preProcessing()
+    
+    singleCellData <- as.data.frame(colData(singleCellDataClean))
+    
+  } else {
+    
+    singleCellDataClean <- singleCellData
+    singleCellData <- as.data.frame(colData(singleCellDataClean))  
+  
+  }
+  
+  
   
   rfData <- singleCellData %>%
     dplyr::select(cellType, all_of(markers)) %>%
@@ -508,16 +533,28 @@ calcContamination <- function(singleCellData,
   # singleCellData2 <- singleCellData %>%
   #   dplyr::left_join(rfData, by = c("cellID"))
 
-  metadata_name <- paste0("Rs", Rs, "")
-  
-  distData <- metadata(SCE)[[metadata_name]]
-  
-  distData <- distData %>%
-    dplyr::left_join(rfData)
 
-  metadata(SCE)[[metadata_name]] <- distData
+  if(!metadata_name %in% names(metadata(singleCellDataClean))) {
+    
+    distData <- colData(singleCellDataClean) 
+    
+    distData <- distData %>% as.data.frame() %>%
+      dplyr::left_join(rfData)
+    
+    metadata(singleCellDataClean)[[metadata_name]] <- distData
+    
+  } else {
+    
+    distData <- metadata(singleCellDataClean)[[metadata_name]]
+    
+    distData <- distData %>% as.data.frame() %>%
+      dplyr::left_join(rfData)
+    
+    metadata(singleCellDataClean)[[metadata_name]] <- distData
+    
+  }
   
-  return(SCE)
+  return(singleCellDataClean)
 }
 
 
