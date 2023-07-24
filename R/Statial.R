@@ -159,7 +159,7 @@ getDistances <- function(singleCellData,
                          nCores = 1) {
   BPPARAM <- .generateBPParam(cores = nCores)
   
-  markersToUse <- rownames(intensitiesData)
+  markersToUse <- rownames(singleCellData)
   
   if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
     singleCellDataClean <- singleCellData %>%
@@ -208,7 +208,7 @@ getDistances <- function(singleCellData,
     ) %>%
     purrr::reduce(full_join)
   
-  metadata_name <- paste0("dist", Rs, "")
+  metadata_name <- paste0("Rs", Rs, "")
   metadata(singleCellDataClean)[[metadata_name]] <- singleCellDataDistances
   # # Identify overlapping column names
   # metadata(singleCellDataClean) <- append(metadata(singleCellDataClean), list(singleCellDataDistances))
@@ -281,10 +281,25 @@ getAbundances <- function(singleCellData,
   
   BPPARAM <- .generateBPParam(cores = nCores)
   
-  metadata_name <- paste0("dist", Rs, "")
+  markersToUse <- rownames(singleCellData)
   
-  SCE <- singleCellData 
-  singleCellData <- metadata(SCE)[[metadata_name]]
+  metadata_name <- paste0("Rs", Rs, "")
+  
+  if(!metadata_name %in% names(metadata(singleCellData))) {
+    
+    if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
+      
+      singleCellDataClean <- singleCellData %>%
+        preProcessing()
+      
+      singleCellData <- as.data.frame(colData(singleCellDataClean))
+    
+    }
+    
+  } else {
+    SCE <- singleCellData
+    singleCellData <- metadata(SCE)[[metadata_name]]
+  }
   
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
@@ -493,7 +508,7 @@ calcContamination <- function(singleCellData,
   # singleCellData2 <- singleCellData %>%
   #   dplyr::left_join(rfData, by = c("cellID"))
 
-  metadata_name <- paste0("dist", Rs, "")
+  metadata_name <- paste0("Rs", Rs, "")
   
   distData <- metadata(SCE)[[metadata_name]]
   
@@ -602,7 +617,7 @@ getStateChanges <- function(singleCellData,
   
   markers = rownames(singleCellData)
   
-  metadata_name <- paste0("dist", Rs, "")
+  metadata_name <- paste0("Rs", Rs, "")
   
   SCE <- singleCellData 
   singleCellData <- metadata(SCE)[[metadata_name]]
@@ -1426,7 +1441,7 @@ visualiseImageRelationship <- function(data,
                                        method = "lm",
                                        modelType = "dist200_") {
   
-  metadata_name <- paste0("dist", Rs, "")
+  metadata_name <- paste0("Rs", Rs, "")
   
   SCE <- data 
   data <- metadata(SCE)[[metadata_name]]
