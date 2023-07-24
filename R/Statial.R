@@ -1,6 +1,9 @@
 #' @noRd
 #'
 #' @import tidyverse
+#' @importFrom SummarizedExperiment assay
+#' @importFrom SummarizedExperiment colData
+#' @importFrom SummarizedExperiment colData<-
 preProcessing <- function(SCE) {
   intensitiesData <- data.frame(t(assay(SCE, "intensities")))
   # spatialData <- data.frame(colData(SCE))
@@ -13,7 +16,6 @@ preProcessing <- function(SCE) {
   if (any(is.na(intensitiesData))) {
     stop("Number of cells in Intensities assay does not match number of cells in SCE")
   }
-  intensitiesData <- DataFrame(intensitiesData)
   colData(SCE) <- cbind(colData(SCE), intensitiesData) 
   
   # Identify factor columns
@@ -140,6 +142,8 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #' @importFrom tibble column_to_rownames
 #' @importFrom dplyr select contains mutate
 #' @importFrom magrittr %>%
+#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata<-
 getDistances <- function(singleCellData,
                          Rs = c(200),
                          whichCellTypes = NULL,
@@ -257,6 +261,8 @@ getDistances <- function(singleCellData,
 #' @importFrom SummarizedExperiment colData assayNames
 #' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom magrittr %>%
+#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata<-
 getAbundances <- function(singleCellData,
                           Rs = c(200),
                           whichCellTypes = NULL,
@@ -398,6 +404,8 @@ getAbundances <- function(singleCellData,
 #' @importFrom ranger ranger
 #' @importFrom tibble column_to_rownames rownames_to_column
 #' @importFrom stringr str_replace
+#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata<-
 calcContamination <- function(singleCellData,
                               Rs = c(200),
                               seed = 2022,
@@ -593,6 +601,8 @@ calcContamination <- function(singleCellData,
 #'   arrange group_by  summarise_at mutate bind_rows left_join filter
 #' @importFrom tidyr gather
 #' @importFrom magrittr %>%
+#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata<-
 getStateChanges <- function(singleCellData,
                             Rs,
                             typeAll = c("dist"),
@@ -793,8 +803,9 @@ modelsPerCellType <- function(cellTypeSplitData,
   if (length(type) == 1) {
     formulas <- lapply(markers, function(x, c) paste(x, "~", c), c = cells) %>%
       unlist()
-    
-    formulas <- formulas %>% lapply(function(x, c) paste(x, "*", c), c = condition) %>% unlist()
+    if (!is.null(condition)) {
+      formulas <- formulas %>% lapply(function(x, c) paste(x, "*", c), c = condition) %>% unlist()  
+    }
     
     # Interaction Models - two types
   } else {
@@ -969,7 +980,7 @@ fitStateModels <- function(x,
   
   if (any(class(outputs) == "try-error")) {
     outputs <- data.frame(
-      independent = paste0(independentSplit, collapse = ", "),
+      independent = paste0(independentSplit, collapse = ""),
       dependent = dependent,
       formula = f
     )
@@ -1397,6 +1408,8 @@ listImageModelsCVFormat <- function(imageModels,
 #'   aes_string ggtitle facet_wrap aes xlab ylab ggtitle autoplot
 #' @importFrom plotly ggplotly
 #' @importFrom magrittr %>%
+#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata<-
 visualiseImageRelationship <- function(data,
                                        Rs,
                                        imageID,
