@@ -9,6 +9,7 @@ markersToUse <- colnames(intensitiesData)
 
 rownames(SCE)
 
+
 # all(!markersToUse %in% colnames(colData(SCE)))
 # 
 # singleCellData <- cbind(spatialData[rownames(intensitiesData), ], intensitiesData)
@@ -61,6 +62,15 @@ imageModelsTest <- getStateChanges(
 ```{r}
 data(headSCE)
 
+library(dplyr)
+data("headSCE")
+singleCellDataDistances <- getDistances(headSCE,
+ nCores = 1,
+ Rs = c(200),
+ whichCellTypes = c("MC2", "SC7")
+)
+
+
 SCE <- getDistances(headSCE, Rs = c(200), 
                     whichCellTypes = c("MC2", "SC7")
                     )
@@ -72,8 +82,8 @@ SCE <- getDistances(headSCE, Rs = c(200),
 SCE <- getDistances(SCE, Rs = c(100), 
                     # whichCellTypes = c("MC2", "EC1")
                     )
-SCE <- getAbundances(headSCE, Rs = c(200), 
-                     # whichCellTypes = c("MC2", "SC7")
+SCE <- getAbundances(SCE, Rs = c(200), 
+                     whichCellTypes = c("MC2", "SC7")
                      )
 SCE <- calcContamination(SCE,
                          Rs = c(200))
@@ -91,25 +101,30 @@ visualiseImageRelationship(
   method = "rlm",
   modelType = "dist200_"
 )
-profvis::profvis(imageModels <- getStateChanges(
-  singleCellData = SCE,
-  Rs = c(200),
-  typeAll = c("dist200"),
-  covariates = c("rfMainCellProb"),
-  method = "lm",
-  isMixed = TRUE,
-  cellTypesToModel = "MC2",
-  nCores = 1))
-
 imageModels <- getStateChanges(
   singleCellData = SCE,
   Rs = c(200),
   typeAll = c("dist200"),
-  covariates = c("rfMainCellProb", "rfSecondLargestCellProb"),
+  method = "lm",
+  isMixed = FALSE,
+  cellTypesToModel = "MC2",
+  nCores = 1)
+
+imageModels <- getStateChanges(
+  singleCellData = SCE,
+  Rs = c(200),
+  typeAll = c("dist200", "abundance200"),
   method = "lm",
   isMixed = TRUE,
   cellTypesToModel = "MC2",
   nCores = 1)
+
+imageModelsFast <- getStateChangesFast(
+ singleCellData = SCE,
+ Rs = c(200),
+ type = c("dist200"),
+ nCores = 1
+)
 # imageModelsNewNoContam <- getStateChanges(
 #   singleCellData = SCE,
 #   markers = markersToUse,
