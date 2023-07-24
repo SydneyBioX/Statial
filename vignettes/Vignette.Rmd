@@ -63,46 +63,45 @@ library(SingleCellExperiment)
 
 ```{r}
 data(headSCE)
-intensitiesData <- data.frame(t(assay(headSCE, "intensities")))
-spatialData <- data.frame(colData(headSCE))
-markersToUse <- colnames(intensitiesData)
-
-singleCellData <- cbind(spatialData[rownames(intensitiesData), ], intensitiesData)
-singleCellData <- singleCellData %>%
-  mutate_at(markersToUse, function(x) ifelse(is.na(x), 0, x)) %>% #replace NAs with 0
-  mutate_if(is.factor, as.character)
 ```
 
 Measures distances between the two cell types mentioned?
 ```{r}
-singleCellDataDistances <- getDistances(singleCellData,
-  nCores = 1,
-  Rs = c(200),
-  whichCellTypes = c("MC2", "SC7")
-)
+SCE <- getDistances(SCE, 
+                    Rs = c(200), 
+                    whichCellTypes = c("MC2", "SC7")
+                    )
 ```
 
 Generates some sort of number that encodes how many cells of each type are within the radius of a cell
 ```{r}
-singleCellDataDistancesCounts <- getAbundances(singleCellDataDistances,
-  nCores = 1,
-  Rs = c(200),
-  whichCellTypes = c("MC2", "SC7")
-)
+SCE <- getAbundances(SCE, 
+                     Rs = c(200), 
+                     whichCellTypes = c("MC2", "SC7")
+                     )
+```
+
+Calculating contamination
+```{r}
+SCE <- calcContamination(SCE, 
+                         Rs = c(200)
+                         )
 ```
 
 Looks at correlation (+whether significant) between dist200 and abundance200 with changes in marker expression
 ```{r, message=FALSE}
-imageModels <- getStateChanges(
-  singleCellData = singleCellDataDistancesCounts,
-  markers = markersToUse,
-  typeAll = c("dist200", "abundance200"),
+imageModelsTest <- getStateChanges(
+  singleCellData = SCE,
+  Rs = c(200),
+  typeAll = c("dist200"),
+  covariates = c("rfMainCellProb", "rfSecondLargestCellProb"),
+  method = "lm",
+  isMixed = FALSE,
   cellTypesToModel = "MC2",
-  nCores = 1
-)
+  nCores = 1)
 ```
 
-Batch effect removal with ImageID
+
 ```{r}
 #TODO: boundary (singular) fit
 mixedModels <- getStateChanges(
