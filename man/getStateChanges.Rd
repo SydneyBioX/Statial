@@ -6,7 +6,7 @@
 \usage{
 getStateChanges(
   singleCellData,
-  markers,
+  Rs,
   typeAll = c("dist"),
   covariates = NULL,
   method = "lm",
@@ -22,8 +22,6 @@ getStateChanges(
 \item{singleCellData}{A dataframe with a imageID, cellType, and marker intensity column along
 with covariates (e.g. distance or abundance of the nearest cell type) to
 model cell state changes}
-
-\item{markers}{A string list of markers that proxy a cell's state}
 
 \item{typeAll}{A prefix that appears on the column names of all cell state modelling
 covariates. The default value is "dist"}

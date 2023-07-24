@@ -6,6 +6,7 @@
 \usage{
 visualiseImageRelationship(
   data,
+  Rs,
   imageID,
   mainCellType,
   interactingCellType,

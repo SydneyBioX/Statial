@@ -2,10 +2,19 @@
 % Please edit documentation in R/Statial.R
 \name{imageModelsCVFormat}
 \alias{imageModelsCVFormat}
+\alias{listImageModelsCVFormat}
 \title{Convert Image Model Output to Cross-Validation Format}
 \usage{
 imageModelsCVFormat(
   imageModels,
+  values_from = "tValue",
+  removeColsThresh = 0.2,
+  missingReplacement = 0
+)
+
+listImageModelsCVFormat(
+  imageModels,
+  classificationData,
   values_from = "tValue",
   removeColsThresh = 0.2,
   missingReplacement = 0
@@ -22,12 +31,51 @@ getStateChangesFast with the argument isMixed = FALSE}
 column in the cross validation ready output}
 
 \item{missingReplacement}{Numeric value to replace missing values}
+
+\item{classificationData}{A level of factors with the classification conditions to be predicted 
+and the imageID as names.}
 }
 \description{
 Takes the output from the getStateChanges function for image based state
 models and converts it in a convenient format for cross validation
+
+Takes the output from the getStateChanges function for image based state
+models and converts it in a convenient format for cross validation
 }
 \examples{
+library(dplyr)
+data("headSCE")
+intensitiesData <- data.frame(t(
+  SummarizedExperiment::assay(headSCE, "intensities")
+))
+spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
+markersToUse <- colnames(intensitiesData)
+singleCellData <- cbind(
+  spatialData[rownames(intensitiesData), ], intensitiesData
+)
+singleCellData <- singleCellData \%>\%
+  mutate(
+    across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
+  ) \%>\%
+  mutate(across(where(is.factor), as.character))
+
+singleCellDataDistances <- getDistances(singleCellData,
+  nCores = 1,
+  Rs = c(200),
+  whichCellTypes = c("MC2", "SC7")
+)
+
+imageModelsFast <- getStateChangesFast(
+  singleCellData = singleCellDataDistances,
+  markers = markersToUse,
+  type = c("dist200"),
+  nCores = 1
+)
+crossValidationData <- imageModelsCVFormat(imageModelsFast,
+  values_from = "tValue",
+  removeColsThresh = 0.2,
+  missingReplacement = 0
+)
 library(dplyr)
 data("headSCE")
 intensitiesData <- data.frame(t(
