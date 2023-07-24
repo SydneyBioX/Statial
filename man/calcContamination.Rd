@@ -17,6 +17,9 @@ calcContamination(
 \item{singleCellData}{A dataframe with a cellType column as well as marker intensity information
 corresponding to each cell. The dataframe must contain a imageID column.}
 
+\item{Rs}{Radius to calculate pairwise distances between cells (can be a numeric or
+vector of radii)}
+
 \item{seed}{A numeric value to allow for replicable results from the random forest
 classification algorithm}
 
@@ -33,23 +36,10 @@ Calculates contamination scores using a random forest classification
 \examples{
 library(dplyr)
 data("headSCE")
-intensitiesData <- data.frame(t(
-  SummarizedExperiment::assay(headSCE, "intensities")
-))
-spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-markersToUse <- colnames(intensitiesData)
-singleCellData <- cbind(
-  spatialData[rownames(intensitiesData), ], intensitiesData
-)
-singleCellData <- singleCellData \%>\%
-  mutate(
-    across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-  ) \%>\%
-  mutate(across(where(is.factor), as.character))
 
 singleCellDataDistancesContam <- calcContamination(
-  singleCellData,
-  markers = markersToUse
+  headSCE,
+  Rs = c(200)
 )
 
 }

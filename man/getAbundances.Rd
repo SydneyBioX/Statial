@@ -27,21 +27,8 @@ each cell to other cell types
 \examples{
 library(dplyr)
 data("headSCE")
-intensitiesData <- data.frame(t(
-  SummarizedExperiment::assay(headSCE, "intensities")
-))
-spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-markersToUse <- colnames(intensitiesData)
-singleCellData <- cbind(
-  spatialData[rownames(intensitiesData), ], intensitiesData
-)
-singleCellData <- singleCellData \%>\%
-  mutate(
-    across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-  ) \%>\%
-  mutate(across(where(is.factor), as.character))
 
-singleCellDataCounts <- getAbundances(singleCellData,
+singleCellDataCounts <- getAbundances(headSCE,
   nCores = 1,
   Rs = c(200),
   whichCellTypes = c("MC2", "SC7")

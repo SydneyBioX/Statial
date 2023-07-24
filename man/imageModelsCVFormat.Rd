@@ -78,19 +78,6 @@ crossValidationData <- imageModelsCVFormat(imageModelsFast,
 )
 library(dplyr)
 data("headSCE")
-intensitiesData <- data.frame(t(
-  SummarizedExperiment::assay(headSCE, "intensities")
-))
-spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-markersToUse <- colnames(intensitiesData)
-singleCellData <- cbind(
-  spatialData[rownames(intensitiesData), ], intensitiesData
-)
-singleCellData <- singleCellData \%>\%
-  mutate(
-    across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-  ) \%>\%
-  mutate(across(where(is.factor), as.character))
 
 singleCellDataDistances <- getDistances(singleCellData,
   nCores = 1,
@@ -98,13 +85,13 @@ singleCellDataDistances <- getDistances(singleCellData,
   whichCellTypes = c("MC2", "SC7")
 )
 
-imageModelsFast <- getStateChangesFast(
+imageModels <- getStateChanges(
   singleCellData = singleCellDataDistances,
-  markers = markersToUse,
+  Rs = c(200),
   type = c("dist200"),
   nCores = 1
 )
-crossValidationData <- imageModelsCVFormat(imageModelsFast,
+crossValidationData <- listimageModelsCVFormat(imageModels,
   values_from = "tValue",
   removeColsThresh = 0.2,
   missingReplacement = 0

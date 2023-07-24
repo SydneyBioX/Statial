@@ -9,6 +9,7 @@ getStateChanges(
   Rs,
   typeAll = c("dist"),
   covariates = NULL,
+  condition = NULL,
   method = "lm",
   isMixed = FALSE,
   randomIntercepts = c("imageID"),
@@ -23,10 +24,15 @@ getStateChanges(
 with covariates (e.g. distance or abundance of the nearest cell type) to
 model cell state changes}
 
+\item{Rs}{Radius to calculate pairwise distances between cells (can be a numeric or
+vector of radii)}
+
 \item{typeAll}{A prefix that appears on the column names of all cell state modelling
 covariates. The default value is "dist"}
 
 \item{covariates}{A list of additional covariates to be included in the model being built.}
+
+\item{condition}{A list of additional conditions to be included in the model being built.}
 
 \item{method}{The type of linear model to be built. Current options include "lm", "rlm".}
 
@@ -55,21 +61,8 @@ provides the option to build robust and mixed linear model variants
 \examples{
 library(dplyr)
 data("headSCE")
-intensitiesData <- data.frame(t(
-  SummarizedExperiment::assay(headSCE, "intensities")
-))
-spatialData <- data.frame(SummarizedExperiment::colData(headSCE))
-markersToUse <- colnames(intensitiesData)
-singleCellData <- cbind(
-  spatialData[rownames(intensitiesData), ], intensitiesData
-)
-singleCellData <- singleCellData \%>\%
-  mutate(
-    across(all_of(markersToUse), function(x) ifelse(is.na(x), 0, x))
-  ) \%>\%
-  mutate(across(where(is.factor), as.character))
 
-singleCellDataDistances <- getDistances(singleCellData,
+singleCellDataDistances <- getDistances(headSCE,
   nCores = 1,
   Rs = c(200),
   whichCellTypes = c("MC2", "SC7")
@@ -77,7 +70,7 @@ singleCellDataDistances <- getDistances(singleCellData,
 
 imageModels <- getStateChanges(
   singleCellData = singleCellDataDistances,
-  markers = markersToUse,
+  Rs = c(200),
   typeAll = c("dist200"),
   cellTypesToModel = "MC2",
   nCores = 1
