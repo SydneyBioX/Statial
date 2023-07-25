@@ -53,6 +53,8 @@ Reiterate the approach
 
 ## Associate with a patient outcome
 
+We might need to add coxph tests to the colTest function. Nick could potentially help with this. If not, for-loop it.
+
 
 # Discrete changes in cell state
 
@@ -84,7 +86,9 @@ Reiterate the approach
 
 # Predicting patient outcomes
 
+## Extract feature sets
 
+## Run classifyR
 
 
 
