@@ -45,6 +45,7 @@ Here we have our Three toy diagrams of our three approaches with a brief overvie
 
 
 # Continuous changes in cell state
+Reiterate the approach
 
 ## Identify within a single image
 
@@ -55,6 +56,8 @@ Here we have our Three toy diagrams of our three approaches with a brief overvie
 
 # Discrete changes in cell state
 
+Reiterate the approach
+
 ## Identify within a single image
 
 Final results should hint at contamination issue.
@@ -63,13 +66,16 @@ Final results should hint at contamination issue.
 
 Show that it helps.
 
-
 ## Identify across images
 
 ## Associate with a patient outcome
 
 
 # Changes within spatial domains
+
+Reiterate the approach
+
+### Identify spatial domains with lisaClust
 
 ## Test between spatial domains
 
