@@ -407,6 +407,9 @@ getAbundances <- function(singleCellData,
 #' @param Rs
 #'   Radius to calculate pairwise distances between cells (can be a numeric or
 #'   vector of radii)
+#' @param markers
+#'   A string list of markers that proxy a cell's state. If NULL, all markers 
+#'   will be used.
 #' @param seed
 #'   A numeric value to allow for replicable results from the random forest
 #'   classification algorithm
@@ -438,6 +441,7 @@ getAbundances <- function(singleCellData,
 #' @importFrom S4Vectors metadata<-
 calcContamination <- function(singleCellData,
                               Rs = c(200),
+                              markers = NULL,
                               seed = 2022,
                               num.trees = 100,
                               verbose = FALSE,
@@ -464,8 +468,9 @@ calcContamination <- function(singleCellData,
   #   singleCellData <- singleCellDataNew
   # }
   
-  
-  markers <- rownames(singleCellData)
+  if(is.null(markers)) {
+    markers <- rownames(singleCellData)
+  }
   
   metadata_name <- paste0("Rs", Rs, "")
   
@@ -592,6 +597,9 @@ calcContamination <- function(singleCellData,
 #' @param Rs
 #'   Radius to calculate pairwise distances between cells (can be a numeric or
 #'   vector of radii)
+#' @param markers
+#'  A string list of markers that proxy a cell's state. If NULL, all markers 
+#'  will be used.
 #' @param typeAll
 #'   A prefix that appears on the column names of all cell state modelling
 #'   covariates. The default value is "dist"
@@ -646,6 +654,7 @@ calcContamination <- function(singleCellData,
 #' @importFrom S4Vectors metadata<-
 getStateChanges <- function(singleCellData,
                             Rs,
+                            markers = NULL,
                             typeAll = c("dist"),
                             covariates = NULL,
                             condition = NULL,
@@ -657,7 +666,9 @@ getStateChanges <- function(singleCellData,
                             timeout = 10,
                             nCores = 1) {
   
-  markers = rownames(singleCellData)
+  if(is.null(markers)) {
+    markers <- rownames(singleCellData)
+  }
   
   metadata_name <- paste0("Rs", Rs, "")
   
@@ -1051,8 +1062,12 @@ fitStateModels <- function(x,
 #'   A dataframe with a imageID, cellType, and marker intensity column along
 #'   with covariates (e.g. distance or abundance of the nearest cell type) to
 #'   model cell state changes
-#' @param Rs Radius to calculate pairwise distances between cells (can be a numeric or
+#' @param Rs 
+#'   Radius to calculate pairwise distances between cells (can be a numeric or
 #'   vector of radii)
+#' @param markers 
+#'   A string list of markers that proxy a cell's state. If NULL, all markers 
+#'   will be used.
 #' @param type
 #'   A prefix that appears on the column names of all cell state modelling
 #'   covariates. The default value is "dist"
@@ -1090,11 +1105,16 @@ fitStateModels <- function(x,
 #' @importFrom magrittr %>%
 getStateChangesFast <- function(singleCellData,
                                 Rs,
+                                markers = NULL,
                                 type = "dist",
                                 covariates = NULL,
                                 removeColsThresh = 0.1,
                                 cellTypesToModel = NULL,
                                 nCores = 1) {
+  
+  if(is.null(markers)) {
+    markers <- rownames(singleCellData)
+  }
   
   x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
