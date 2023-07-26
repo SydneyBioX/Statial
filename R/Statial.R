@@ -5,6 +5,27 @@
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SummarizedExperiment colData<-
 preProcessing <- function(SCE) {
+  
+  
+  #Check if cellID exists in image already - if duplicated, reassign to
+  #ImageCellID
+  if(any(c("cellID", "CellID") %in% colnames(colData(SCE)))) {
+    if(any(duplicated(colData(SCE)$cellID))) {
+      colnames(colData(SCE))[which(names(colData(SCE)) == "cellID")] <- "imageCellID"
+    } 
+    #TODO:Need to change CellID to cellID
+    if(any(duplicated(colData(SCE)$CellID))) {
+      colnames(colData(SCE))[which(names(colData(SCE)) == "CellID")] <- "ImageCellID"      
+    } else {
+      colnames(colData(SCE))[which(names(colData(SCE)) == "CellID")] <- "cellID"      
+    }
+  }
+  
+  if(!c("cellID") %in% colnames(colData(SCE))) {
+    colData(SCE)$cellID <- rownames(colData(SCE))
+  }
+  
+  
   intensitiesData <- data.frame(t(assay(SCE, "intensities")))
   # spatialData <- data.frame(colData(SCE))
   
@@ -20,18 +41,13 @@ preProcessing <- function(SCE) {
   
   # Identify factor columns
   
-  
-  
   factor_cols <- which(sapply(colData(SCE), is.factor))
   
-  # Convert factor columns to characters in colData
-  colData(SCE)[, factor_cols] <- lapply(colData(SCE)[, factor_cols], as.character)
-  #Works for headSCE
   
-  # colData(SCE)[, factor_cols] <- colData(SCE)[, factor_cols] %>% as.character
-  #Works for kerenSCE
-  
-  
+  for(x in factor_cols) {
+    colData(SCE)[, x] <- colData(SCE)[, x] %>% as.character
+  }
+
   return(SCE)
 }
 
@@ -1421,6 +1437,7 @@ visualiseImageRelationship <- function(data,
   modelData <- data[data$cellType == mainCellType, ]
   model <- lm(formula(relationshipFormula), modelData)
   
+  print(summary(model))
   
   data[data$cellType == mainCellType, "fittedValues"] <- predict(
     model,
@@ -1433,8 +1450,6 @@ visualiseImageRelationship <- function(data,
       model, data[data$cellType == mainCellType, ]
     )
   }
-  
-  
   
   g1 <- ggplot2::ggplot() +
     ggplot2::stat_density_2d(
@@ -1476,7 +1491,8 @@ visualiseImageRelationship <- function(data,
     ggplot2::geom_smooth(method = lm) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
-    ggplot2::ylab(depedentMarker)
+    ggplot2::ylab(depedentMarker) +
+    ggplot2::ylim(-1, NA)
   
   
   
