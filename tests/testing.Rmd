@@ -9,6 +9,11 @@ markersToUse <- colnames(intensitiesData)
 
 rownames(SCE)
 
+colData(SCE)[, factor_cols] <- colData(SCE)[, factor_cols] %>% as.character 
+
+#TURN IMAGEID COLUMN INTO A CHARACTER COLUMN
+
+#
 
 # all(!markersToUse %in% colnames(colData(SCE)))
 # 
@@ -18,6 +23,132 @@ rownames(SCE)
 #   mutate_if(is.factor, as.character)
 ```
 
+```{r}
+colnames(colData(kerenSCE))[which(names(colData(kerenSCE)) == "CellID")] <- "ImageCellID"
+
+colData(kerenSCE)$cellID <- rownames(colData(kerenSCE))
+
+#TURN IMAGEID COLUMN INTO A CHARACTER COLUMN
+colData(kerenSCE)$imageID <- colData(kerenSCE)$imageID %>% as.character
+#
+
+
+colData(kerenSCE)$cellType[colData(kerenSCE)$cellType == "CD4"] <- "CD4_Cell"
+colData(kerenSCE)$cellType[colData(kerenSCE)$cellType == "CD8"] <- "CD8_Cell"
+colData(kerenSCE)$cellType[colData(kerenSCE)$cellType == "CD3"] <- "CD3_Cell"
+
+subset <- kerenSCE[, colData(kerenSCE)$imageID %in% c("1", "2", "3")]
+
+
+#TURN IMAGEID COLUMN INTO A CHARACTER COLUMN
+
+#
+
+
+SCE <- getDistances(subset,
+                         Rs = c(200),
+                         whichCellTypes = c("Macrophages", "Keratin+Tumour"))
+
+SCE <- getAbundances(SCE,
+                             Rs = c(200),
+                             whichCellTypes = c("Macrophages", "Keratin+Tumour")
+                             )
+
+# tmp <- getAbundances(headSCE,
+#                              Rs = c(200),
+#                              whichCellTypes = c("MC2", "SC7")
+#                              )
+
+SCE <- calcContamination(SCE,
+                         Rs = c(200))
+
+imageModels <- getStateChanges(
+  singleCellData = SCE,
+  Rs = c(200),
+  typeAll = c("dist200", "abundance200"),
+  covariates = c("rfMainCellProb"),
+  method = "lm",
+  isMixed = FALSE,
+  cellTypesToModel = "Keratin+Tumour",
+  nCores = 1)
+
+
+# 
+# 
+# visualiseImageRelationship(
+#   data = SCE,
+#   Rs = c(200),
+#   imageID = "3",
+#   mainCellType = "Keratin+Tumour",
+#   interactingCellType = "CD3_Cell",
+#   depedentMarker = "CD3",
+#   interactive = FALSE,
+#   plotModelFit = FALSE,
+#   method = "rlm",
+#   modelType = "dist200_"
+# )
+
+namesVector <- unique(colData(subset)$imageID)
+
+classificationDataKeep <- factor(x = rep("cool", length(namesVector))) %>% set_names(namesVector)
+
+modellingData <- listImageModelsCVFormat(imageModels, classificationDataKeep, values_from = "tValue",
+                                     removeColsThresh = 0.2,
+                                     missingReplacement = 0)
+
+#RUN CLASSIFICATION
+interactionsResults =  seq(1, length(modellingData)) %>%
+  bplapply(function(x) 
+    {
+    print(x)
+    try({
+    interactionsResults = ClassifyR::crossValidate(measurements = modellingData[[x]],
+                                            outcome = classificationDataKeep,
+                                            nFeatures = 10,
+                                            selectionMethod = "t-test",
+                                            classifier = "XGB",
+                                            nRepeats = 50,
+                                            nCores = 1,
+                                            characteristicsLabel = names(modellingData)[[x]])
+    })
+    
+  }, BPPARAM = BiocParallel::MulticoreParam(workers = 1))
+
+
+names(interactionsResults) = names(modellingData)
+interactionsResults = interactionsResults[unlist(lapply(interactionsResults,class)) != "try-error"]
+
+#PLOT BOXPLOT OF ACCURACY
+interactionsResults %>%
+  lapply(function(x) ClassifyR::calcCVperformance(x, performanceType  = "Balanced Accuracy")@performance) %>% 
+  lapply(data.frame) %>% 
+  mapply(FUN = function(x, name) x %>% set_names(name), x = .,
+         name = names(interactionsResults), SIMPLIFY = FALSE) %>% 
+  bind_cols() %>% 
+  gather() %>% 
+  mutate(key = str_replace_all(key, "_", " ")) %>% 
+  mutate(key = str_replace_all(key, "\\.", " ")) %>% 
+  mutate(key = str_replace_all(key, "None", "Simple")) %>% 
+  mutate(key = str_replace_all(key, "count", "abundance")) %>% 
+  mutate(key = str_to_title(key)) %>% 
+  ggplot(aes(x = reorder(key, value, median), y = value)) + 
+  geom_boxplot() +
+  labs(y = "Balanced Accuracy", x = "Assay Name") +
+  geom_hline(yintercept = 0.5, lty = "dashed") +
+  theme(axis.text=element_text(size = 7)) +
+  coord_flip()  +
+  ggtitle("Head and Neck Data (XGB)")
+
+
+
+
+
+
+
+
+
+
+```
 
 ```{r}
 # Rs = c(200)
@@ -32,28 +163,28 @@ rownames(SCE)
 
 
 ```{r}
-data(headSCE)
-
-SCE_complete <- getDistances(headSCE,
-                             Rs = c(200)
-                             )
-
-SCE_complete <- getAbundances(SCE_complete,
-                             Rs = c(200)
-                             )
-
-SCE_complete <- calcContamination(SCE_complete,
-                                  Rs = c(200)
-                                  )
-
-imageModelsTest <- getStateChanges(
-  singleCellData = SCE_complete,
-  Rs = c(200),
-  typeAll = c("dist200", "abundance200"),
-  covariates = c("rfMainCellProb"),
-  method = "lm",
-  isMixed = TRUE,
-  nCores = 1)
+# data(headSCE)
+# 
+# SCE_complete <- getDistances(headSCE,
+#                              Rs = c(200)
+#                              )
+# 
+# SCE_complete <- getAbundances(SCE_complete,
+#                              Rs = c(200)
+#                              )
+# 
+# SCE_complete <- calcContamination(SCE_complete,
+#                                   Rs = c(200)
+#                                   )
+# 
+# imageModelsTest <- getStateChanges(
+#   singleCellData = SCE_complete,
+#   Rs = c(200),
+#   typeAll = c("dist200", "abundance200"),
+#   covariates = c("rfMainCellProb"),
+#   method = "lm",
+#   isMixed = FALSE,
+#   nCores = 1)
 
 
 ```
