@@ -121,20 +121,17 @@ stateChanges <- getStateChanges(
 
 Let's take a look at the most significant gene-to-distance pairwise 
 interactions. We can see that the most significant interaction between distance
-and gene expression occurs between B cells and CD8+ T cells for the CD8 gene.
-The CD8 gene codes a ligand present on CD8+ T cells, and should not be expressed 
-on B cells. 
+and expression occurs between B cells and CD8+ T cells for the CD8 ligand.
+CD8 is a highly specific ligand for CD8+ T cells, and should not be expressed 
+on B cells in a normal biological context. 
 
 ```{r}
 head(stateChanges)
-
-
-
 ```
 Taking a deeper look at this interaction, we can indeed see that the result 
 appears real. So why are B cells expressing CD8?
 
-This brings us to a key problem of segmentation - contamination.
+This brings us to a key problem of cell segmentation - contamination.
 ```{r}
 visualiseImageRelationship(
   data = SCE,
@@ -163,7 +160,7 @@ introduce these probabilities as covariates into our linear model.
 ```{r}
 SCE <- calcContamination(SCE)
 
-stateChanges <- getStateChanges(
+stateChangesContam <- getStateChanges(
   singleCellData = SCE,
   Rs = c(200),
   typeAll = c("dist200", "abundance200"),
@@ -174,7 +171,37 @@ stateChanges <- getStateChanges(
 ```
 
 
+We can see that adding the contamination scores as covariates improves the...
+TODO: generate the ROC plots (sorry could not figure this one out + could not
+find code for this)
+```{r}
 
+```
+
+
+The next steps will involve comparing survival time to see if these 
+distance-to-gene interactions are biologically significant.
+
+### Ellis, I've just realised that we're looking at survival data, not a
+### discrete variable. Not sure if colTest is the correct choice (correct me if I'm wrong)
+
+```{r}
+stateChanges <- getStateChanges(
+  singleCellData = SCE,
+  Rs = c(200),
+  typeAll = c("dist200", "abundance200"),
+  method = "lm",
+  isMixed = TRUE,
+  nCores = 30)
+
+modellingData <- listImageModelsCVFormat(stateChanges,
+                                         values_from = "tValue",
+                                         removeColsThresh = 0.2,
+                                         missingReplacement = 0)
+
+t_tests <- colTest(modellingData[1])
+
+```
 
 ### Code to run it for a single relationship (e.g. does CD8 go up in T cells as T cells get closer to a tumour)
 ### Code to run for everything (e.g. don't specify for relationships)
