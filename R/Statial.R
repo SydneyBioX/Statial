@@ -19,10 +19,18 @@ preProcessing <- function(SCE) {
   colData(SCE) <- cbind(colData(SCE), intensitiesData) 
   
   # Identify factor columns
+  
+  
+  
   factor_cols <- which(sapply(colData(SCE), is.factor))
   
   # Convert factor columns to characters in colData
   colData(SCE)[, factor_cols] <- lapply(colData(SCE)[, factor_cols], as.character)
+  #Works for headSCE
+  
+  # colData(SCE)[, factor_cols] <- colData(SCE)[, factor_cols] %>% as.character
+  #Works for kerenSCE
+  
   
   return(SCE)
 }
@@ -148,6 +156,7 @@ getDistances <- function(singleCellData,
                          Rs = c(200),
                          whichCellTypes = NULL,
                          nCores = 1) {
+  x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
   
   markersToUse <- rownames(singleCellData)
@@ -268,6 +277,7 @@ getAbundances <- function(singleCellData,
                           whichCellTypes = NULL,
                           nCores = 1) {
   
+  x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
   
   markersToUse <- rownames(singleCellData)
@@ -347,7 +357,8 @@ getAbundances <- function(singleCellData,
     mapply(
       function(x, newNames) x %>% purrr::set_names(newNames),
       x = ., newNames = correctedColumnNames, SIMPLIFY = FALSE
-    ) %>%
+    ) 
+  singleCellDataK <- singleCellDataK %>%
     mapply(
       function(x, imageID) {
         x %>%
@@ -355,10 +366,13 @@ getAbundances <- function(singleCellData,
           dplyr::mutate(imageID = imageID)
       },
       x = ., imageID = names(.), SIMPLIFY = FALSE
-    ) %>%
+    ) 
+  singleCellDataK <- singleCellDataK %>%
     dplyr::bind_rows() %>%
     tibble::rownames_to_column("cellID") %>%
-    dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.na(x), 0, x))) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.na(x), 0, x)))
+  
+  singleCellDataK <- singleCellDataK %>%
     dplyr::right_join(singleCellData, by = c("imageID", "cellID")) %>%
     dplyr::relocate(imageID)
   
@@ -475,21 +489,32 @@ calcContamination <- function(singleCellData,
   
   maxn <- function(n) function(x) order(x, decreasing = TRUE)[!is.na(x)][n]
   
-  rfData <- cbind(rfData, predictions) %>%
+  rfData <- cbind(rfData, predictions) 
+  
+  #check for duplicates - this can happen if your cells are annotated "CD4" for 
+  #"CD4 T cells" and you also have a gene marker "CD4"
+  if(!is.empty(which(duplicated(names(rfData))))) {
+    duplicate_columns <- which(duplicated(names(rfData)))
+    print(paste("You have duplicate columns at columns ", paste0(duplicate_columns, collapse = ",")))
+  }
+  
+  rfData <- rfData %>%
     dplyr::mutate(
       rfMaxCellProb = apply(
         .[colnames(predictions)],
         1,
         function(x) x[maxn(1)(x)]
       )
-    ) %>%
+    ) 
+  rfData <- rfData %>%
     dplyr::mutate(
       rfSecondLargestCellProb = apply(
         .[colnames(predictions)],
         1,
         function(x) x[maxn(2)(x)]
       )
-    ) %>%
+    )
+  rfData <- rfData %>%
     dplyr::mutate(
       rfMainCellProb = apply(
         .[c("cellType", colnames(predictions))],
@@ -679,6 +704,8 @@ calculateStateModels <- function(singleCellData,
                                  verbose = TRUE,
                                  timeout = 10,
                                  nCores = 1) {
+  
+  x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
   
   if (isMixed == TRUE) {
@@ -1053,6 +1080,7 @@ getStateChangesFast <- function(singleCellData,
                                 cellTypesToModel = NULL,
                                 nCores = 1) {
   
+  x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
   
   markers = rownames(singleCellData)
@@ -1286,7 +1314,7 @@ listImageModelsCVFormat <- function(imageModels,
              filter(imageID %in% imageSubset) %>% 
              column_to_rownames("imageID") %>% 
              dplyr::select(!contains(c("dataset", "type"))), 
-           imageSubset = names(classificationDataKeep))
+           imageSubset = names(classificationData))
   
   return(modellingData)
 }
