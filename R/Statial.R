@@ -1263,9 +1263,6 @@ imageModelsCVFormat <- function(imageModels,
 #' @param imageModels
 #'   A dataframe with the output from the function getStateChanges or
 #'   getStateChangesFast with the argument isMixed = FALSE
-#' @param classificationData
-#'   A level of factors with the classification conditions to be predicted 
-#'   and the imageID as names.
 #' @param values_from
 #'   Column to use from imageModels for cross validation. The default is
 #'   "tValue" but "beta" can be choosen as well
@@ -1290,12 +1287,7 @@ imageModelsCVFormat <- function(imageModels,
 #'   type = c("dist200"),
 #'   nCores = 1
 #' )
-#' 
-#' classificationDataKeep <- factor(x = c("NP", "NP", "NP", "P", "P")) %>% 
-#' purrr::set_names(c("1", "5", "6", "7", "8"))
-#' 
 #' crossValidationData <- listImageModelsCVFormat(imageModels,
-#'   classificationData = classificationDataKeep,
 #'   values_from = "tValue",
 #'   removeColsThresh = 0.2,
 #'   missingReplacement = 0
@@ -1306,12 +1298,15 @@ imageModelsCVFormat <- function(imageModels,
 #' @importFrom stringr str_detect str_replace str_split
 #' @importFrom tidyr pivot_wider
 #' @importFrom magrittr %>%
-#' @importFrom purrr set_names
 listImageModelsCVFormat <- function(imageModels,
-                                classificationData,
                                 values_from = "tValue",
                                 removeColsThresh = 0.2,
                                 missingReplacement = 0) {
+  
+  if(!c("imageID") %in% colnames(imageModels)) {
+    stop("The argument imageID needs to exist in the data i.e. use isMixed = FALSE")
+  }                                                                             
+  classificationData <- imageModels$imageID %>% unique()
   
   crossValidateInteractionsData <- imageModels %>%
     filter(sampleSize >= 10) %>%
@@ -1325,6 +1320,7 @@ listImageModelsCVFormat <- function(imageModels,
            SIMPLIFY = FALSE )
   crossValidateInteractionsData <- crossValidateInteractionsData[unlist(lapply(crossValidateInteractionsData,
                                                                               function(x) ncol(x) > 2))]
+  
   modellingData <- crossValidateInteractionsData %>% 
     lapply(function(x, imageSubset) x %>%
              filter(imageID %in% imageSubset) %>% 
