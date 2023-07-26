@@ -1,0 +1,96 @@
+---
+title: "Introduction to Statial"
+date: "`r BiocStyle::doc_date()`"
+params:
+  test: FALSE
+author:
+- name: Farhan Ameen
+  affiliation:  
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Sourish Iyengar
+  affiliation:
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Ellis Patrick
+  affiliation:
+  - &WIMR Westmead Institute for Medical Research, University of Sydney, Australia
+  - School of Mathematics and Statistics, University of Sydney, Australia
+vignette: >
+  %\VignetteIndexEntry{"Introduction to Statial"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output: 
+  BiocStyle::html_document
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(BiocStyle)
+```
+
+
+# Analysis of cell-resolution spatial omics data
+
+Talk about our spicy workflow packages or scdney. We should have a paragraph like this either at the beginning or end of all of our vignettes. It would be good if it was standardised so that all of the vignettes pull it from the same place.
+
+# What are cell states?
+
+We should look at how diffcyt frames this or pitches it. Essentially summarise the cell type vs cell state debate and reframe as why it is beneficial analytically to frame some things as states.
+
+# Identifying spatially-related changes in cell state with Statial.
+
+Here we have our Three toy diagrams of our three approaches with a brief overview.
+
+
+# Continuous changes in cell state
+Reiterate the approach
+
+## Identify within a single image
+
+## Identify across images
+
+## Associate with a patient outcome
+
+We might need to add coxph tests to the colTest function. Nick could potentially help with this. If not, for-loop it.
+
+
+# Discrete changes in cell state
+
+Reiterate the approach
+
+## Identify within a single image
+
+Final results should hint at contamination issue.
+
+### Marker contamination from lateral spillover
+
+Show that it helps.
+
+## Identify across images
+
+## Associate with a patient outcome
+
+
+# Changes within spatial domains
+
+Reiterate the approach
+
+### Identify spatial domains with lisaClust
+
+## Test between spatial domains
+
+## Associate with a patient outcome
+
+
+# Predicting patient outcomes
+
+## Extract feature sets
+
+## Run classifyR
+
+
+
+
+
