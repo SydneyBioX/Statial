@@ -6,7 +6,6 @@
 \usage{
 listImageModelsCVFormat(
   imageModels,
-  classificationData,
   values_from = "tValue",
   removeColsThresh = 0.2,
   missingReplacement = 0
@@ -15,9 +14,6 @@ listImageModelsCVFormat(
 \arguments{
 \item{imageModels}{A dataframe with the output from the function getStateChanges or
 getStateChangesFast with the argument isMixed = FALSE}
-
-\item{classificationData}{A level of factors with the classification conditions to be predicted 
-and the imageID as names.}
 
 \item{values_from}{Column to use from imageModels for cross validation. The default is
 "tValue" but "beta" can be choosen as well}
@@ -47,12 +43,7 @@ imageModels <- getStateChanges(
   type = c("dist200"),
   nCores = 1
 )
-
-classificationDataKeep <- factor(x = c("NP", "NP", "NP", "P", "P")) \%>\% 
-purrr::set_names(c("1", "5", "6", "7", "8"))
-
 crossValidationData <- listImageModelsCVFormat(imageModels,
-  classificationData = classificationDataKeep,
   values_from = "tValue",
   removeColsThresh = 0.2,
   missingReplacement = 0

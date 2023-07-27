@@ -7,6 +7,7 @@
 getStateChanges(
   singleCellData,
   Rs,
+  markers = NULL,
   typeAll = c("dist"),
   covariates = NULL,
   condition = NULL,
@@ -26,6 +27,9 @@ model cell state changes}
 
 \item{Rs}{Radius to calculate pairwise distances between cells (can be a numeric or
 vector of radii)}
+
+\item{markers}{A string list of markers that proxy a cell's state. If NULL, all markers 
+will be used.}
 
 \item{typeAll}{A prefix that appears on the column names of all cell state modelling
 covariates. The default value is "dist"}

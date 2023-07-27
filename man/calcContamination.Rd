@@ -7,6 +7,7 @@
 calcContamination(
   singleCellData,
   Rs = c(200),
+  markers = NULL,
   seed = 2022,
   num.trees = 100,
   verbose = FALSE,
@@ -19,6 +20,9 @@ corresponding to each cell. The dataframe must contain a imageID column.}
 
 \item{Rs}{Radius to calculate pairwise distances between cells (can be a numeric or
 vector of radii)}
+
+\item{markers}{A string list of markers that proxy a cell's state. If NULL, all markers 
+will be used.}
 
 \item{seed}{A numeric value to allow for replicable results from the random forest
 classification algorithm}
