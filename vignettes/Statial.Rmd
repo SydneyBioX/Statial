@@ -66,7 +66,7 @@ The definitions of cell types and cell states are somewhat ambiguous, cell types
 
 # Loading example data
 
-In the following we will analyse cutaneous squamous cell carcinoma data from the head and neck region (Ferguson et al. 2022). These images are stored in a `SingleCellExperiment` object. The first step in analysing these images is to organise all the cells present into cell state populations or clusters, e.g. all the different B cell types are put in a vector called bcells.
+In the following we will analyse breast cancer data from Keren et al. 2018. These images are stored in a `SingleCellExperiment` object. The first step in analysing these images is to organise all the cells present into cell state populations or clusters, e.g. all the different B cell types are put in a vector called bcells.
 
 ```{r}
 # Load head and neck data
@@ -139,7 +139,7 @@ parentDf <- parentCombinations(
   tcells,
   myeloid,
   endothelial,
-  epithelial,
+  mesenchymal,
   tissue,
   immune
 )
@@ -150,14 +150,14 @@ head(parentDf)
 Rather than specifying `to`, `from`, and `parent` in Kontextual, the output from `parentCombinations` can be inputed into `Kontextual` using the `parentDf` argument. Here we will test the first 20 pairwise cell relationships in `parentCombinations` on the first image of the dataset.
 ```{r}
 # Selecting Image 1 as an example
-image_1 <- headSCE |>
+image_6 <- kerenSCE |>
   colData() |>
   data.frame() |>
-  filter(imageID == "1")
+  filter(imageID == "6")
 
 
 image1_Kontextual <- Kontextual(
-  cells = image_1,
+  cells = image_6,
   parentDf = parentDf[1:20, ],
   r = 50,
   cores = 1
@@ -169,18 +169,30 @@ head(image1_Kontextual)
 
 # RsCurve
 
-Here we examine an image were the relationship between 2 cell types depends on a parent cell population. This is a breast cancer image obtained from Keren et al, 2018 from patient 6. In the image below we can see that `p53` and `Immune` are dispersed. However when the behaviour of `p53` is placed in the context of the spatial behaviour of its parent population `Keratin+Tumour`, `p53` and `Immune` now appear localised.
+Here we examine an image from the Keren et al. 2018 dataset where the relationship between 2 cell types depends on a parent cell population. In the image below we can see that `p53` and `Immune` are dispersed. However when the behaviour of `p53` is placed in the context of the spatial behaviour of its parent population `Keratin+Tumour`, `p53` and `Immune` now appear localised.
 
 
 ```{r}
-data("kerenImage")
+#Select image 6 from the kerenSCE dataset
+kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
 
-kerenImage |>
-  filter(cellType %in% c("Keratin+Tumour", "Immune", "p53")) |>
-  arrange(cellType) |>
+#Select for all cells that express higher than baseline level of p53
+p53Pos = assay(kerenImage6)["p53",]  |> 
+  as.numeric() > -0.300460
+kerenImage6$cellType[p53Pos & kerenImage6$cellType %in% c("Keratin_Tumour")] <- "p53+Tumour"
+
+#Group all immune cells under the name "Immune"
+kerenImage6$cellType[kerenImage6$cellType %in% immune] <- "Immune"
+
+kerenImage6 |>
+  colData() %>%
+  as.data.frame() %>%
+  filter(cellType %in% c("Keratin_Tumour", "Immune", "p53+Tumour")) %>%
+  arrange(cellType) %>%
   ggplot(aes(x = x, y = y, color = cellType)) +
   geom_point(size = 1) +
   scale_colour_manual(values = c("#505050", "#D6D6D6", "#64BC46"))
+
 ```
 
 
@@ -188,10 +200,10 @@ The `rsCurve` function plots the L-function value and Kontextual values over a r
 
 ```{r}
 rsDf <- rsCurve(
-  cells = kerenImage,
-  from = "p53",
+  cells = kerenImage6,
+  from = "p53+Tumour",
   to = "Immune",
-  parent = c("p53", "Keratin+Tumour"),
+  parent = c("p53", "Keratin_Tumour"),
   rs = seq(10, 510, 100),
   cores = 1
 )
@@ -200,9 +212,11 @@ rsDf <- rsCurve(
 ggplotRs(rsDf)
 ```
 
+#Examining Cell-to-cell interactions with marker expression
+In the next section of this vignette, we will utilise multiplexed imaging data to computationally identify and quantify evidence of cell interactions that catalyse cell state changes. This approach measures how protein markers in a cell change with spatial proximity and abundance to other cell types. 
+The methods utilised here will provide a framework to explore how the dynamic behaviour of cells are altered by the agents they are surrounded by.
 
-##Sourish's Stuff
-
+The first step in analysing these changes is to calculate the spatial proximity (`getDistances`) and abundance (`getAbundances`) of each cell to every cell type. These values will then be stored in the `reducedDims` slot of the `SingleCellExperiment` object under the names `distances` and `abundances` respectively.
 ```{r}
 data(kerenSCE)
 
@@ -217,31 +231,28 @@ SCE <- getAbundances(SCE,
 
 ```
 
-First, let's examine the effect of the distance between Keratin/Tumour cells and
-macrophages on the expression of p53 in Keratin/Tumour cells. We can observe
-that keratin/tumour cells closer to a group of macrophages tend to have higher
-expression of p53. This relationship is outlined with the second graph, showing
-a decrease of p53 expression in keratin/tumour cells over distance to 
-macrophages. The pvalue provided also shows us that this is a significant 
-interaction.
+First, let's examine the same effect observed earlier with Kontextual - the distance between p53-positive keratin/tumour cells and macrophages in the context of total keratin/tumour cells. 
+Statial provides a convenient function for observing this interaction - `visualiseImageRelationship`. Here, we can specify the `imageID` and our main cell of interest, `mainCellType` and our interacting cell type `interactingCellType` and our marker of interest `dependentMarker`, in this case p53.
+
+Through this analysis, we can observe that keratin/tumour cells closer to a group of macrophages tend to have higher expression of p53, as observed in the first graph. This relationship is outlined with the second graph, showing an overall decrease of p53 expression in keratin/tumour cells over distance to macrophages. The pvalue provided also shows us that this correlative interaction is statistically significant.
+
+These results are similar to those provided with Kontextual, which calculates a similar localisation between p53+ keratin/tumour cells and macrophages.
 ```{r}
 visualiseImageRelationship(
   data = SCE,
   Rs = c(200),
-  imageID = "3",
-  mainCellType = "B",
-  interactingCellType = "CD8_Cell",
-  depedentMarker = "CD8",
+  imageID = "6",
+  mainCellType = "Keratin_Tumour",
+  interactingCellType = "Macrophages",
+  depedentMarker = "p53",
   interactive = FALSE,
   plotModelFit = FALSE,
-  method = "rlm",
+  method = "lm",
   modelType = "dist200_"
 )
 
 ```
-
-
-Now, let's look at the most significant interactions across all the images.
+Beyond looking at single cell-to-cell interactions for a single image, we can also look at all interactions across all images. Statial provides the `getStateChanges` function for this exact purpose, allowing us to examine the most significant correlations between distance and marker expression.
 ```{r}
 stateChanges <- getStateChanges(
   singleCellData = SCE,
@@ -251,21 +262,52 @@ stateChanges <- getStateChanges(
   isMixed = FALSE,
   nCores = 40)
 
+head(stateChanges, 10)
 ```
 
-Let's take a look at the most significant gene-to-distance pairwise 
-interactions. We can see that the most significant interaction between distance
-and expression occurs between B cells and CD8+ T cells for the CD8 ligand.
-CD8 is a highly specific ligand for CD8+ T cells, and should not be expressed 
-on B cells in a normal biological context. 
+Let's take a look at the top 10 most significant gene-to-distance pairwise interactions. We can see that the most significant interaction involving keratin/tumour cells occurs between keratin/tumour cells and macrophages in image 27, where HLA Class I molecules in keratin/tumour cells are upregulated when nearby macrophage populations. 
+We can examine this interaction further with the `visualiseImageRelationship` function, showing us a clear visual correlation between macrophage density and HLA Class I expression.
+
+Biologically, HLA Class I is a ligand which exists on all nucleated cells, tasked with presenting internal cell antigens for recognition by the immune system, marking aberrant cells for destruction by either CD8+ T cells or NK cells. This increased expression of HLA Class I molecules on tumour cells is an interesting finding, and potentially uncovers a novel interaction between tumour cells and macrophages which drives aberrant HLA Class I expression.
 
 ```{r}
-head(stateChanges)
+visualiseImageRelationship(
+  data = SCE,
+  Rs = c(200),
+  imageID = "27",
+  mainCellType = "Keratin_Tumour",
+  interactingCellType = "Macrophages",
+  depedentMarker = "HLA_Class_1",
+  interactive = FALSE,
+  plotModelFit = FALSE,
+  method = "lm",
+  modelType = "dist200_"
+)
 ```
-Taking a deeper look at this interaction, we can indeed see that the result 
-appears real. So why are B cells expressing CD8?
+However, these significant results are occasionally isolated to a single image or patient, and it may sometimes be wiser to perform a more holistic analysis of all the images/patients to examine common interactions across a whole group. Additionally, patients can be divided into treatment groups to examine the effects of a treatment on cell-to-cell interactions. 
 
-This brings us to a key problem of cell segmentation - contamination.
+Fortunately, `getStateChanges` provides the `isMixed` parameter for performing a holistic analysis. In this next section, we will employ a mixed effects model to examine the most significant cell-to-cell interactions shared across all images.
+
+
+```{r}
+stateChangesMixed <- getStateChanges(
+  singleCellData = SCE,
+  Rs = c(200),
+  typeAll = c("dist200", "abundance200"),
+  method = "lm",
+  isMixed = TRUE,
+  nCores = 40)
+
+head(stateChangesMixed, 10)
+```
+
+Looking at the same top 10 most significant interactions, we can see that the results are vastly different. Running the mixed effects model appears to bring about some curious results. One of the most significant interactions occurs between B cells and CD8 T cells, where B cells are found to increase in CD8 expression when in close proximity to CD8 T cells. 
+Biologically, CD8 is a highly specific ligand for CD8 T cells, and under no biologically health circumstances are they expressed in B cells. 
+
+Could this potentially be an artefact of `getStateChanges`? Taking a look at an image through the `visualiseImageRelationships` function, we indeed observe an apparent localisation between CD8+ B cells and CD8 T cells.
+
+QUESTIONBOX: Feel free to play around with the imageID parameter to observe the effect in other imageIDs.
+
 ```{r}
 visualiseImageRelationship(
   data = SCE,
@@ -276,21 +318,25 @@ visualiseImageRelationship(
   depedentMarker = "CD8",
   interactive = FALSE,
   plotModelFit = FALSE,
-  method = "rlm",
+  method = "lm",
   modelType = "dist200_"
 )
-
 ```
+So why are B cells expressing CD8?
+This brings us to a key problem of cell segmentation - contamination.
 
-Contamination
-### Write explanation of contamination here
+#Contamination
+Contamination, or lateral marker spill over is an issue that results in a cell’s marker expressions being wrongly attributed to another adjacent cell. This issue arises from incorrect segmentation 
+where components of one cell are wrongly determined as belonging to another cell. 
+Alternatively, this issue can arise when antibodies used to tag and measure marker expressions don't latch on properly to a cell of interest, thereby resulting in residual markers being wrongly assigned as belonging to a cell near the intended target cell. It is important that we either correct or account
+for this incorrect attribution of markers in our modelling process. This is critical in 
+understanding whether significant cell-cell interactions detected are an artefact of technical 
+measurement errors driven by spill over or are real biological changes that represent a shift in a 
+cell’s state.
 
 To circumvent this problem, Statial provides a function that predicts the
-probability that a cell is any particular cell type. This comes in the format of
-"rfMainCellProb". "rfMainCellProb" provides the probability that a cell is what
-it's stated to be. E.g. For a cell designated as CD8, rfMainCellProb could give 
-a 80% chance that the cell is indeed CD8, due to contamination. We can then
-introduce these probabilities as covariates into our linear model.
+probability that a cell is any particular cell type. This comes in the format of the `calcContamination` function, which returns a dataframe of probabilities demarcating the chance of a cell being any particular cellType. It also provides the `rfMainCellProb` vector, which provides the probability that a cell is indeed the cell type it has been designated. 
+E.g. For a cell designated as CD8, rfMainCellProb could give a 80% chance that the cell is indeed CD8, due to contamination. We can then introduce these probabilities as covariates into our linear model.
 ```{r}
 SCE <- calcContamination(SCE)
 
@@ -302,39 +348,46 @@ stateChangesContam <- getStateChanges(
   method = "lm",
   isMixed = TRUE,
   nCores = 30)
-```
 
+head(stateChangesContam)
+```
 
 We can see that adding the contamination scores as covariates improves the...
 TODO: generate the ROC plots (sorry could not figure this one out + could not
 find code for this)
 ```{r}
-
+#TODO: ROC Plots + colTest(coxPH)
 ```
 
 
 The next steps will involve comparing survival time to see if these 
 distance-to-gene interactions are biologically significant.
 
-### Ellis, I've just realised that we're looking at survival data, not a
-### discrete variable. Not sure if colTest is the correct choice (correct me if I'm wrong)
+#Cross Validation
 
 ```{r}
-stateChanges <- getStateChanges(
-  singleCellData = SCE,
-  Rs = c(200),
-  typeAll = c("dist200", "abundance200"),
-  method = "lm",
-  isMixed = TRUE,
-  nCores = 30)
+survivalData <- kerenSCE %>%
+  colData() %>%
+  as.data.frame() %>%
+  select(c("imageID", "Survival_days_capped")) %>%
+  distinct()
 
 modellingData <- listImageModelsCVFormat(stateChanges,
                                          values_from = "tValue",
                                          removeColsThresh = 0.2,
-                                         missingReplacement = 0)
+                                         missingReplacement = 0) %>%
+  rownames_to_column(var = "imageID") %>%
+  left_join(survivalData, by = "imageID")
 ```
 
+#lisaClust
+```{r}
+data(kerenSCE)
+lisaClustOutput <- markerMeanCTR(kerenSCE,
+                                  patientIDs = "DONOR_NO",
+                                  survivalData = "Survival_days_capped")
 
+```
 
 # References
 
