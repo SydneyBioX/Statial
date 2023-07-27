@@ -236,10 +236,10 @@ getDistances <- function(singleCellData,
   rownames(redDim) <- colnames(singleCellDataClean)
   matching_indices <- match(distances$cellID, colnames(singleCellDataClean))
   
-  redDim[matching_indices, ] <- distances[, -1]
+  redDim[matching_indices, ] <- distances
   colnames(redDim) <- colnames(distances)
   
-  redDim <- redDim %>% select(-c("cellID"))
+  # redDim <- redDim %>% select(-c("cellID"))
   
   
   reducedDim(singleCellDataClean, "distances") <- redDim
@@ -404,10 +404,10 @@ getAbundances <- function(singleCellData,
   rownames(redDim) <- colnames(singleCellDataClean)
   matching_indices <- match(abundances$cellID, colnames(singleCellDataClean))
   
-  redDim[matching_indices, ] <- abundances[, -1]
+  redDim[matching_indices, ] <- abundances
   colnames(redDim) <- colnames(abundances)
   
-  redDim <- redDim %>% select(-c("cellID"))
+  # redDim <- redDim %>% select(-c("cellID"))
   
   
   reducedDim(singleCellDataClean, "abundances") <- redDim
@@ -714,14 +714,14 @@ getStateChanges <- function(singleCellData,
     contams <- reducedDim(SCE, "contamination") %>% select(-c("cellType"))
     redDimNames <- redDimNames[!redDimNames %in% "contamination"]
     for(name in redDimNames) {
-      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+      singleCellData <- right_join(singleCellData, reducedDim(SCE, name))
     }
-    singleCellData <- bind_cols(singleCellData, contams)
+    singleCellData <- right_join(singleCellData, contams)
     
   } else {
     
     for(name in redDimNames) {
-      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+      singleCellData <- right_join(singleCellData, reducedDim(SCE, name))
     }
     
   }
@@ -1515,14 +1515,14 @@ visualiseImageRelationship <- function(data,
     contams <- reducedDim(SCE, "contamination") %>% select(-c("cellType"))
     redDimNames <- redDimNames[!redDimNames %in% "contamination"]
     for(name in redDimNames) {
-      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+      singleCellData <- right_join(singleCellData, reducedDim(SCE, name))
     }
-    singleCellData <- bind_cols(singleCellData, contams)
+    singleCellData <- right_join(singleCellData, contams)
     
   } else {
     
     for(name in redDimNames) {
-      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+      singleCellData <- right_join(singleCellData, reducedDim(SCE, name))
     }
     
   }
