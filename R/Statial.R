@@ -177,23 +177,19 @@ getDistances <- function(singleCellData,
   
   markersToUse <- rownames(singleCellData)
   
-  metadata_name <- paste0("Rs", Rs, "")
+  # metadata_name <- paste0("Rs", Rs, "")
   
-  if(!metadata_name %in% names(metadata(singleCellData))) {
+  if(!"distances" %in% names(reducedDims(singleCellData))) {
     
     if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
-      
       singleCellDataClean <- singleCellData %>%
         preProcessing()
-      
-      singleCellData <- as.data.frame(colData(singleCellDataClean))
-      
+    } else {
+      singleCellDataClean <- singleCellData
     }
     
-  } else {
-    singleCellDataClean <- singleCellData
-    singleCellData <- metadata(singleCellDataClean)[[metadata_name]]
   }
+  singleCellData <- as.data.frame(colData(singleCellDataClean))
   
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
@@ -212,9 +208,11 @@ getDistances <- function(singleCellData,
     BiocParallel::bplapply(distanceCalculator,
                            maxRS = max(Rs),
                            BPPARAM = BPPARAM
-    ) %>%
+    )
+  singleCellDataDistances <- singleCellDataDistances %>%
     dplyr::bind_rows() %>%
-    dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.infinite(x), NA, x))) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.infinite(x), NA, x)))
+  singleCellDataDistances <- singleCellDataDistances %>%
     lapply(Rs, function(x, rmax) {
       x %>%
         dplyr::mutate(
@@ -233,8 +231,24 @@ getDistances <- function(singleCellData,
     ) %>%
     purrr::reduce(full_join)
   
-  metadata_name <- paste0("Rs", Rs, "")
-  metadata(singleCellDataClean)[[metadata_name]] <- singleCellDataDistances
+  distances <- singleCellDataDistances %>% select(c("cellID", contains("dist")))
+  redDim <- data.frame(matrix(NA, nrow = ncol(singleCellDataClean), ncol = ncol(distances)))
+  rownames(redDim) <- colnames(singleCellDataClean)
+  matching_indices <- match(distances$cellID, colnames(singleCellDataClean))
+  
+  redDim[matching_indices, ] <- distances[, -1]
+  colnames(redDim) <- colnames(distances)
+  
+  redDim <- redDim %>% select(-c("cellID"))
+  
+  
+  reducedDim(singleCellDataClean, "distances") <- redDim
+  
+  
+  # metadata_name <- paste0("Rs", Rs, "")
+  # metadata(singleCellDataClean)[[metadata_name]] <- singleCellDataDistances
+  
+  
   # # Identify overlapping column names
   # metadata(singleCellDataClean) <- append(metadata(singleCellDataClean), list(singleCellDataDistances))
   # overlap_cols <- intersect(names(singleCellDataDistances), colnames(colData(singleCellDataClean)))
@@ -298,23 +312,19 @@ getAbundances <- function(singleCellData,
   
   markersToUse <- rownames(singleCellData)
   
-  metadata_name <- paste0("Rs", Rs, "")
+  # metadata_name <- paste0("Rs", Rs, "")
   
-  if(!metadata_name %in% names(metadata(singleCellData))) {
+  if(!"abundances" %in% names(reducedDims(singleCellData))) {
     
     if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
-      
       singleCellDataClean <- singleCellData %>%
         preProcessing()
-      
-      singleCellData <- as.data.frame(colData(singleCellDataClean))
-    
+    } else {
+      singleCellDataClean <- singleCellData
     }
     
-  } else {
-    singleCellDataClean <- singleCellData
-    singleCellData <- metadata(singleCellDataClean)[[metadata_name]]
   }
+  singleCellData <- as.data.frame(colData(singleCellDataClean))
   
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
@@ -388,11 +398,25 @@ getAbundances <- function(singleCellData,
     tibble::rownames_to_column("cellID") %>%
     dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.na(x), 0, x)))
   
+  
+  abundances <- singleCellDataK %>% select(c("cellID", contains("abundance")))
+  redDim <- data.frame(matrix(NA, nrow = ncol(singleCellDataClean), ncol = ncol(abundances)))
+  rownames(redDim) <- colnames(singleCellDataClean)
+  matching_indices <- match(abundances$cellID, colnames(singleCellDataClean))
+  
+  redDim[matching_indices, ] <- abundances[, -1]
+  colnames(redDim) <- colnames(abundances)
+  
+  redDim <- redDim %>% select(-c("cellID"))
+  
+  
+  reducedDim(singleCellDataClean, "abundances") <- redDim
+  
   singleCellDataK <- singleCellDataK %>%
     dplyr::right_join(singleCellData, by = c("imageID", "cellID")) %>%
     dplyr::relocate(imageID)
   
-  metadata(singleCellDataClean)[[metadata_name]] <- singleCellDataK
+  # metadata(singleCellDataClean)[[metadata_name]] <- singleCellDataK
   return(singleCellDataClean)
 }
 
@@ -472,21 +496,19 @@ calcContamination <- function(singleCellData,
     markers <- rownames(singleCellData)
   }
   
-  metadata_name <- paste0("Rs", Rs, "")
+  # metadata_name <- paste0("Rs", Rs, "")
+  
+  if("contamination" %in% names(reducedDims(singleCellData))) {
+    stop("Contamination scores have already been calculated")
+  }
   
   if(!all(markers %in% colnames(colData(singleCellData)))) {
-    
     singleCellDataClean <- singleCellData %>%
       preProcessing()
-    
-    singleCellData <- as.data.frame(colData(singleCellDataClean))
-    
   } else {
-    
     singleCellDataClean <- singleCellData
-    singleCellData <- as.data.frame(colData(singleCellDataClean))  
-  
   }
+  singleCellData <- as.data.frame(colData(singleCellDataClean))  
   
   
   
@@ -551,26 +573,32 @@ calcContamination <- function(singleCellData,
   # singleCellData2 <- singleCellData %>%
   #   dplyr::left_join(rfData, by = c("cellID"))
 
+  redDim <- rfData %>% select(-c("cellID"))
+  
+  
+  reducedDim(singleCellDataClean, "contamination") <- redDim
+  
+  
 
-  if(!metadata_name %in% names(metadata(singleCellDataClean))) {
-    
-    distData <- colData(singleCellDataClean) 
-    
-    distData <- distData %>% as.data.frame() %>%
-      dplyr::left_join(rfData)
-    
-    metadata(singleCellDataClean)[[metadata_name]] <- distData
-    
-  } else {
-    
-    distData <- metadata(singleCellDataClean)[[metadata_name]]
-    
-    distData <- distData %>% as.data.frame() %>%
-      dplyr::left_join(rfData)
-    
-    metadata(singleCellDataClean)[[metadata_name]] <- distData
-    
-  }
+  # if(!metadata_name %in% names(metadata(singleCellDataClean))) {
+  #   
+  #   distData <- colData(singleCellDataClean) 
+  #   
+  #   distData <- distData %>% as.data.frame() %>%
+  #     dplyr::left_join(rfData)
+  #   
+  #   metadata(singleCellDataClean)[[metadata_name]] <- distData
+  #   
+  # } else {
+  #   
+  #   distData <- metadata(singleCellDataClean)[[metadata_name]]
+  #   
+  #   distData <- distData %>% as.data.frame() %>%
+  #     dplyr::left_join(rfData)
+  #   
+  #   metadata(singleCellDataClean)[[metadata_name]] <- distData
+  #   
+  # }
   
   return(singleCellDataClean)
 }
@@ -666,14 +694,37 @@ getStateChanges <- function(singleCellData,
                             timeout = 10,
                             nCores = 1) {
   
+  # if (nrow(colData(singleCellData)) != nrow(reducedDim(singleCellData))) {
+  #   stop("Error: Data frames do not have the same number of rows.")
+  # }
+  
   if(is.null(markers)) {
     markers <- rownames(singleCellData)
   }
   
-  metadata_name <- paste0("Rs", Rs, "")
+  # metadata_name <- paste0("Rs", Rs, "")
   
   SCE <- singleCellData 
-  singleCellData <- metadata(SCE)[[metadata_name]]
+  
+  redDimNames <- names(reducedDims(SCE))
+  singleCellData <- as.data.frame(colData(SCE))
+  
+  if ("contamination" %in% redDimNames) {
+    
+    contams <- reducedDim(SCE, "contamination") %>% select(-c("cellType"))
+    redDimNames <- redDimNames[!redDimNames %in% "contamination"]
+    for(name in redDimNames) {
+      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+    }
+    singleCellData <- bind_cols(singleCellData, contams)
+    
+  } else {
+    
+    for(name in redDimNames) {
+      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+    }
+    
+  }
   
   typeVector <- singleCellData %>%
     dplyr::select(contains(typeAll)) %>%
@@ -1121,10 +1172,31 @@ getStateChangesFast <- function(singleCellData,
   
   markers = rownames(singleCellData)
   
-  metadata_name <- paste0("Rs", Rs, "")
+  # metadata_name <- paste0("Rs", Rs, "")
   
   SCE <- singleCellData 
-  singleCellData <- metadata(SCE)[[metadata_name]]
+  
+  redDimNames <- names(reducedDims(SCE))
+  singleCellData <- as.data.frame(colData(SCE))
+  
+  if ("contamination" %in% redDimNames) {
+    
+    contams <- reducedDim(SCE, "contamination") %>% select(-c("cellType"))
+    redDimNames <- redDimNames[!redDimNames %in% "contamination"]
+    for(name in redDimNames) {
+      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+    }
+    singleCellData <- bind_cols(singleCellData, contams)
+    
+  } else {
+    
+    for(name in redDimNames) {
+      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+    }
+    
+  }
+  
+  # singleCellData <- metadata(SCE)[[metadata_name]]
   
   if (!is.null(cellTypesToModel)) {
     singleCellData <- singleCellData %>%
@@ -1431,10 +1503,33 @@ visualiseImageRelationship <- function(data,
                                        method = "lm",
                                        modelType = "dist200_") {
   
-  metadata_name <- paste0("Rs", Rs, "")
+  # metadata_name <- paste0("Rs", Rs, "")
   
   SCE <- data 
-  data <- metadata(SCE)[[metadata_name]]
+  
+  redDimNames <- names(reducedDims(SCE))
+  singleCellData <- as.data.frame(colData(SCE))
+  
+  if ("contamination" %in% redDimNames) {
+    
+    contams <- reducedDim(SCE, "contamination") %>% select(-c("cellType"))
+    redDimNames <- redDimNames[!redDimNames %in% "contamination"]
+    for(name in redDimNames) {
+      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+    }
+    singleCellData <- bind_cols(singleCellData, contams)
+    
+  } else {
+    
+    for(name in redDimNames) {
+      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+    }
+    
+  }
+  
+  data <- singleCellData
+  
+  # data <- metadata(SCE)[[metadata_name]]
   
   if(!depedentMarker %in% colnames(data)) {
     stop("The argument depedentMarker needs to exist in the data")
