@@ -1632,3 +1632,74 @@ visualiseImageRelationship <- function(data,
 }
 
 
+
+
+#' Extract the average expression for all markers for each cell type in each 
+#' region defined by lisaClust
+#'
+#' Takes a SingleCellObject and outputs a dataframe in a convenient format for 
+#' cross validation
+#'
+#' @param data
+#'   A SingleCellExperiment object with intensities data in the assays slot.
+#' @param patientIDs
+#'   A string vector specifying name of the column specifying information on 
+#'   patient ID in colData.
+#' @param survivalData
+#'   A string vector specifying name of the column specifying information on 
+#'   patient survival in colData.
+#' @param k
+#'   The number of regions to cluster as specified in lisaClust.
+#' @param markers 
+#'   A string list of markers that proxy a cell's state. If NULL, all markers 
+#'   will be used.
+#'
+#' @examples
+#' library(dplyr)
+#' lisaClustOutput2 <- markerMeanCTR(kerenSCE,
+#'                     patientIDs = "DONOR_NO",
+#'                     survivalData = "Survival_days_capped")
+#' @export
+#' @rdname imageModelsCVFormat
+#' @importFrom dplyr 
+#'   distinct across mutate summarise_at select vars left_join group_by
+#' @importFrom lisaClust lisaClust
+#' @importFrom tidyr pivot_wider pivot_longer
+#' @importFrom magrittr %>%
+#' @importFrom SummarizedExperiment colData
+#' @importFrom tibble column_to_rownames
+markerMeanCTR <- function(data,
+                          patientIDs,
+                          survivalData,
+                          k = 5,
+                          markers = NULL) {
+  
+  if(is.null(markers)) {
+    markers <- rownames(data)
+  }
+  
+  survivalData <- data %>%
+    colData() %>%
+    as.data.frame() %>%
+    select(c("imageID", all_of(survivalData))) %>%
+    distinct()
+  
+  markerDf <- data %>%
+    preProcessing() %>%
+    lisaClust::lisaClust(k = k) %>% 
+    colData() %>%
+    as.data.frame() %>%
+    select(c(patientID, imageID, cellType, region, all_of(markers)))
+  
+  lisaClustOutput = markerDf %>% 
+    select(-c(patientID)) %>%
+    group_by(imageID, cellType, region) %>%
+    summarise_at(vars(-group_cols()), mean, na.rm = TRUE) %>%
+    pivot_longer(-c(imageID, cellType, region), names_to = "markers") %>%
+    pivot_wider(names_from = c(cellType, region, markers), values_from = value) %>%
+    left_join(survivalData, by = "imageID") %>%
+    column_to_rownames("imageID") %>% 
+    replace(is.na(.), 0)
+}
+
+
