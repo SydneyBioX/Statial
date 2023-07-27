@@ -69,7 +69,7 @@ Reiterate the approach
 ## Identify within a single image
 Preprocessing
 ```{r}
-kerenSCE
+data(kerenSCE)
 
 SCE <- getDistances(kerenSCE,
                     Rs = c(200),
