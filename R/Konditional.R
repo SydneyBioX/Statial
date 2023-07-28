@@ -352,3 +352,32 @@ isKontextual <- function(kontextualResult){
     
     return(all(colNames %in% names(kontextualResult)))
 }
+
+#' Convert Kontextual results to a matrix for classification
+#'
+#' @param kontextualResult a kontextual result data.frame
+#' @param type return the either the `kontextual` or `original` L-function values
+#' @param replaceVal value which NAs are replaced with
+#' @param imageID The column which contains image identifiers.
+#'
+#' @examples
+#' 
+#'
+#' @export prepKontextMat
+#' @rdname prepKontextMat
+#' @import tidyverse
+prepKontextMat = function(kontextualResult,
+                          type = "kontextual",
+                          replaceVal = 0,
+                          imageID = "imageID") {
+    
+    kontextMat = kontextualResult |> 
+        # Implement support for multiple values in other columns.
+        select(!!imageID, "test", type) |> 
+        pivot_wider(names_from = "test", values_from = type) |> 
+        column_to_rownames(`imageID`) %>% 
+        replace(is.na(.), replaceVal)
+    
+    return(kontextMat)
+}
+    

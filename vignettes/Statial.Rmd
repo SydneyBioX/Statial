@@ -39,6 +39,8 @@ library(ClassifyR)
 library(tidyverse)
 library(SingleCellExperiment)
 library(ggplot2)
+library(ggsurvfit)
+library(survival)
 
 theme_set(theme_classic())
 ```
@@ -147,23 +149,30 @@ head(parentDf)
 ```
 
 
-Rather than specifying `to`, `from`, and `parent` in Kontextual, the output from `parentCombinations` can be inputed into `Kontextual` using the `parentDf` argument. Here we will test the first 20 pairwise cell relationships in `parentCombinations` on the first image of the dataset.
-```{r}
-# Selecting Image 1 as an example
-image_6 <- kerenSCE |>
-  colData() |>
-  data.frame() |>
-  filter(imageID == "6")
+Rather than specifying `to`, `from`, and `parent` in Kontextual, the output from `parentCombinations` can be inputed into `Kontextual` using the `parentDf` argument, to examine all pairwise relationships in the dataset. This chunk will take a signficant amount of time to run, for demonstration the results have been saved and are loaded in.
 
 
-image1_Kontextual <- Kontextual(
-  cells = image_6,
-  parentDf = parentDf[1:20, ],
+```{r eval = FALSE, show = FALSE}
+# save(kerenKontextual, file = "../data/kerenKontextual.rda")
+# tools::resaveRdaFiles("../data/kerenKontextual.rda", compress = "auto")
+```
+
+```{r eval = FALSE}
+# Running Kontextual on all relationships across all images.
+kerenKontextual <- Kontextual(
+  cells = kerenSCE,
+  parentDf = parentDf,
   r = 50,
   cores = 1
 )
 
-head(image1_Kontextual)
+```
+
+
+```{r}
+data("kerenKontextual")
+
+head(kerenKontextual)
 ```
 
 
@@ -211,7 +220,7 @@ rsDf <- rsCurve(
 ggplotRs(rsDf)
 ```
 
-#Examining Cell-to-cell interactions with marker expression
+# Examining Cell-to-cell interactions with marker expression
 In the next section of this vignette, we will utilise multiplexed imaging data to computationally identify and quantify evidence of cell interactions that catalyse cell state changes. This approach measures how protein markers in a cell change with spatial proximity and abundance to other cell types. 
 The methods utilised here will provide a framework to explore how the dynamic behaviour of cells are altered by the agents they are surrounded by.
 
@@ -324,7 +333,7 @@ visualiseImageRelationship(
 So why are B cells expressing CD8?
 This brings us to a key problem of cell segmentation - contamination.
 
-#Contamination
+# Contamination
 Contamination, or lateral marker spill over is an issue that results in a cell’s marker expressions being wrongly attributed to another adjacent cell. This issue arises from incorrect segmentation 
 where components of one cell are wrongly determined as belonging to another cell. 
 Alternatively, this issue can arise when antibodies used to tag and measure marker expressions don't latch on properly to a cell of interest, thereby resulting in residual markers being wrongly assigned as belonging to a cell near the intended target cell. It is important that we either correct or account
@@ -362,7 +371,80 @@ find code for this)
 The next steps will involve comparing survival time to see if these 
 distance-to-gene interactions are biologically significant.
 
-#Cross Validation
+
+
+# Relating `Statial` features to patient groups or outcomes.
+
+To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we can use the `colTest` function from `SpicyR`. To understand if features differ significantly between 2 patient groups, specify `type = "ttest"` in `colTest`. Here we examine which features are most associated with patient survival using the Kontextual values as example. To do so, the survival data is extracted from `kerenSCE` and converted to a survival object. In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepKontextMat`. Note, to extract the original L-function values, specify `type = "original"` in `prepKontextMat`. Finally, both the Kontextual matrix and survival object are passed into `colTest`, with `type = "coxph"` to obtain the survival results. 
+
+As we can see from the results `Mesenchymal_Macrophages_tissue` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and Macrophages, relative to the parent population of all tissue cells. We can see that there is a negative coeffcient associated with this relationship, which tells us the increase in localisation of Mesenchymal and Macrophages lead to more favourable survival outcomes for patients.  
+
+
+```{r}
+# Extracting survial data
+survData = kerenSCE@colData |> 
+    data.frame() |> 
+    select(imageID, Survival_days_capped, Censored) |> 
+    unique()
+
+# Creating survival vector
+kerenSurv = Surv(survData$Survival_days_capped, survData$Censored)
+names(kerenSurv) = survData$imageID
+
+
+# Converting Kontextual result into data matrix
+kontextMat = prepKontextMat(kerenKontextual)
+
+# Ensuring rownames of kontextMat match up with rownames of the survival vector 
+kontextMat = kontextMat[match(names(kerenSurv), rownames(kontextMat)), ]
+
+
+# Running survival analysis
+
+coxTests = function(measurementMat, Surv) {
+  
+  result = apply(measurementMat, 2, function(measurementCol) {
+    fit = coxph(Surv ~ measurementCol)
+    summary(fit)$coefficients[1, c(1, 3, 5)]
+  })
+  
+  result = result |> 
+    t() |> 
+    data.frame() |> 
+    rownames_to_column() 
+  
+  colnames(result) = c("imageID", "coef", "se.coef", "p.value")
+  result$`adj.p.value` = result$`p.value`*nrow(result)
+  
+  result = result |> arrange(p.value)
+  
+  return(result)
+}
+
+survialResults = coxTests(kontextMat, kerenSurv)
+
+head(survialResults)
+
+```
+The association between `Mesenchymal_Macrophages_tissue` and survival can also be visualised on a Kaplan-Meier curve. We must first extract the Kontextual values of this relationship across all images. Next we determine if Mesenchymal and Macrophages are relatively attracted or avoiding in each image, by comparing the Kontextual value in each image to the median Kontextual value. Finally we plot the Kaplan-Meier curve using the `ggsurvfit` package. 
+
+As shown below, when Mesenchymal and Macrophages are relatively more localised to one another, patients tend to have better survival outcomes. When these cells are relatively dispersed, patients have a poorer survival outcome. 
+
+```{r}
+# Selecting most significant relationship
+survRelationship = kontextMat[["Mesenchymal__Macrophages__tissue"]]
+survRelationship = ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
+    
+# Plotting Kaplan-Meier curve
+survfit2(kerenSurv ~ survRelationship) |>
+    ggsurvfit() +
+    add_confidence_interval() +
+    add_pvalue() +
+    ggtitle("Mesenchymal__Macrophages__tissue")
+```
+
+
+# Cross Validation
 
 ```{r}
 survivalData <- kerenSCE %>%
@@ -381,8 +463,9 @@ for(modelling in modellingData) {
 }
 ```
 
-#lisaClust
-```{r}
+# LisaClust
+```{r lisaClust}
+set.seed(101)
 data(kerenSCE)
 
 regions <- lisaClust::lisaClust(kerenSCE, k = 5)
@@ -393,8 +476,6 @@ lisaClustOutput <- getMarkerMeans(regions,
 ```
 
 # References
-
-Ferguson, A. L., Sharman, A. R., Allen, R. O., Ye, T., Lee, J. H., Low, T.-H. H., Ch'ng, S., Palme, C. E., Ashford, B., Ranson, M., Clark, J. R., Patrick, E., Gupta, R., & Palendira, U. (2022). High-Dimensional and Spatial Analysis Reveals Immune Landscape–Dependent Progression in Cutaneous Squamous Cell Carcinoma. Clinical Cancer Research, OF1-OF12. ([DOI](https://doi.org/10.1158/1078-0432.Ccr-22-1332))
 
 Keren, L., Bosse, M., Marquez, D., Angoshtari, R., Jain, S., Varma, S., Yang, S. R., Kurian, A., Van Valen, D., West, R., Bendall, S. C., & Angelo, M. (2018). A Structured Tumor-Immune Microenvironment in Triple Negative Breast Cancer Revealed by Multiplexed Ion Beam Imaging. Cell, 174(6), 1373-1387.e1319. ([DOI](https://doi.org/10.1016/j.cell.2018.08.039))
 
