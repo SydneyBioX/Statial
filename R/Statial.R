@@ -149,9 +149,9 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #' data("kerenSCE")
 #'
 #' singleCellDataDistances <- getDistances(kerenSCE,
-#'   nCores = 1,
 #'   Rs = c(200),
-#'   whichCellTypes = c("Keratin_Tumour", "Macrophages")
+#'   whichCellTypes = c("Keratin_Tumour", "Macrophages"),
+#'   nCores = 1
 #' )
 #'
 #' @export
@@ -291,9 +291,9 @@ getDistances <- function(singleCellData,
 #' data("kerenSCE")
 #' 
 #' singleCellDataCounts <- getAbundances(kerenSCE,
-#'   nCores = 1,
 #'   Rs = c(200),
-#'   whichCellTypes = c("Keratin_Tumour", "Macrophages")
+#'   whichCellTypes = c("Keratin_Tumour", "Macrophages"),
+#'   nCores = 1
 #' )
 #'
 #' @export
@@ -1385,7 +1385,8 @@ imageModelsCVFormat <- function(imageModels,
 #' imageModels <- getStateChanges(
 #'   singleCellData = singleCellDataDistances,
 #'   Rs = c(200),
-#'   type = c("dist200"),
+#'   typeAll = c("dist200"),
+#'   cellTypesToModel = "Macrophages",
 #'   nCores = 1
 #' )
 #' crossValidationData <- listImageModelsCVFormat(imageModels,

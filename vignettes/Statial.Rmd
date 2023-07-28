@@ -221,12 +221,11 @@ data(kerenSCE)
 
 SCE <- getDistances(kerenSCE,
                     Rs = c(200),
-                    nCores = 30)
+                    nCores = 1)
 
 SCE <- getAbundances(SCE,
                      Rs = c(200),
-                     nCores = 30
-                     )
+                     nCores = 1)
 
 ```
 
@@ -247,23 +246,30 @@ visualiseImageRelationship(
   interactive = FALSE,
   plotModelFit = FALSE,
   method = "lm",
-  modelType = "dist200_"
-)
+  modelType = "dist200_")
 
 ```
 Beyond looking at single cell-to-cell interactions for a single image, we can also look at all interactions across all images. Statial provides the `getStateChanges` function for this exact purpose, allowing us to examine the most significant correlations between distance and marker expression.
-```{r}
+
+```{r, eval = FALSE}
+#This function takes approximately 5 minutes to run with 40 cores. 
 stateChanges <- getStateChanges(
   singleCellData = SCE,
   Rs = c(200),
   typeAll = c("dist200", "abundance200"),
   method = "lm",
   isMixed = FALSE,
-  nCores = 40)
+  nCores = 1)
 
-head(stateChanges, 10)
+#Let's filter out interactions with fewer than 100 cells and a low correlative index (tValue)
+stateChangesFiltered <- stateChanges %>% filter(sampleSize > 100, abs(tValue) > 5)
+
+head(stateChangesFiltered, 10)
 ```
-
+```{r, echo = FALSE}
+data("stateChangesFiltered")
+head(stateChangesFiltered, 10)
+```
 Let's take a look at the top 10 most significant gene-to-distance pairwise interactions. We can see that the most significant interaction involving keratin/tumour cells occurs between keratin/tumour cells and macrophages in image 27, where HLA Class I molecules in keratin/tumour cells are upregulated when nearby macrophage populations. 
 We can examine this interaction further with the `visualiseImageRelationship` function, showing us a clear visual correlation between macrophage density and HLA Class I expression.
 
@@ -280,23 +286,25 @@ visualiseImageRelationship(
   interactive = FALSE,
   plotModelFit = FALSE,
   method = "lm",
-  modelType = "dist200_"
-)
+  modelType = "dist200_")
 ```
 However, these significant results are occasionally isolated to a single image or patient, and it may sometimes be wiser to perform a more holistic analysis of all the images/patients to examine common interactions across a whole group. Additionally, patients can be divided into treatment groups to examine the effects of a treatment on cell-to-cell interactions. 
 
 Fortunately, `getStateChanges` provides the `isMixed` parameter for performing a holistic analysis. In this next section, we will employ a mixed effects model to examine the most significant cell-to-cell interactions shared across all images.
 
-
-```{r}
+```{r, eval = FALSE}
 stateChangesMixed <- getStateChanges(
   singleCellData = SCE,
   Rs = c(200),
   typeAll = c("dist200", "abundance200"),
   method = "lm",
   isMixed = TRUE,
-  nCores = 40)
+  nCores = 1)
 
+head(stateChangesMixed, 10)
+```
+```{r}
+data("stateChangesMixed")
 head(stateChangesMixed, 10)
 ```
 
@@ -321,22 +329,18 @@ visualiseImageRelationship(
   modelType = "dist200_"
 )
 ```
+
 So why are B cells expressing CD8?
 This brings us to a key problem of cell segmentation - contamination.
 
 #Contamination
-Contamination, or lateral marker spill over is an issue that results in a cell’s marker expressions being wrongly attributed to another adjacent cell. This issue arises from incorrect segmentation 
-where components of one cell are wrongly determined as belonging to another cell. 
-Alternatively, this issue can arise when antibodies used to tag and measure marker expressions don't latch on properly to a cell of interest, thereby resulting in residual markers being wrongly assigned as belonging to a cell near the intended target cell. It is important that we either correct or account
-for this incorrect attribution of markers in our modelling process. This is critical in 
-understanding whether significant cell-cell interactions detected are an artefact of technical 
-measurement errors driven by spill over or are real biological changes that represent a shift in a 
-cell’s state.
+Contamination, or lateral marker spill over is an issue that results in a cell’s marker expressions being wrongly attributed to another adjacent cell. This issue arises from incorrect segmentation where components of one cell are wrongly determined as belonging to another cell. 
+Alternatively, this issue can arise when antibodies used to tag and measure marker expressions don't latch on properly to a cell of interest, thereby resulting in residual markers being wrongly assigned as belonging to a cell near the intended target cell. It is important that we either correct or account for this incorrect attribution of markers in our modelling process. This is critical in understanding whether significant cell-cell interactions detected are an artefact of technical measurement errors driven by spill over or are real biological changes that represent a shift in a cell’s state.
 
-To circumvent this problem, Statial provides a function that predicts the
-probability that a cell is any particular cell type. This comes in the format of the `calcContamination` function, which returns a dataframe of probabilities demarcating the chance of a cell being any particular cellType. It also provides the `rfMainCellProb` vector, which provides the probability that a cell is indeed the cell type it has been designated. 
+To circumvent this problem, Statial provides a function that predicts the probability that a cell is any particular cell type. This comes in the format of the `calcContamination` function, which returns a dataframe of probabilities demarcating the chance of a cell being any particular cellType. It also provides the `rfMainCellProb` vector, which provides the probability that a cell is indeed the cell type it has been designated. 
 E.g. For a cell designated as CD8, rfMainCellProb could give a 80% chance that the cell is indeed CD8, due to contamination. We can then introduce these probabilities as covariates into our linear model.
-```{r}
+
+```{r, eval = FALSE}
 SCE <- calcContamination(SCE)
 
 stateChangesContam <- getStateChanges(
@@ -346,9 +350,13 @@ stateChangesContam <- getStateChanges(
   covariates = c("rfMainCellProb"),
   method = "lm",
   isMixed = TRUE,
-  nCores = 30)
+  nCores = 1)
 
 head(stateChangesContam)
+```
+```{r, echo = FALSE}
+data("stateChangesContam")
+head(stateChangesContam, 10)
 ```
 
 We can see that adding the contamination scores as covariates improves the...
@@ -359,39 +367,71 @@ find code for this)
 ```
 
 
-The next steps will involve comparing survival time to see if these 
-distance-to-gene interactions are biologically significant.
+The next steps will involve comparing survival time to see if these distance-to-gene interactions are biologically significant.
 
 #Cross Validation
 
 ```{r}
-survivalData <- kerenSCE %>%
-  colData() %>%
-  as.data.frame() %>%
-  select(c("imageID", "Survival_days_capped")) %>%
-  distinct()
+# survivalData <- kerenSCE %>%
+#   colData() %>%
+#   as.data.frame() %>%
+#   select(c("imageID", "Survival_days_capped")) %>%
+#   distinct() %>%
+#   remove_rownames()
+# 
+# kerenSurv = Surv(survivalData$Survival_days_capped, survivalData$Censored)
+# names(kerenSurv) = survivalData$imageID
+# 
+# #Preparing features for Kontextual
+# 
+# 
+# #Preparing features for Statial
+# StatialOutput <- listImageModelsCVFormat(stateChanges,
+#                                          values_from = "tValue",
+#                                          removeColsThresh = 0.2,
+#                                          missingReplacement = 0)
+# 
+# KontextualOutput <-
+# 
+# #Preparing features for lisaClust
+# regions <- lisaClust::lisaClust(kerenSCE, k = 5)
+# lisaClustOutput <- getMarkerMeans(regions,
+#                               survivalData = "Survival_days_capped")
+# 
+# 
+# kerenFeatureList = c(StatialOutput, KontextualOutput, lisaClustOutput)
+# 
+# measurementsOutcome = ClassifyR::prepareData(kerenFeatureList, kerenSurv)
+# featuresMulti = measurementsOutcome$measurements
 
-modellingData <- listImageModelsCVFormat(stateChanges,
-                                         values_from = "tValue",
-                                         removeColsThresh = 0.2,
-                                         missingReplacement = 0)
-for(modelling in modellingData) {
-  modelling <- modelling %>%
-    left_join(survivalData, by = "imageID")
-}
 ```
 
-#lisaClust
+
+#Classification
 ```{r}
-data(kerenSCE)
-
-regions <- lisaClust::lisaClust(kerenSCE, k = 5)
-
-lisaClustOutput <- getMarkerMeans(regions,
-                              survivalData = "Survival_days_capped")
+# outcome = kerenNoColdSurv
+# classifier = "CoxNet"
+# selectionMethod = "none"
+# multiViewMethod = "none"
+# 
+# nFolds = 10
+# nFeatures = 15
+# nRepeats = 20
+# nCores = 40
+# 
+# kerenSurvClassification = crossValidate(
+#   measurements = kerenNoColdFeatureList,
+#   outcome = outcome,
+#   classifier = classifier,
+#   selectionMethod  = selectionMethod,
+#   multiViewMethod = multiViewMethod,
+#   nFolds = nFolds,
+#   nFeatures = nFeatures,
+#   nRepeats = nRepeats,
+#   nCores = nCores
+#   ) 
 
 ```
-
 # References
 
 Ferguson, A. L., Sharman, A. R., Allen, R. O., Ye, T., Lee, J. H., Low, T.-H. H., Ch'ng, S., Palme, C. E., Ashford, B., Ranson, M., Clark, J. R., Patrick, E., Gupta, R., & Palendira, U. (2022). High-Dimensional and Spatial Analysis Reveals Immune Landscape–Dependent Progression in Cutaneous Squamous Cell Carcinoma. Clinical Cancer Research, OF1-OF12. ([DOI](https://doi.org/10.1158/1078-0432.Ccr-22-1332))

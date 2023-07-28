@@ -29,9 +29,9 @@ library(dplyr)
 data("kerenSCE")
 
 singleCellDataCounts <- getAbundances(kerenSCE,
-  nCores = 1,
   Rs = c(200),
-  whichCellTypes = c("Keratin_Tumour", "Macrophages")
+  whichCellTypes = c("Keratin_Tumour", "Macrophages"),
+  nCores = 1
 )
 
 }
