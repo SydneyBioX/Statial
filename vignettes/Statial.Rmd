@@ -374,9 +374,11 @@ survivalData <- kerenSCE %>%
 modellingData <- listImageModelsCVFormat(stateChanges,
                                          values_from = "tValue",
                                          removeColsThresh = 0.2,
-                                         missingReplacement = 0) %>%
-  rownames_to_column(var = "imageID") %>%
-  left_join(survivalData, by = "imageID")
+                                         missingReplacement = 0)
+for(modelling in modellingData) {
+  modelling <- modelling %>%
+    left_join(survivalData, by = "imageID")
+}
 ```
 
 #lisaClust

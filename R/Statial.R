@@ -1424,10 +1424,9 @@ listImageModelsCVFormat <- function(imageModels,
   
   modellingData <- crossValidateInteractionsData %>% 
     lapply(function(x, imageSubset) x %>%
-             filter(imageID %in% imageSubset) %>% 
-             column_to_rownames("imageID") %>% 
+             filter(imageID %in% imageSubset) %>%
              dplyr::select(!contains(c("dataset", "type"))), 
-           imageSubset = names(classificationData))
+           imageSubset = classificationData)
   
   return(modellingData)
 }
