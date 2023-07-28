@@ -40,7 +40,8 @@ singleCellDataDistances <- getDistances(kerenSCE,
 imageModels <- getStateChanges(
   singleCellData = singleCellDataDistances,
   Rs = c(200),
-  type = c("dist200"),
+  typeAll = c("dist200"),
+  cellTypesToModel = "Macrophages",
   nCores = 1
 )
 crossValidationData <- listImageModelsCVFormat(imageModels,

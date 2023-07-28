@@ -1396,7 +1396,7 @@ imageModelsCVFormat <- function(imageModels,
 #' )
 #' @export
 #' @rdname imageModelsCVFormat
-#' @importFrom dplyr bind_rows across mutate rename select
+#' @importFrom dplyr bind_rows across mutate rename select column_to_rownames
 #' @importFrom stringr str_detect str_replace str_split
 #' @importFrom tidyr pivot_wider
 #' @importFrom magrittr %>%
@@ -1426,7 +1426,9 @@ listImageModelsCVFormat <- function(imageModels,
   modellingData <- crossValidateInteractionsData %>% 
     lapply(function(x, imageSubset) x %>%
              filter(imageID %in% imageSubset) %>%
-             dplyr::select(!contains(c("dataset", "type"))), 
+             dplyr::select(!contains(c("dataset", "type"))) %>%
+             column_to_rownames("imageID") %>%
+             replace(is.na(.), 0), 
            imageSubset = classificationData)
   
   return(modellingData)

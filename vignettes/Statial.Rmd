@@ -112,7 +112,7 @@ CD4_Kontextual <- Kontextual(
 head(CD4_Kontextual)
 ```
 
-The `original` and `kontextual` values can be compared in a scatter plot to identify relationships which have been identified differently between the functions. The dashed red line represents the expected pattern of the data, i.e. where there exists no relationship between the two cell types. The top left quadrant therefore represents values where `Kontextual` has identified localisation between `CD4` and `SC1` and the original L-function has identified dispersion, the opposite is true for the bottom right quadrant.
+The `original` and `kontextual` values can be compared in a scatter plot to identify relationships which have been identified differently between the functions. The dashed red line represents the expected pattern of the data, i.e. where there exists no relationship between the two cell types. The top left quadrant therefore represents values where `Kontextual` has identified localisation between `CD4` and `Keratin_Tumour` cells and the original L-function has identified dispersion, the opposite is true for the bottom right quadrant.
 
 ```{r fig.wide = TRUE}
 
@@ -372,66 +372,52 @@ The next steps will involve comparing survival time to see if these distance-to-
 #Cross Validation
 
 ```{r}
-# survivalData <- kerenSCE %>%
-#   colData() %>%
-#   as.data.frame() %>%
-#   select(c("imageID", "Survival_days_capped")) %>%
-#   distinct() %>%
-#   remove_rownames()
-# 
-# kerenSurv = Surv(survivalData$Survival_days_capped, survivalData$Censored)
-# names(kerenSurv) = survivalData$imageID
-# 
-# #Preparing features for Kontextual
-# 
-# 
-# #Preparing features for Statial
-# StatialOutput <- listImageModelsCVFormat(stateChanges,
-#                                          values_from = "tValue",
-#                                          removeColsThresh = 0.2,
-#                                          missingReplacement = 0)
-# 
-# KontextualOutput <-
-# 
-# #Preparing features for lisaClust
-# regions <- lisaClust::lisaClust(kerenSCE, k = 5)
-# lisaClustOutput <- getMarkerMeans(regions,
-#                               survivalData = "Survival_days_capped")
-# 
-# 
-# kerenFeatureList = c(StatialOutput, KontextualOutput, lisaClustOutput)
-# 
-# measurementsOutcome = ClassifyR::prepareData(kerenFeatureList, kerenSurv)
-# featuresMulti = measurementsOutcome$measurements
+survivalData <- kerenSCE %>%
+  colData() %>%
+  as.data.frame() %>%
+  select(c("imageID", "Survival_days_capped")) %>%
+  distinct() %>%
+  remove_rownames()
+
+kerenSurv = Surv(survivalData$Survival_days_capped, survivalData$Censored)
+names(kerenSurv) = survivalData$imageID
+
+#Preparing features for Kontextual
+
+
+#Preparing features for Statial
+StatialOutput <- listImageModelsCVFormat(stateChanges,
+                                         values_from = "tValue",
+                                         removeColsThresh = 0.2,
+                                         missingReplacement = 0)
+
+KontextualOutput <- Kontextual %>% 
+  pivot_wider(names_from = "test", values_from = "konditional") %>% 
+  column_to_rownames("imageID") %>% 
+  replace(is.na(.), 0)
+
+#Preparing features for lisaClust
+regions <- lisaClust::lisaClust(kerenSCE, k = 5)
+lisaClustOutput <- getMarkerMeans(regions,
+                              survivalData = "Survival_days_capped")
+
+
+kerenFeatureList = c(StatialOutput, KontextualOutput, lisaClustOutput)
+
+kerenSurvClassification = crossValidate(
+  measurements = kerenFeatureList,
+  outcome = kerenSurv,
+  classifier = "CoxNet",
+  selectionMethod  = "none",
+  multiViewMethod = "none",
+  nFolds = 10,
+  nFeatures = 15,
+  nRepeats = 20,
+  nCores = 40
+  )
 
 ```
 
-
-#Classification
-```{r}
-# outcome = kerenNoColdSurv
-# classifier = "CoxNet"
-# selectionMethod = "none"
-# multiViewMethod = "none"
-# 
-# nFolds = 10
-# nFeatures = 15
-# nRepeats = 20
-# nCores = 40
-# 
-# kerenSurvClassification = crossValidate(
-#   measurements = kerenNoColdFeatureList,
-#   outcome = outcome,
-#   classifier = classifier,
-#   selectionMethod  = selectionMethod,
-#   multiViewMethod = multiViewMethod,
-#   nFolds = nFolds,
-#   nFeatures = nFeatures,
-#   nRepeats = nRepeats,
-#   nCores = nCores
-#   ) 
-
-```
 # References
 
 Ferguson, A. L., Sharman, A. R., Allen, R. O., Ye, T., Lee, J. H., Low, T.-H. H., Ch'ng, S., Palme, C. E., Ashford, B., Ranson, M., Clark, J. R., Patrick, E., Gupta, R., & Palendira, U. (2022). High-Dimensional and Spatial Analysis Reveals Immune Landscape–Dependent Progression in Cutaneous Squamous Cell Carcinoma. Clinical Cancer Research, OF1-OF12. ([DOI](https://doi.org/10.1158/1078-0432.Ccr-22-1332))
