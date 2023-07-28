@@ -1662,8 +1662,11 @@ visualiseImageRelationship <- function(data,
 #'
 #' @examples
 #' library(dplyr)
-#' lisaClustOutput2 <- markerMeanCTR(kerenSCE,
-#'                     patientIDs = "DONOR_NO",
+#' data(kerenSCE)
+#' 
+#' regionSCE <- lisaClust::lisaClust(kerenSCE, k = 5)
+#' 
+#' lisaClustOutput2 <- markerMeanCTR(regionSCE,
 #'                     survivalData = "Survival_days_capped")
 #' @export
 #' @rdname markerMean
