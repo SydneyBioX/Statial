@@ -64,19 +64,19 @@ provides the option to build robust and mixed linear model variants
 }
 \examples{
 library(dplyr)
-data("headSCE")
+data("kerenSCE")
 
-singleCellDataDistances <- getDistances(headSCE,
+singleCellDataDistances <- getDistances(kerenSCE,
   nCores = 1,
   Rs = c(200),
-  whichCellTypes = c("MC2", "SC7")
+  whichCellTypes = c("Keratin_Tumour", "Macrophages")
 )
 
 imageModels <- getStateChanges(
   singleCellData = singleCellDataDistances,
   Rs = c(200),
   typeAll = c("dist200"),
-  cellTypesToModel = "MC2",
+  cellTypesToModel = "Macrophages",
   nCores = 1
 )
 

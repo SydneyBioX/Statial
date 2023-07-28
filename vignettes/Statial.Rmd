@@ -208,7 +208,6 @@ rsDf <- rsCurve(
   cores = 1
 )
 
-
 ggplotRs(rsDf)
 ```
 
@@ -386,7 +385,7 @@ data(kerenSCE)
 
 regions <- lisaClust::lisaClust(kerenSCE, k = 5)
 
-lisaClustOutput <- markerMean(regions,
+lisaClustOutput <- getMarkerMeans(regions,
                               survivalData = "Survival_days_capped")
 
 ```

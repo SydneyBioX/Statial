@@ -53,19 +53,19 @@ Helper functions to visualise OLS model fits for image based state models
 \examples{
 \dontrun{
 library(dplyr)
-data("headSCE")
+data("kerenSCE")
 
-singleCellDataDistances <- getDistances(headSCE,
+singleCellDataDistances <- getDistances(kerenSCE,
   nCores = 1,
   Rs = c(200),
-  whichCellTypes = c("MC2", "SC7")
+  whichCellTypes = c("Keratin_Tumour", "Macrophages")
 )
 visualiseImageRelationship(
   data = singleCellDataDistances,
   Rs = c(200),
   imageID = "36",
-  mainCellType = "MC2",
-  interactingCellType = "SC7",
+  mainCellType = "Macrophages",
+  interactingCellType = "Keratin_Tumour",
   depedentMarker = "Podoplanin",
   interactive = FALSE,
   plotModelFit = FALSE,
