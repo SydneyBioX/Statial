@@ -383,9 +383,11 @@ modellingData <- listImageModelsCVFormat(stateChanges,
 #lisaClust
 ```{r}
 data(kerenSCE)
-lisaClustOutput <- markerMeanCTR(kerenSCE,
-                                  patientIDs = "DONOR_NO",
-                                  survivalData = "Survival_days_capped")
+
+regions <- lisaClust::lisaClust(kerenSCE, k = 5)
+
+lisaClustOutput <- markerMean(regions,
+                              survivalData = "Survival_days_capped")
 
 ```
 
