@@ -30,7 +30,7 @@
 #'
 #' @usage data(kerenImage)
 #'
-#' @format headData a SingleCellExperiment object
+#' @format kerenImage an image from a SingleCellExperiment object
 #' @aliases
 #' kerenImage
 #'
@@ -53,7 +53,7 @@
 #'
 #' @usage data(kerenSCE)
 #'
-#' @format headData a SingleCellExperiment object
+#' @format kerenSCE a SingleCellExperiment object
 #' @aliases
 #' kerenSCE
 #'
@@ -65,6 +65,24 @@
 #'
 #'
 "kerenSCE"
+
+
+#' Kontextual results from kerenSCE
+#'
+#' @description
+#' This is a kontextual results data.frame created using Kontextual on the kerenSCE dataset.
+#'
+#'
+#' @usage data(kerenKontextual)
+#'
+#' @format kerenKontextual a kontextual results object.
+#' @aliases
+#' kerenKontextual
+#'
+#'
+#'
+"kerenKontextual"
+
 
 #' Results from getStateChanges with the mixed effects model for kerenSCE
 #'
@@ -128,4 +146,5 @@
 #' @aliases 
 #' stateChangesContam
 "stateChangesContam"
+
 
