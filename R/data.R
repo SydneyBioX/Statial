@@ -83,7 +83,7 @@
 #' @format stateChanges a dataframe
 #' @aliases 
 #' stateChanges
-"stateChanges"
+"stateChangesFiltered"
 
 
 
