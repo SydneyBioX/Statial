@@ -25,13 +25,15 @@
 #'
 #' @examples
 #'
-#' data("kerenImage")
-#'
+#' data("kerenSCE")
+#' 
+#' kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+#' 
 #' rsDf <- rsCurve(
-#'   cells = kerenImage,
-#'   from = "p53",
-#'   to = "Immune",
-#'   parent = c("p53", "Keratin+Tumour"),
+#'   cells = kerenSCE,
+#'   from = "CD4_Cell",
+#'   to = "Keratin_Tumour",
+#'   parent = c("CD4_Cell", "Macrophages"),
 #'   rs = seq(10, 510, 100),
 #'   cores = 2
 #' )

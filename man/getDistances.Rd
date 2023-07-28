@@ -26,12 +26,12 @@ type
 }
 \examples{
 library(dplyr)
-data("headSCE")
+data("kerenSCE")
 
-singleCellDataDistances <- getDistances(headSCE,
-  nCores = 1,
+singleCellDataDistances <- getDistances(kerenSCE,
   Rs = c(200),
-  whichCellTypes = c("MC2", "SC7")
+  whichCellTypes = c("Keratin_Tumour", "Macrophages"),
+  nCores = 1
 )
 
 }

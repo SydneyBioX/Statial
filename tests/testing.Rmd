@@ -1,4 +1,8 @@
+```{r}
 
+colData(kerenSCE)$Censored <- colData(kerenSCEVig)$Censored
+
+```
 
 ```{r}
 #TODO: Add these functionalities into getDistances
@@ -10,6 +14,15 @@ markersToUse <- colnames(intensitiesData)
 rownames(SCE)
 
 colData(SCE)[, factor_cols] <- colData(SCE)[, factor_cols] %>% as.character 
+
+data("kerenSCE")
+
+singleCellDataCounts <- getAbundances(kerenSCE,
+   nCores = 30,
+   Rs = c(200),
+   whichCellTypes = c("Keratin_Tumour", "Macrophages")
+ )
+
 
 #TURN IMAGEID COLUMN INTO A CHARACTER COLUMN
 
@@ -24,12 +37,14 @@ colData(SCE)[, factor_cols] <- colData(SCE)[, factor_cols] %>% as.character
 ```
 
 ```{r}
-colnames(colData(kerenSCE))[which(names(colData(kerenSCE)) == "CellID")] <- "ImageCellID"
+colnames(colData(kerenSCE))[40] <- "Survival_days_capped"
 
-colData(kerenSCE)$cellID <- rownames(colData(kerenSCE))
 
-#TURN IMAGEID COLUMN INTO A CHARACTER COLUMN
+colData(kerenSCE) <- colData(kerenSCE) %>% as.data.frame %>% select(c(x, y, CellID, imageID, cellType, tumour_type, DONOR_NO, AGE_AT_DX, Survival_days_capped)) %>% DataFrame()
+
 colData(kerenSCE)$imageID <- colData(kerenSCE)$imageID %>% as.character
+#TURN IMAGEID COLUMN INTO A CHARACTER COLUMN
+
 #
 
 
@@ -37,6 +52,7 @@ colData(kerenSCE)$cellType[colData(kerenSCE)$cellType == "CD4"] <- "CD4_Cell"
 colData(kerenSCE)$cellType[colData(kerenSCE)$cellType == "CD8"] <- "CD8_Cell"
 colData(kerenSCE)$cellType[colData(kerenSCE)$cellType == "CD3"] <- "CD3_Cell"
 
+data(kerenSCE)
 subset <- kerenSCE[, colData(kerenSCE)$imageID %in% c("1", "2", "3")]
 
 
@@ -45,13 +61,16 @@ subset <- kerenSCE[, colData(kerenSCE)$imageID %in% c("1", "2", "3")]
 #
 
 
-SCE <- getDistances(subset,
+SCEsubset <- getDistances(SCEsubset,
                          Rs = c(200),
-                         whichCellTypes = c("Macrophages", "Keratin+Tumour"))
+                         # whichCellTypes = c("Macrophages", "Keratin_Tumour"),
+                         nCores = 3
+                         )
 
-SCE <- getAbundances(SCE,
+SCEsubset <- getAbundances(SCEsubset,
                              Rs = c(200),
-                             whichCellTypes = c("Macrophages", "Keratin+Tumour")
+                             nCores = 3
+                             # whichCellTypes = c("Macrophages", "Keratin_Tumour")
                              )
 
 # tmp <- getAbundances(headSCE,
@@ -59,36 +78,45 @@ SCE <- getAbundances(SCE,
 #                              whichCellTypes = c("MC2", "SC7")
 #                              )
 
-SCE <- calcContamination(SCE,
+SCEsubset <- calcContamination(subset,
                          Rs = c(200))
 
-imageModels <- getStateChanges(
-  singleCellData = SCE,
+test <- getStateChanges(
+  singleCellData = SCEsubset,
   Rs = c(200),
   typeAll = c("dist200", "abundance200"),
-  covariates = c("rfMainCellProb"),
   method = "lm",
   isMixed = FALSE,
-  cellTypesToModel = "Keratin+Tumour",
-  nCores = 1)
+  cellTypesToModel = "Keratin_Tumour",
+  nCores = 3)
+
+
+test2 <- getStateChanges(
+  singleCellData = SCEsubset,
+  Rs = c(200),
+  typeAll = c("dist200", "abundance200"),
+  method = "lm",
+  isMixed = FALSE,
+  cellTypesToModel = "Keratin_Tumour",
+  nCores = 30)
 
 
 # 
-# 
-# visualiseImageRelationship(
-#   data = SCE,
-#   Rs = c(200),
-#   imageID = "3",
-#   mainCellType = "Keratin+Tumour",
-#   interactingCellType = "CD3_Cell",
-#   depedentMarker = "CD3",
-#   interactive = FALSE,
-#   plotModelFit = FALSE,
-#   method = "rlm",
-#   modelType = "dist200_"
-# )
 
-namesVector <- unique(colData(subset)$imageID)
+visualiseImageRelationship(
+  data = SCEsubset,
+  Rs = c(200),
+  imageID = "3",
+  mainCellType = "CD8_Cell",
+  interactingCellType = "CD3_Cell",
+  depedentMarker = "CD8",
+  interactive = FALSE,
+  plotModelFit = FALSE,
+  method = "rlm",
+  modelType = "dist200_"
+)
+
+namesVector <- unique(colData(SCE)$imageID)
 
 classificationDataKeep <- factor(x = rep("cool", length(namesVector))) %>% set_names(namesVector)
 
@@ -189,6 +217,12 @@ interactionsResults %>%
 
 ```
 
+```{r}
+
+
+```
+
+
 
 ```{r}
 data(headSCE)
@@ -198,46 +232,57 @@ data("headSCE")
 singleCellDataDistances <- getDistances(headSCE,
  nCores = 1,
  Rs = c(200),
- whichCellTypes = c("MC2", "SC7")
+ whichCellTypes = c("MC2")
 )
 
 
-SCE <- getDistances(headSCE, Rs = c(200), 
-                    whichCellTypes = c("MC2", "SC7")
-                    )
-# tmp <- SCE@metadata[["dist200"]]
+SCEhead <- getDistances(headSCE, 
+                        Rs = c(200),
+                        nCores = 5,
+                    whichCellTypes = c("MC2", "SC7"))
+
+tmp <- metadata(SCEhead)$Rs200 %>% as.data.frame
+
+rownames(tmp) <- colnames(SCEhead)
+                    
+reducedDim(SCEhead, "dist") <- tmp
+reducedDim(SCEhead, "abundance") <- tmp
+
+# tmp <- SCEhead@metadata[["dist200"]]
 
 # ttmp <- left_join(tmp, contams)
 
-# tmp <- SCE@metadata$dist200_
-SCE <- getDistances(SCE, Rs = c(100), 
-                    # whichCellTypes = c("MC2", "EC1")
-                    )
-SCE <- getAbundances(SCE, Rs = c(200), 
+# tmp <- SCEhead@metadata$dist200_
+# SCEhead <- getDistances(SCEhead, Rs = c(100), 
+#                     # whichCellTypes = c("MC2", "EC1")
+#                     )
+SCEhead <- getAbundances(SCEhead, Rs = c(200),
                      whichCellTypes = c("MC2", "SC7")
                      )
-SCE <- calcContamination(SCE,
-                         Rs = c(200))
-# tmp <- as.data.frame(colData(SCE))
 
-visualiseImageRelationship(
-  data = SCE,
-  Rs = c(200),
-  imageID = "8",
-  mainCellType = "MC2",
-  interactingCellType = "SC7",
-  depedentMarker = "DNA2",
-  interactive = FALSE,
-  plotModelFit = FALSE,
-  method = "rlm",
-  modelType = "dist200_"
-)
+# SCEhead <- calcContamination(SCEhead,
+#                          Rs = c(200))
+# tmp <- as.data.frame(colData(SCEhead))
+
+# visualiseImageRelationship(
+#   data = SCEhead,
+#   Rs = c(200),
+#   imageID = "8",
+#   mainCellType = "MC2",
+#   interactingCellType = "SC7",
+#   depedentMarker = "DNA2",
+#   interactive = FALSE,
+#   plotModelFit = FALSE,
+#   method = "rlm",
+#   modelType = "dist200_"
+# )
 imageModels <- getStateChanges(
-  singleCellData = SCE,
+  singleCellData = SCEhead,
   Rs = c(200),
-  typeAll = c("dist200"),
+  typeAll = c("dist200", "abundance200"),
   method = "lm",
   isMixed = FALSE,
+  condition = "condition",
   cellTypesToModel = "MC2",
   nCores = 1)
 
@@ -268,7 +313,7 @@ imageModelsFast <- getStateChangesFast(
 #SPECIFY FEATURES - HERE IT IS NON PROGRESSIVE AND PROGRESSIVE. THESE ARE NOT FOUND IN HEADSCE.
 classificationDataKeep <- factor(x = c("NP", "NP", "NP", "P", "P")) %>% set_names(c("1", "5", "6", "7", "8"))
 
-metadata(SCE)$dist200 <- metadata(SCE)$dist200 %>% mutate(condition = case_when(
+metadata(SCEhead)$Rs200 <- metadata(SCEhead)$Rs200 %>% mutate(condition = case_when(
   imageID %in% c("1", "5", "6") ~ "NP",
   imageID %in% c("7", "8") ~ "P",
   TRUE ~ "P"

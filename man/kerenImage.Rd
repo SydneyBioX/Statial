@@ -5,7 +5,7 @@
 \alias{kerenImage}
 \title{MIBI-TOF Breast cancer image}
 \format{
-headData a SingleCellExperiment object
+kerenImage an image from a SingleCellExperiment object
 }
 \usage{
 data(kerenImage)

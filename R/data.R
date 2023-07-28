@@ -30,7 +30,7 @@
 #'
 #' @usage data(kerenImage)
 #'
-#' @format headData a SingleCellExperiment object
+#' @format kerenImage an image from a SingleCellExperiment object
 #' @aliases
 #' kerenImage
 #'
@@ -53,7 +53,7 @@
 #'
 #' @usage data(kerenSCE)
 #'
-#' @format headData a SingleCellExperiment object
+#' @format kerenSCE a SingleCellExperiment object
 #' @aliases
 #' kerenSCE
 #'
@@ -65,3 +65,86 @@
 #'
 #'
 "kerenSCE"
+
+
+#' Kontextual results from kerenSCE
+#'
+#' @description
+#' This is a kontextual results data.frame created using Kontextual on the kerenSCE dataset.
+#'
+#'
+#' @usage data(kerenKontextual)
+#'
+#' @format kerenKontextual a kontextual results object.
+#' @aliases
+#' kerenKontextual
+#'
+#'
+#'
+"kerenKontextual"
+
+
+#' Results from getStateChanges with the mixed effects model for kerenSCE
+#'
+#' Results from the call:
+#' SCE <- getDistances(kerenSCE, nCores = 20)
+#' SCE <- getAbundances(SCE, nCores = 20)
+#' 
+#' stateChangesMixed <- getStateChanges(
+#'   singleCellData = SCE,
+#'   Rs = c(200),
+#'   typeAll = c("dist200", "abundance200"),
+#'   method = "lm",
+#'   isMixed = FALSE,
+#'   nCores = 40)
+#'
+#' @format stateChanges a dataframe
+#' @aliases 
+#' stateChanges
+"stateChangesFiltered"
+
+
+
+#' Results from getStateChanges with the mixed effects model for kerenSCE
+#'
+#' Results from the call:
+#' SCE <- getDistances(kerenSCE, nCores = 20)
+#' SCE <- getAbundances(SCE, nCores = 20)
+#' 
+#' stateChangesMixed <- getStateChanges(
+#'   singleCellData = SCE,
+#'   Rs = c(200),
+#'   typeAll = c("dist200", "abundance200"),
+#'   method = "lm",
+#'   isMixed = TRUE,
+#'   nCores = 40)
+#'
+#' @format stateChangesMixed a dataframe
+#' @aliases 
+#' stateChangesMixed
+"stateChangesMixed"
+
+
+#' Results from getStateChanges with the mixed effects model when using
+#' contamination as a covariate for kerenSCE.
+#'
+#' Results from the call:
+#' SCE <- getDistances(kerenSCE, nCores = 20)
+#' SCE <- getAbundances(SCE, nCores = 20)
+#' SCE <- calcContamination(SCE)
+#' 
+#' stateChangesContam <- getStateChanges(
+#'   singleCellData = SCE,
+#'   Rs = c(200),
+#'   typeAll = c("dist200", "abundance200"),
+#'   covariates = c("rfMainCellProb"),
+#'   method = "lm",
+#'   isMixed = TRUE,
+#'   nCores = 40)
+#'
+#' @format stateChangesContam a dataframe
+#' @aliases 
+#' stateChangesContam
+"stateChangesContam"
+
+

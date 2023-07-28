@@ -34,14 +34,14 @@
 #'
 #' @examples
 #' # Load data
-#' data("headSCE")
+#' data("kerenSCE")
 #'
 #' CD4_Kontextual <- Kontextual(
-#'   cells = headSCE,
+#'   cells = kerenSCE,
 #'   r = 50,
-#'   from = "TC_CD4",
-#'   to = "SC5",
-#'   parent = c("TC_CD4", "TC_CD8"),
+#'   from = "Macrophages",
+#'   to = "Keratin_Tumour",
+#'   parent = c("Macrophages", "CD4_Cell"),
 #'   cores = 2
 #' )
 #'
@@ -352,3 +352,32 @@ isKontextual <- function(kontextualResult){
     
     return(all(colNames %in% names(kontextualResult)))
 }
+
+#' Convert Kontextual results to a matrix for classification
+#'
+#' @param kontextualResult a kontextual result data.frame
+#' @param type return the either the `kontextual` or `original` L-function values
+#' @param replaceVal value which NAs are replaced with
+#' @param imageID The column which contains image identifiers.
+#'
+#' @examples
+#' 
+#'
+#' @export prepKontextMat
+#' @rdname prepKontextMat
+#' @import tidyverse
+prepKontextMat = function(kontextualResult,
+                          type = "kontextual",
+                          replaceVal = 0,
+                          imageID = "imageID") {
+    
+    kontextMat = kontextualResult |> 
+        # Implement support for multiple values in other columns.
+        select(!!imageID, "test", type) |> 
+        pivot_wider(names_from = "test", values_from = type) |> 
+        column_to_rownames(`imageID`) %>% 
+        replace(is.na(.), replaceVal)
+    
+    return(kontextMat)
+}
+    

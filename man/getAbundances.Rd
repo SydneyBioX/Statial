@@ -26,12 +26,12 @@ each cell to other cell types
 }
 \examples{
 library(dplyr)
-data("headSCE")
+data("kerenSCE")
 
-singleCellDataCounts <- getAbundances(headSCE,
-  nCores = 1,
+singleCellDataCounts <- getAbundances(kerenSCE,
   Rs = c(200),
-  whichCellTypes = c("MC2", "SC7")
+  whichCellTypes = c("Keratin_Tumour", "Macrophages"),
+  nCores = 1
 )
 
 }

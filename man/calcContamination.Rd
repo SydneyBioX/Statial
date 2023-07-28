@@ -39,10 +39,10 @@ Calculates contamination scores using a random forest classification
 }
 \examples{
 library(dplyr)
-data("headSCE")
+data("kerenSCE")
 
 singleCellDataDistancesContam <- calcContamination(
-  headSCE,
+  kerenSCE,
   Rs = c(200)
 )
 

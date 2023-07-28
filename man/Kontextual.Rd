@@ -76,14 +76,14 @@ particular radius (r).
 }
 \examples{
 # Load data
-data("headSCE")
+data("kerenSCE")
 
 CD4_Kontextual <- Kontextual(
-  cells = headSCE,
+  cells = kerenSCE,
   r = 50,
-  from = "TC_CD4",
-  to = "SC5",
-  parent = c("TC_CD4", "TC_CD8"),
+  from = "Macrophages",
+  to = "Keratin_Tumour",
+  parent = c("Macrophages", "CD4_Cell"),
   cores = 2
 )
 

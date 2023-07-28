@@ -5,7 +5,7 @@
 \alias{kerenSCE}
 \title{MIBI-TOF Breast cancer intensities}
 \format{
-headData a SingleCellExperiment object
+kerenSCE a SingleCellExperiment object
 }
 \usage{
 data(kerenSCE)

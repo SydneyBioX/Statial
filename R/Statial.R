@@ -146,12 +146,12 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #'
 #' @examples
 #' library(dplyr)
-#' data("headSCE")
+#' data("kerenSCE")
 #'
-#' singleCellDataDistances <- getDistances(headSCE,
-#'   nCores = 1,
+#' singleCellDataDistances <- getDistances(kerenSCE,
 #'   Rs = c(200),
-#'   whichCellTypes = c("MC2", "SC7")
+#'   whichCellTypes = c("Keratin_Tumour", "Macrophages"),
+#'   nCores = 1
 #' )
 #'
 #' @export
@@ -232,12 +232,16 @@ getDistances <- function(singleCellData,
     purrr::reduce(full_join)
   
   distances <- singleCellDataDistances %>% select(c("cellID", contains("dist")))
-  redDim <- data.frame(matrix(NA, nrow = ncol(singleCellDataClean), ncol = ncol(distances)))
-  rownames(redDim) <- colnames(singleCellDataClean)
-  matching_indices <- match(distances$cellID, colnames(singleCellDataClean))
+  cellIDs <- colData(singleCellDataClean) %>% as.data.frame %>% select("cellID")
   
-  redDim[matching_indices, ] <- distances
-  colnames(redDim) <- colnames(distances)
+  redDim <- left_join(cellIDs, distances, by = "cellID")
+  
+  # redDim <- data.frame(matrix(NA, nrow = ncol(singleCellDataClean), ncol = ncol(distances)))
+  # rownames(redDim) <- colnames(singleCellDataClean)
+  # matching_indices <- match(distances$cellID, colnames(singleCellDataClean))
+  # 
+  # redDim[matching_indices, ] <- distances
+  # colnames(redDim) <- colnames(distances)
   
   # redDim <- redDim %>% select(-c("cellID"))
   
@@ -284,12 +288,12 @@ getDistances <- function(singleCellData,
 #'
 #' @examples
 #' library(dplyr)
-#' data("headSCE")
+#' data("kerenSCE")
 #' 
-#' singleCellDataCounts <- getAbundances(headSCE,
-#'   nCores = 1,
+#' singleCellDataCounts <- getAbundances(kerenSCE,
 #'   Rs = c(200),
-#'   whichCellTypes = c("MC2", "SC7")
+#'   whichCellTypes = c("Keratin_Tumour", "Macrophages"),
+#'   nCores = 1
 #' )
 #'
 #' @export
@@ -400,12 +404,17 @@ getAbundances <- function(singleCellData,
   
   
   abundances <- singleCellDataK %>% select(c("cellID", contains("abundance")))
-  redDim <- data.frame(matrix(NA, nrow = ncol(singleCellDataClean), ncol = ncol(abundances)))
-  rownames(redDim) <- colnames(singleCellDataClean)
-  matching_indices <- match(abundances$cellID, colnames(singleCellDataClean))
   
-  redDim[matching_indices, ] <- abundances
-  colnames(redDim) <- colnames(abundances)
+  cellIDs <- colData(singleCellDataClean) %>% as.data.frame %>% select("cellID")
+  
+  redDim <- left_join(cellIDs, abundances, by = "cellID")
+  
+  # redDim <- data.frame(matrix(NA, nrow = ncol(singleCellDataClean), ncol = ncol(abundances)))
+  # rownames(redDim) <- colnames(singleCellDataClean)
+  # matching_indices <- match(abundances$cellID, colnames(singleCellDataClean))
+  # 
+  # redDim[matching_indices, ] <- abundances
+  # colnames(redDim) <- colnames(abundances)
   
   # redDim <- redDim %>% select(-c("cellID"))
   
@@ -446,10 +455,10 @@ getAbundances <- function(singleCellData,
 #'
 #' @examples
 #' library(dplyr)
-#' data("headSCE")
+#' data("kerenSCE")
 #'
 #' singleCellDataDistancesContam <- calcContamination(
-#'   headSCE,
+#'   kerenSCE,
 #'   Rs = c(200)
 #' )
 #'
@@ -573,7 +582,7 @@ calcContamination <- function(singleCellData,
   # singleCellData2 <- singleCellData %>%
   #   dplyr::left_join(rfData, by = c("cellID"))
 
-  redDim <- rfData %>% select(-c("cellID"))
+  redDim <- rfData
   
   
   reducedDim(singleCellDataClean, "contamination") <- redDim
@@ -655,19 +664,19 @@ calcContamination <- function(singleCellData,
 #'
 #' @examples
 #' library(dplyr)
-#' data("headSCE")
+#' data("kerenSCE")
 #'
-#' singleCellDataDistances <- getDistances(headSCE,
+#' singleCellDataDistances <- getDistances(kerenSCE,
 #'   nCores = 1,
 #'   Rs = c(200),
-#'   whichCellTypes = c("MC2", "SC7")
+#'   whichCellTypes = c("Keratin_Tumour", "Macrophages")
 #' )
 #'
 #' imageModels <- getStateChanges(
 #'   singleCellData = singleCellDataDistances,
 #'   Rs = c(200),
 #'   typeAll = c("dist200"),
-#'   cellTypesToModel = "MC2",
+#'   cellTypesToModel = "Macrophages",
 #'   nCores = 1
 #' )
 #'
@@ -675,7 +684,7 @@ calcContamination <- function(singleCellData,
 #' @rdname getStateChanges
 #' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom dplyr
-#'   arrange group_by  summarise_at mutate bind_rows left_join filter
+#'   arrange group_by  summarise_at mutate bind_rows left_join filter left_join
 #' @importFrom tidyr gather
 #' @importFrom magrittr %>%
 #' @importFrom S4Vectors metadata
@@ -714,14 +723,14 @@ getStateChanges <- function(singleCellData,
     contams <- reducedDim(SCE, "contamination") %>% select(-c("cellType"))
     redDimNames <- redDimNames[!redDimNames %in% "contamination"]
     for(name in redDimNames) {
-      singleCellData <- right_join(singleCellData, reducedDim(SCE, name))
+      singleCellData <- left_join(singleCellData, reducedDim(SCE, name), by = "cellID")
     }
-    singleCellData <- right_join(singleCellData, contams)
+    singleCellData <- left_join(singleCellData, contams, by = "cellID")
     
   } else {
     
     for(name in redDimNames) {
-      singleCellData <- right_join(singleCellData, reducedDim(SCE, name))
+      singleCellData <- left_join(singleCellData, reducedDim(SCE, name), by = "cellID")
     }
     
   }
@@ -1135,12 +1144,12 @@ fitStateModels <- function(x,
 #'
 #' @examples
 #' library(dplyr)
-#' data("headSCE")
+#' data("kerenSCE")
 #'
-#' singleCellDataDistances <- getDistances(headSCE,
+#' singleCellDataDistances <- getDistances(kerenSCE,
 #'   nCores = 1,
 #'   Rs = c(200),
-#'   whichCellTypes = c("MC2", "SC7")
+#'   whichCellTypes = c("Keratin_Tumour", "Macrophages")
 #' )
 #'
 #' imageModelsFast <- getStateChangesFast(
@@ -1151,7 +1160,7 @@ fitStateModels <- function(x,
 #' )
 #' @export
 #' @rdname getStateChangesFast
-#' @importFrom dplyr bind_rows filter
+#' @importFrom dplyr bind_rows filter left_join
 #' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom magrittr %>%
 getStateChangesFast <- function(singleCellData,
@@ -1184,14 +1193,14 @@ getStateChangesFast <- function(singleCellData,
     contams <- reducedDim(SCE, "contamination") %>% select(-c("cellType"))
     redDimNames <- redDimNames[!redDimNames %in% "contamination"]
     for(name in redDimNames) {
-      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+      singleCellData <- left_join(singleCellData, reducedDim(SCE, name), by = "cellID")
     }
-    singleCellData <- bind_cols(singleCellData, contams)
+    singleCellData <- left_join(singleCellData, contams, by = "cellID")
     
   } else {
     
     for(name in redDimNames) {
-      singleCellData <- bind_cols(singleCellData, reducedDim(SCE, name))
+      singleCellData <- left_join(singleCellData, reducedDim(SCE, name), by = "cellID")
     }
     
   }
@@ -1365,18 +1374,19 @@ imageModelsCVFormat <- function(imageModels,
 #'
 #' @examples
 #' library(dplyr)
-#' data("headSCE")
+#' data("kerenSCE")
 #'
-#' singleCellDataDistances <- getDistances(headSCE,
+#' singleCellDataDistances <- getDistances(kerenSCE,
 #'   nCores = 1,
 #'   Rs = c(200),
-#'   whichCellTypes = c("MC2", "SC7")
+#'   whichCellTypes = c("Keratin_Tumour", "Macrophages")
 #' )
 #'
 #' imageModels <- getStateChanges(
 #'   singleCellData = singleCellDataDistances,
 #'   Rs = c(200),
-#'   type = c("dist200"),
+#'   typeAll = c("dist200"),
+#'   cellTypesToModel = "Macrophages",
 #'   nCores = 1
 #' )
 #' crossValidationData <- listImageModelsCVFormat(imageModels,
@@ -1386,7 +1396,7 @@ imageModelsCVFormat <- function(imageModels,
 #' )
 #' @export
 #' @rdname imageModelsCVFormat
-#' @importFrom dplyr bind_rows across mutate rename select
+#' @importFrom dplyr bind_rows across mutate rename select column_to_rownames
 #' @importFrom stringr str_detect str_replace str_split
 #' @importFrom tidyr pivot_wider
 #' @importFrom magrittr %>%
@@ -1415,10 +1425,11 @@ listImageModelsCVFormat <- function(imageModels,
   
   modellingData <- crossValidateInteractionsData %>% 
     lapply(function(x, imageSubset) x %>%
-             filter(imageID %in% imageSubset) %>% 
-             column_to_rownames("imageID") %>% 
-             dplyr::select(!contains(c("dataset", "type"))), 
-           imageSubset = names(classificationData))
+             filter(imageID %in% imageSubset) %>%
+             dplyr::select(!contains(c("dataset", "type"))) %>%
+             column_to_rownames("imageID") %>%
+             replace(is.na(.), 0), 
+           imageSubset = classificationData)
   
   return(modellingData)
 }
@@ -1460,19 +1471,19 @@ listImageModelsCVFormat <- function(imageModels,
 #' @examples
 #' \dontrun{
 #' library(dplyr)
-#' data("headSCE")
+#' data("kerenSCE")
 #'
-#' singleCellDataDistances <- getDistances(headSCE,
+#' singleCellDataDistances <- getDistances(kerenSCE,
 #'   nCores = 1,
 #'   Rs = c(200),
-#'   whichCellTypes = c("MC2", "SC7")
+#'   whichCellTypes = c("Keratin_Tumour", "Macrophages")
 #' )
 #' visualiseImageRelationship(
 #'   data = singleCellDataDistances,
 #'   Rs = c(200),
 #'   imageID = "36",
-#'   mainCellType = "MC2",
-#'   interactingCellType = "SC7",
+#'   mainCellType = "Macrophages",
+#'   interactingCellType = "Keratin_Tumour",
 #'   depedentMarker = "Podoplanin",
 #'   interactive = FALSE,
 #'   plotModelFit = FALSE,
@@ -1482,7 +1493,7 @@ listImageModelsCVFormat <- function(imageModels,
 #'
 #' @export
 #' @rdname visualiseImageRelationship
-#' @importFrom dplyr filter
+#' @importFrom dplyr filter left_join
 #' @importFrom ggplot2
 #'   ggplot scale_fill_distiller stat_density_2d geom_point theme_classic
 #'   aes_string ggtitle facet_wrap aes xlab ylab ggtitle autoplot
@@ -1515,14 +1526,14 @@ visualiseImageRelationship <- function(data,
     contams <- reducedDim(SCE, "contamination") %>% select(-c("cellType"))
     redDimNames <- redDimNames[!redDimNames %in% "contamination"]
     for(name in redDimNames) {
-      singleCellData <- right_join(singleCellData, reducedDim(SCE, name))
+      singleCellData <- left_join(singleCellData, reducedDim(SCE, name), by = "cellID")
     }
-    singleCellData <- right_join(singleCellData, contams)
+    singleCellData <- left_join(singleCellData, contams, by = "cellID")
     
   } else {
     
     for(name in redDimNames) {
-      singleCellData <- right_join(singleCellData, reducedDim(SCE, name))
+      singleCellData <- left_join(singleCellData, reducedDim(SCE, name), by = "cellID")
     }
     
   }
@@ -1641,26 +1652,35 @@ visualiseImageRelationship <- function(data,
 #' cross validation
 #'
 #' @param data
-#'   A SingleCellExperiment object with intensities data in the assays slot.
-#' @param patientIDs
-#'   A string vector specifying name of the column specifying information on 
-#'   patient ID in colData.
+#'   A SingleCellExperiment object with intensities data in the assays slot and
+#'   regions information in colData generated by lisaClust.
 #' @param survivalData
 #'   A string vector specifying name of the column specifying information on 
 #'   patient survival in colData.
-#' @param k
-#'   The number of regions to cluster as specified in lisaClust.
+#' @param imageID
+#'   A string vector of imageIDs to specify for which images the marker mean
+#'   needs to be calculated for. If NULL, all images will be used.
+#' @param cellType
+#'   A string vector of cell types to specify which cell types the marker mean
+#'   needs to be calculated for. If NULL, all cell types will be used.
+#' @param region 
+#'   A string vector of regions provided by lisaClust so specify for which
+#'   regions the marker mean will be calculated. If NULL, all regions will be 
+#'   used.
 #' @param markers 
-#'   A string list of markers that proxy a cell's state. If NULL, all markers 
+#'   A string vector of markers that proxy a cell's state. If NULL, all markers 
 #'   will be used.
 #'
 #' @examples
 #' library(dplyr)
-#' lisaClustOutput2 <- markerMeanCTR(kerenSCE,
-#'                     patientIDs = "DONOR_NO",
+#' data(kerenSCE)
+#' 
+#' regionSCE <- lisaClust::lisaClust(kerenSCE, k = 5)
+#' 
+#' lisaClustOutput2 <- getMarkerMeans(regionSCE,
 #'                     survivalData = "Survival_days_capped")
 #' @export
-#' @rdname imageModelsCVFormat
+#' @rdname getMarkerMeans
 #' @importFrom dplyr 
 #'   distinct across mutate summarise_at select vars left_join group_by
 #' @importFrom lisaClust lisaClust
@@ -1668,14 +1688,28 @@ visualiseImageRelationship <- function(data,
 #' @importFrom magrittr %>%
 #' @importFrom SummarizedExperiment colData
 #' @importFrom tibble column_to_rownames
-markerMeanCTR <- function(data,
-                          patientIDs,
-                          survivalData,
-                          k = 5,
-                          markers = NULL) {
+getMarkerMeans <- function(data,
+                       survivalData,
+                       imageID = NULL,
+                       cellType = NULL,
+                       region = NULL,
+                       markers = NULL) {
+  
   
   if(is.null(markers)) {
     markers <- rownames(data)
+  }
+  
+  if(is.null(imageID)) {
+    imageID <- unique(colData(data)$imageID)
+  }
+  
+  if(is.null(cellType)) {
+    cellType <- unique(colData(data)$cellType)
+  }
+  
+  if(is.null(region)) {
+    region <- unique(colData(data)$region)
   }
   
   survivalData <- data %>%
@@ -1685,14 +1719,13 @@ markerMeanCTR <- function(data,
     distinct()
   
   markerDf <- data %>%
-    preProcessing() %>%
-    lisaClust::lisaClust(k = k) %>% 
+    preProcessing() %>% 
     colData() %>%
     as.data.frame() %>%
-    select(c(patientID, imageID, cellType, region, all_of(markers)))
+    select(c(imageID, cellType, region, all_of(markers))) %>%
+    filter(imageID %in% imageID, cellType %in% cellType, region %in% region)
   
-  lisaClustOutput = markerDf %>% 
-    select(-c(patientID)) %>%
+  lisaClustOutput <- markerDf %>%
     group_by(imageID, cellType, region) %>%
     summarise_at(vars(-group_cols()), mean, na.rm = TRUE) %>%
     pivot_longer(-c(imageID, cellType, region), names_to = "markers") %>%
@@ -1700,6 +1733,8 @@ markerMeanCTR <- function(data,
     left_join(survivalData, by = "imageID") %>%
     column_to_rownames("imageID") %>% 
     replace(is.na(.), 0)
+  
+  return(lisaClustOutput)
 }
 
 

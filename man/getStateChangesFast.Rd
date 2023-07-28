@@ -47,12 +47,12 @@ provides the option to build OLS models
 }
 \examples{
 library(dplyr)
-data("headSCE")
+data("kerenSCE")
 
-singleCellDataDistances <- getDistances(headSCE,
+singleCellDataDistances <- getDistances(kerenSCE,
   nCores = 1,
   Rs = c(200),
-  whichCellTypes = c("MC2", "SC7")
+  whichCellTypes = c("Keratin_Tumour", "Macrophages")
 )
 
 imageModelsFast <- getStateChangesFast(
