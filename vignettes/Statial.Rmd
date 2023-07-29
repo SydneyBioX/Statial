@@ -226,14 +226,13 @@ The methods utilised here will provide a framework to explore how the dynamic be
 
 The first step in analysing these changes is to calculate the spatial proximity (`getDistances`) and abundance (`getAbundances`) of each cell to every cell type. These values will then be stored in the `reducedDims` slot of the `SingleCellExperiment` object under the names `distances` and `abundances` respectively.
 ```{r}
-data(kerenSCE)
 
-SCE <- getDistances(kerenSCE,
-                    Rs = c(200),
+kerenSCE <- getDistances(kerenSCE,
+                    maxDist = 200,
                     nCores = 1)
 
 SCE <- getAbundances(SCE,
-                     Rs = c(200),
+                     radius = 200,
                      nCores = 1)
 
 ```
@@ -275,10 +274,15 @@ stateChangesFiltered <- stateChanges %>% filter(sampleSize > 100, abs(tValue) > 
 
 head(stateChangesFiltered, 10)
 ```
+
+
+
 ```{r, echo = FALSE}
 data("stateChangesFiltered")
 head(stateChangesFiltered, 10)
 ```
+
+
 Let's take a look at the top 10 most significant gene-to-distance pairwise interactions. We can see that the most significant interaction involving keratin/tumour cells occurs between keratin/tumour cells and macrophages in image 27, where HLA Class I molecules in keratin/tumour cells are upregulated when nearby macrophage populations. 
 We can examine this interaction further with the `visualiseImageRelationship` function, showing us a clear visual correlation between macrophage density and HLA Class I expression.
 
@@ -342,20 +346,10 @@ visualiseImageRelationship(
 So why are B cells expressing CD8?
 This brings us to a key problem of cell segmentation - contamination.
 
-<<<<<<< HEAD
-#Contamination
+
+# Contamination
 Contamination, or lateral marker spill over is an issue that results in a cell’s marker expressions being wrongly attributed to another adjacent cell. This issue arises from incorrect segmentation where components of one cell are wrongly determined as belonging to another cell. 
 Alternatively, this issue can arise when antibodies used to tag and measure marker expressions don't latch on properly to a cell of interest, thereby resulting in residual markers being wrongly assigned as belonging to a cell near the intended target cell. It is important that we either correct or account for this incorrect attribution of markers in our modelling process. This is critical in understanding whether significant cell-cell interactions detected are an artefact of technical measurement errors driven by spill over or are real biological changes that represent a shift in a cell’s state.
-=======
-# Contamination
-Contamination, or lateral marker spill over is an issue that results in a cell’s marker expressions being wrongly attributed to another adjacent cell. This issue arises from incorrect segmentation 
-where components of one cell are wrongly determined as belonging to another cell. 
-Alternatively, this issue can arise when antibodies used to tag and measure marker expressions don't latch on properly to a cell of interest, thereby resulting in residual markers being wrongly assigned as belonging to a cell near the intended target cell. It is important that we either correct or account
-for this incorrect attribution of markers in our modelling process. This is critical in 
-understanding whether significant cell-cell interactions detected are an artefact of technical 
-measurement errors driven by spill over or are real biological changes that represent a shift in a 
-cell’s state.
->>>>>>> 22e999d562367e6028aa3e4da3bf7efda3886ad1
 
 To circumvent this problem, Statial provides a function that predicts the probability that a cell is any particular cell type. This comes in the format of the `calcContamination` function, which returns a dataframe of probabilities demarcating the chance of a cell being any particular cellType. It also provides the `rfMainCellProb` vector, which provides the probability that a cell is indeed the cell type it has been designated. 
 E.g. For a cell designated as CD8, rfMainCellProb could give a 80% chance that the cell is indeed CD8, due to contamination. We can then introduce these probabilities as covariates into our linear model.
@@ -374,6 +368,9 @@ stateChangesContam <- getStateChanges(
 
 head(stateChangesContam)
 ```
+
+
+
 ```{r, echo = FALSE}
 data("stateChangesContam")
 head(stateChangesContam, 10)
@@ -399,8 +396,9 @@ As we can see from the results `Mesenchymal_Macrophages_tissue` is the most sign
 
 
 ```{r}
-# Extracting survial data
-survData = kerenSCE@colData |> 
+# Extracting survival data
+survData = kerenSCE |>
+    colData() |> 
     data.frame() |> 
     select(imageID, Survival_days_capped, Censored) |> 
     unique()
@@ -468,7 +466,7 @@ survfit2(kerenSurv ~ survRelationship) |>
 survivalData <- kerenSCE %>%
   colData() %>%
   as.data.frame() %>%
-  select(c("imageID", "Survival_days_capped")) %>%
+  select(c("imageID", "Survival_days_capped", "Censored")) %>%
   distinct() %>%
   remove_rownames()
 
@@ -484,22 +482,25 @@ StatialOutput <- listImageModelsCVFormat(stateChanges,
                                          removeColsThresh = 0.2,
                                          missingReplacement = 0)
 
-<<<<<<< HEAD
+
 KontextualOutput <- Kontextual %>% 
   pivot_wider(names_from = "test", values_from = "konditional") %>% 
   column_to_rownames("imageID") %>% 
   replace(is.na(.), 0)
-=======
+
+```  
+  
+  
 # LisaClust
 ```{r lisaClust}
 set.seed(101)
-data(kerenSCE)
->>>>>>> 22e999d562367e6028aa3e4da3bf7efda3886ad1
 
 #Preparing features for lisaClust
-regions <- lisaClust::lisaClust(kerenSCE, k = 5)
-lisaClustOutput <- getMarkerMeans(regions,
-                              survivalData = "Survival_days_capped")
+kerenSCE <- lisaClust::lisaClust(kerenSCE, k = 5)
+cellTypeRegionMeans <- getMarkerMeans(kerenSCE,
+                              imageID = "imageID",
+                              cellType = "cellType",
+                              region = "region")
 
 
 kerenFeatureList = c(StatialOutput, KontextualOutput, lisaClustOutput)
@@ -508,8 +509,7 @@ kerenSurvClassification = crossValidate(
   measurements = kerenFeatureList,
   outcome = kerenSurv,
   classifier = "CoxNet",
-  selectionMethod  = "none",
-  multiViewMethod = "none",
+  selectionMethod  = "coxph",
   nFolds = 10,
   nFeatures = 15,
   nRepeats = 20,

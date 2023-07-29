@@ -1,0 +1,263 @@
+---
+title: "Introduction to Statial"
+date: "`r BiocStyle::doc_date()`"
+params:
+  test: FALSE
+author:
+- name: Farhan Ameen
+  affiliation:  
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Sourish Iyengar
+  affiliation:
+  - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Ellis Patrick
+  affiliation:
+  - &WIMR Westmead Institute for Medical Research, University of Sydney, Australia
+  - School of Mathematics and Statistics, University of Sydney, Australia
+vignette: >
+  %\VignetteIndexEntry{"Introduction to Statial"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output: 
+  BiocStyle::html_document
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(BiocStyle)
+```
+
+```{r warning=FALSE, message=FALSE}
+# load required packages
+library(Statial)
+library(ggplot2)
+library(spicyR)
+library(tidyverse)
+library(ClassifyR)
+library(SingleCellExperiment)
+```
+
+# Installation
+```{r eval = FALSE}
+# Install the package from Bioconductor
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install("Statial")
+```
+
+# Analysis of cell-resolution spatial omics data
+
+Talk about our spicy workflow packages or scdney. We should have a paragraph like this either at the beginning or end of all of our vignettes. It would be good if it was standardised so that all of the vignettes pull it from the same place.
+
+# What are cell states?
+
+We should look at how diffcyt frames this or pitches it. Essentially summarise the cell type vs cell state debate and reframe as why it is beneficial analytically to frame some things as states.
+
+# Identifying spatially-related changes in cell state with Statial.
+
+Here we have our Three toy diagrams of our three approaches with a brief overview.
+
+####STATIAL
+
+# Continuous changes in cell state
+Reiterate the approach
+
+## Identify within a single image
+Preprocessing
+```{r}
+kerenSCE
+
+SCE <- getDistances(kerenSCE,
+                    Rs = c(200),
+                    nCores = 30)
+
+SCE <- getAbundances(SCE,
+                     Rs = c(200),
+                     nCores = 30
+                     )
+
+```
+
+First, let's examine the effect of the distance between Keratin/Tumour cells and
+macrophages on the expression of p53 in Keratin/Tumour cells. We can observe
+that keratin/tumour cells closer to a group of macrophages tend to have higher
+expression of p53. This relationship is outlined with the second graph, showing
+a decrease of p53 expression in keratin/tumour cells over distance to 
+macrophages. The pvalue provided also shows us that this is a significant 
+interaction.
+```{r}
+visualiseImageRelationship(
+  data = SCE,
+  Rs = c(200),
+  imageID = "6",
+  mainCellType = "Keratin_Tumour",
+  interactingCellType = "Macrophages",
+  depedentMarker = "p53",
+  interactive = FALSE,
+  plotModelFit = FALSE,
+  method = "lm",
+  modelType = "dist200_"
+)
+
+```
+
+
+Now, let's look at the most significant interactions across all the images with
+a mixed model.
+```{r}
+stateChanges <- getStateChanges(
+  singleCellData = SCE,
+  Rs = c(200),
+  typeAll = c("dist200", "abundance200"),
+  method = "lm",
+  isMixed = TRUE,
+  nCores = 30)
+
+```
+
+Let's take a look at the most significant gene-to-distance pairwise 
+interactions. We can see that the most significant interaction between distance
+and expression occurs between B cells and CD8+ T cells for the CD8 ligand.
+CD8 is a highly specific ligand for CD8+ T cells, and should not be expressed 
+on B cells in a normal biological context. 
+
+```{r}
+head(stateChanges)
+```
+Taking a deeper look at this interaction, we can indeed see that the result 
+appears real. So why are B cells expressing CD8?
+
+This brings us to a key problem of cell segmentation - contamination.
+```{r}
+visualiseImageRelationship(
+  data = SCE,
+  Rs = c(200),
+  imageID = "3",
+  mainCellType = "B",
+  interactingCellType = "CD8_Cell",
+  depedentMarker = "CD8",
+  interactive = FALSE,
+  plotModelFit = FALSE,
+  method = "rlm",
+  modelType = "dist200_"
+)
+
+```
+
+Contamination
+### Write explanation of contamination here
+
+To circumvent this problem, Statial provides a function that predicts the
+probability that a cell is any particular cell type. This comes in the format of
+"rfMainCellProb". "rfMainCellProb" provides the probability that a cell is what
+it's stated to be. E.g. For a cell designated as CD8, rfMainCellProb could give 
+a 80% chance that the cell is indeed CD8, due to contamination. We can then
+introduce these probabilities as covariates into our linear model.
+```{r}
+SCE <- calcContamination(SCE)
+
+stateChangesContam <- getStateChanges(
+  singleCellData = SCE,
+  Rs = c(200),
+  typeAll = c("dist200", "abundance200"),
+  covariates = c("rfMainCellProb"),
+  method = "lm",
+  isMixed = TRUE,
+  nCores = 30)
+```
+
+
+We can see that adding the contamination scores as covariates improves the...
+TODO: generate the ROC plots (sorry could not figure this one out + could not
+find code for this)
+```{r}
+
+```
+
+
+The next steps will involve comparing survival time to see if these 
+distance-to-gene interactions are biologically significant.
+
+### Ellis, I've just realised that we're looking at survival data, not a
+### discrete variable. Not sure if colTest is the correct choice (correct me if I'm wrong)
+
+```{r}
+stateChanges <- getStateChanges(
+  singleCellData = SCE,
+  Rs = c(200),
+  typeAll = c("dist200", "abundance200"),
+  method = "lm",
+  isMixed = TRUE,
+  nCores = 30)
+
+modellingData <- listImageModelsCVFormat(stateChanges,
+                                         values_from = "tValue",
+                                         removeColsThresh = 0.2,
+                                         missingReplacement = 0)
+
+t_tests <- colTest(modellingData[1])
+
+```
+
+### Code to run it for a single relationship (e.g. does CD8 go up in T cells as T cells get closer to a tumour)
+### Code to run for everything (e.g. don't specify for relationships)
+### Which interactions don't make sense
+### Add contamination as a covariate
+### ROC curve showing contamination calculation works (somewhat)
+
+## Identify across images
+### Mixed model
+
+## Associate with a patient outcome
+### ProportionalHazards Models
+### Generate imageModels and see if the image features are associated with survival with spicyR::colTest
+
+####KONTEXTUAL
+
+# Discrete changes in cell state
+
+Reiterate the approach
+
+## Identify within a single image
+
+Final results should hint at contamination issue.
+
+### Marker contamination from lateral spillover
+
+Show that it helps.
+
+## Identify across images
+
+## Associate with a patient outcome
+
+
+# Changes within spatial domains
+
+Reiterate the approach
+
+####LISACLUST 
+
+
+
+### Identify spatial domains with lisaClust
+
+## Test between spatial domains
+
+## Associate with a patient outcome
+
+We might need to add coxph tests to the colTest function. Nick could potentially help with this. If not, for-loop it.
+
+# Predicting patient outcomes
+
+## Extract feature sets
+
+## Run classifyR
+
+
+
+
+

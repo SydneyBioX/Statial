@@ -57,73 +57,45 @@ preProcessing <- function(SCE) {
 #' Calculates the euclidean distance from each cell to the nearest cell of each
 #' type for a single image
 #'
-#' @param singleCellData the single cell data of interest
-#' @param maxRS Maximum distance between pairs of points to be counted as close
+#' @param data the single cell data of interest
+#' @param maxDist Maximum distance between pairs of points to be counted as close
 #'   pairs.
 #'
-#' @export
 #' @rdname distanceCalculator
 #' @importFrom tibble rownames_to_column
 #' @importFrom dplyr
 #'   select mutate inner_join arrange group_by slice rename relocate full_join
 #' @importFrom spatstat.geom owin ppp closepairs
 #' @importFrom tidyr pivot_wider
-distanceCalculator <- function(singleCellData, maxRS = 200) {
-  singleCellData <- singleCellData %>%
-    tibble::rownames_to_column("i") %>%
-    dplyr::select(-i) %>%
-    tibble::rownames_to_column("cellIndex") %>%
-    dplyr::mutate(cellIndex = as.numeric(cellIndex))
-  
-  
+distanceCalculator <- function(data, maxDist = 200) {
+ 
   ow <- spatstat.geom::owin(
-    xrange = range(singleCellData$x),
-    yrange = range(singleCellData$y)
+    xrange = range(data$x),
+    yrange = range(data$y)
   )
   pppData <- spatstat.geom::ppp(
-    x = singleCellData$x,
-    y = singleCellData$y,
+    x = data$x,
+    y = data$y,
     window = ow,
-    marks = singleCellData$cellType
+    marks = data$cellType
   )
   
-  closePairData <- spatstat.geom::closepairs(pppData, rmax = maxRS)
+  closePairData <- spatstat.geom::closepairs(pppData, rmax = maxDist, what = "ijd")
   distanceData <- data.frame(
-    cellIndexA = closePairData$i,
-    cellIndexB = closePairData$j,
+    cellID = data$cellID[closePairData$i],
+    cellType = data$cellType[closePairData$j],
     d = closePairData$d
   )
   
+  distanceData <- tidyr::pivot_wider(distanceData, names_from = cellType, values_from = d, 
+                                     values_fn = min)
+  distanceData <- dplyr::left_join(data[,"cellID", drop = FALSE], distanceData, by = "cellID")|>
+    tibble::column_to_rownames("cellID") 
   
-  cellAInformation <- singleCellData %>%
-    dplyr::select(
-      cellIndexA = cellIndex,
-      cellTypeA = cellType,
-      cellIDA = cellID
-    )
-  cellBInformation <- singleCellData %>%
-    dplyr::select(cellIndexB = cellIndex, cellTypeB = cellType)
+  distanceData[is.na(distanceData)] <- maxDist
+  distanceData
   
-  processedDistanceData <- distanceData %>%
-    dplyr::inner_join(cellAInformation, by = "cellIndexA") %>%
-    dplyr::inner_join(cellBInformation, by = "cellIndexB") %>%
-    dplyr::arrange(d) %>%
-    dplyr::group_by(cellIndexA, cellTypeA, cellTypeB) %>%
-    dplyr::slice(1) %>%
-    dplyr::ungroup() %>%
-    dplyr::rename(cellType = "cellTypeA") %>%
-    dplyr::rename(cellIndex = "cellIndexA") %>%
-    dplyr::rename(cellID = "cellIDA") %>%
-    dplyr::select(-cellIndexB, -cellIndex) %>%
-    dplyr::mutate(cellTypeB = paste0("dist_", cellTypeB)) %>%
-    tidyr::pivot_wider(names_from = cellTypeB, values_from = d) %>%
-    dplyr::mutate(imageID = unique(singleCellData$imageID)) %>%
-    dplyr::relocate(imageID)
-  
-  
-  processedDistanceData <- processedDistanceData %>%
-    dplyr::right_join(singleCellData, by = c("imageID", "cellID", "cellType"))
-}
+  }
 
 
 #' Wrapper to calculate pairwise distance between cell types by image
@@ -131,7 +103,7 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #' Calculates the euclidean distance from each cell to the nearest cell of each
 #' type
 #'
-#' @param singleCellData
+#' @param cells
 #'   A dataframe with a cellType column as well as x and y spatial coordinates.
 #'   The dataframe must contain a imageID column and cellID (unique cell
 #'   identifier's) column as well
@@ -168,32 +140,34 @@ distanceCalculator <- function(singleCellData, maxRS = 200) {
 #' @importFrom magrittr %>%
 #' @importFrom S4Vectors metadata
 #' @importFrom S4Vectors metadata<-
-getDistances <- function(singleCellData,
-                         Rs = c(200),
+getDistances <- function(cells,
+                         maxDist = NULL,
+                         imageID = "imageID",
+                         spatialCoords = c("x", "y"),
+                         cellType = "cellType",
                          whichCellTypes = NULL,
                          nCores = 1) {
   x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
   
-  markersToUse <- rownames(singleCellData)
+  if(!is(cells, "SingleCellExperiment"))stop("Currently this only accepts SpatialExperiment or SingleCellExperiment")
+  
+  cd <- as.data.frame(SingleCellExperiment::colData(cells))
+  
+  if(!any(c(cellType, imageID, spatialCoords)%in%colnames(cd))) stop("Either imageID, cellType or spatialCoords is not in your colData")
+  
+  cd <- cd[, c(cellType, imageID, spatialCoords)]
+  colnames(cd) <- c("cellType", "imageID", "x", "y")
+  if(is.null(colnames(cells))) colnames(cells) <- seq_len(ncol(cells))
+  cd$cellID <- colnames(cells)
   
   # metadata_name <- paste0("Rs", Rs, "")
   
-  if(!"distances" %in% names(reducedDims(singleCellData))) {
-    
-    if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
-      singleCellDataClean <- singleCellData %>%
-        preProcessing()
-    } else {
-      singleCellDataClean <- singleCellData
-    }
-    
-  }
-  singleCellData <- as.data.frame(colData(singleCellDataClean))
+  cdFilt <- cd
   
   if (!is.null(whichCellTypes)) {
     if (length(whichCellTypes) >= 2) {
-      singleCellData <- singleCellData %>%
+      cdFilt <- cd %>%
         dplyr::filter(cellType %in% whichCellTypes)
     } else {
       warnings(
@@ -203,67 +177,23 @@ getDistances <- function(singleCellData,
     }
   }
   
-  singleCellDataDistances <- singleCellData %>%
-    split(~imageID) %>%
+  if(is.null(maxDist))maxDist <- max(diff(range(cdFilt$x)), diff(range(cdFilt$y)))
+  
+  distances <- cdFilt |>
+    split(~imageID) |>
     BiocParallel::bplapply(distanceCalculator,
-                           maxRS = max(Rs),
+                           maxDist = maxDist,
                            BPPARAM = BPPARAM
     )
-  singleCellDataDistances <- singleCellDataDistances %>%
-    dplyr::bind_rows() %>%
-    dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.infinite(x), NA, x)))
-  singleCellDataDistances <- singleCellDataDistances %>%
-    lapply(Rs, function(x, rmax) {
-      x %>%
-        dplyr::mutate(
-          dplyr::across(dplyr::contains("dist_"),
-                        function(x) ifelse(x <= rmax, x, NA)
-          )
-        ) %>%
-        dplyr::rename_with(
-          function(x) {
-            stringr::str_replace(x, "dist_", paste0("dist", rmax, "_"))
-          },
-          dplyr::starts_with("dist_")
-        )
-    },
-    x = .
-    ) %>%
-    purrr::reduce(full_join)
-  
-  distances <- singleCellDataDistances %>% select(c("cellID", contains("dist")))
-  cellIDs <- colData(singleCellDataClean) %>% as.data.frame %>% select("cellID")
-  
-  redDim <- left_join(cellIDs, distances, by = "cellID")
-  
-  # redDim <- data.frame(matrix(NA, nrow = ncol(singleCellDataClean), ncol = ncol(distances)))
-  # rownames(redDim) <- colnames(singleCellDataClean)
-  # matching_indices <- match(distances$cellID, colnames(singleCellDataClean))
-  # 
-  # redDim[matching_indices, ] <- distances
-  # colnames(redDim) <- colnames(distances)
-  
-  # redDim <- redDim %>% select(-c("cellID"))
   
   
-  reducedDim(singleCellDataClean, "distances") <- redDim
   
+  distances <- distances |>
+    dplyr::bind_rows() 
   
-  # metadata_name <- paste0("Rs", Rs, "")
-  # metadata(singleCellDataClean)[[metadata_name]] <- singleCellDataDistances
+  SingleCellExperiment::reducedDim(cells, "distances") <- distances[colnames(cells),]
   
-  
-  # # Identify overlapping column names
-  # metadata(singleCellDataClean) <- append(metadata(singleCellDataClean), list(singleCellDataDistances))
-  # overlap_cols <- intersect(names(singleCellDataDistances), colnames(colData(singleCellDataClean)))
-  # 
-  # # Remove overlapping columns from the new data frame
-  # singleCellDataDistances <- singleCellDataDistances[, !names(singleCellDataDistances) %in% overlap_cols]
-  # 
-  # # Append singleCellDataDistances to colData slot in SCE
-  # colData(singleCellDataClean) <- cbind(colData(singleCellDataClean), singleCellDataDistances)
-  # 
-  return(singleCellDataClean)
+  cells
 }
 
 
@@ -1681,60 +1611,60 @@ visualiseImageRelationship <- function(data,
 #'                     survivalData = "Survival_days_capped")
 #' @export
 #' @rdname getMarkerMeans
-#' @importFrom dplyr 
-#'   distinct across mutate summarise_at select vars left_join group_by
-#' @importFrom lisaClust lisaClust
+#' @importFrom dplyr left_join group_by
 #' @importFrom tidyr pivot_wider pivot_longer
-#' @importFrom magrittr %>%
-#' @importFrom SummarizedExperiment colData
+#' @importFrom SummarizedExperiment colData assay
 #' @importFrom tibble column_to_rownames
 getMarkerMeans <- function(data,
-                       survivalData,
                        imageID = NULL,
                        cellType = NULL,
                        region = NULL,
-                       markers = NULL) {
+                       markers = NULL,
+                       assay = 1) {
+  
   
   
   if(is.null(markers)) {
     markers <- rownames(data)
   }
   
-  if(is.null(imageID)) {
-    imageID <- unique(colData(data)$imageID)
+  if(!is.null(imageID)) {
+    if(!imageID%in%colnames(colData(data)))stop("Your imageID is not in colData")
+    data$imageID <- colData(data)[,imageID]
+    imageID <- "imageID"
   }
   
-  if(is.null(cellType)) {
-    cellType <- unique(colData(data)$cellType)
+  if(!is.null(cellType)) {
+    if(!cellType%in%colnames(colData(data)))stop("Your cellType is not in colData")
+    data$cellType <- colData(data)[,cellType]
+    cellType <- "cellType"
   }
   
-  if(is.null(region)) {
-    region <- unique(colData(data)$region)
+  if(!is.null(region)) {
+    if(!region%in%colnames(colData(data)))stop("Your region is not in colData")
+    data$region <- colData(data)[,region]
+    region <- "region"
   }
   
-  survivalData <- data %>%
-    colData() %>%
-    as.data.frame() %>%
-    select(c("imageID", all_of(survivalData))) %>%
-    distinct()
   
-  markerDf <- data %>%
-    preProcessing() %>% 
-    colData() %>%
-    as.data.frame() %>%
-    select(c(imageID, cellType, region, all_of(markers))) %>%
-    filter(imageID %in% imageID, cellType %in% cellType, region %in% region)
   
-  lisaClustOutput <- markerDf %>%
-    group_by(imageID, cellType, region) %>%
-    summarise_at(vars(-group_cols()), mean, na.rm = TRUE) %>%
-    pivot_longer(-c(imageID, cellType, region), names_to = "markers") %>%
-    pivot_wider(names_from = c(cellType, region, markers), values_from = value) %>%
-    left_join(survivalData, by = "imageID") %>%
-    column_to_rownames("imageID") %>% 
-    replace(is.na(.), 0)
+  use <- c(imageID, cellType, region)
   
-  return(lisaClustOutput)
+  df <- data.frame(colData(data)[,use, drop = FALSE], t(assay(data, assay)))
+  df <- tidyr::pivot_longer(df, -use, names_to = "markers") 
+  df <- dplyr::group_by(df, across(-value))
+  
+  if(!is.null(imageID)){
+  m <-  tidyr::pivot_wider(df, names_from = c(markers, cellType, region), values_from = value, values_fn = mean, names_sep = "__")
+  m <- column_to_rownames(m, "imageID")
+  m <- as.data.frame(m)
+  }
+  
+  if(is.null(imageID)){
+    m <-  tidyr::pivot_wider(df, names_from = markers, values_from = value, values_fn = mean, names_sep = "__")
+    m <- as.data.frame(m)
+  }
+  m
 }
 
 
