@@ -67,7 +67,7 @@ preProcessing <- function(SCE) {
 #'   select mutate inner_join arrange group_by slice rename relocate full_join
 #' @importFrom spatstat.geom owin ppp closepairs
 #' @importFrom tidyr pivot_wider
-distanceCalculator <- function(data, maxDist = 200) {
+distanceCalculator <- function(data, maxDist = 200, distFun = "min") {
  
   ow <- spatstat.geom::owin(
     xrange = range(data$x),
@@ -87,12 +87,17 @@ distanceCalculator <- function(data, maxDist = 200) {
     d = closePairData$d
   )
   
+  if(distFun == "min") values_fn <- function(x){min(c(x,maxDist), na.rm = TRUE)}
+  if(distFun == "abundance") values_fn <- function(x){sum(c(x,0)>0, na.rm = TRUE)}
+  
+  values_fill = values_fn(NULL)
+  
   distanceData <- tidyr::pivot_wider(distanceData, names_from = cellType, values_from = d, 
-                                     values_fn = min)
+                                     values_fn = values_fn, values_fill = values_fill)
   distanceData <- dplyr::left_join(data[,"cellID", drop = FALSE], distanceData, by = "cellID")|>
     tibble::column_to_rownames("cellID") 
   
-  distanceData[is.na(distanceData)] <- maxDist
+  #distanceData[is.na(distanceData)] <- maxDist
   distanceData
   
   }
@@ -107,13 +112,9 @@ distanceCalculator <- function(data, maxDist = 200) {
 #'   A dataframe with a cellType column as well as x and y spatial coordinates.
 #'   The dataframe must contain a imageID column and cellID (unique cell
 #'   identifier's) column as well
-#' @param Rs
+#' @param r
 #'   Radius to calculate pairwise distances between cells (can be a numeric or
 #'   vector of radii)
-#' @param whichCellTypes
-#'   Character vector specifying what cell types to include in the calculation.
-#'   If the argument is non-null, then at least two cell types need to be
-#'   specified
 #' @param nCores Number of cores for parallel processing
 #'
 #' @examples
@@ -121,8 +122,7 @@ distanceCalculator <- function(data, maxDist = 200) {
 #' data("kerenSCE")
 #'
 #' singleCellDataDistances <- getDistances(kerenSCE,
-#'   Rs = c(200),
-#'   whichCellTypes = c("Keratin_Tumour", "Macrophages"),
+#'   r = c(200),
 #'   nCores = 1
 #' )
 #'
@@ -145,7 +145,9 @@ getDistances <- function(cells,
                          imageID = "imageID",
                          spatialCoords = c("x", "y"),
                          cellType = "cellType",
-                         whichCellTypes = NULL,
+                         #to = NULL,
+                         redDimName = "distances",
+                         distFn = "min",
                          nCores = 1) {
   x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
@@ -165,17 +167,19 @@ getDistances <- function(cells,
   
   cdFilt <- cd
   
-  if (!is.null(whichCellTypes)) {
-    if (length(whichCellTypes) >= 2) {
-      cdFilt <- cd %>%
-        dplyr::filter(cellType %in% whichCellTypes)
-    } else {
-      warnings(
-        "The argument whichCellTypes needs to contain at least cellType",
-        " names in the vector"
-      )
-    }
-  }
+  # whichCellTypes <- to
+  # 
+  # if (!is.null(whichCellTypes)) {
+  #   if (length(whichCellTypes) >= 2) {
+  #     cdFilt <- cd %>%
+  #       dplyr::filter(cellType %in% whichCellTypes)
+  #   } else {
+  #     warnings(
+  #       "The argument 'from' or 'to' needs to contain at least cellType",
+  #       " names in the vector"
+  #     )
+  #   }
+  # }
   
   if(is.null(maxDist))maxDist <- max(diff(range(cdFilt$x)), diff(range(cdFilt$y)))
   
@@ -183,6 +187,7 @@ getDistances <- function(cells,
     split(~imageID) |>
     BiocParallel::bplapply(distanceCalculator,
                            maxDist = maxDist,
+                           distFun = distFun,
                            BPPARAM = BPPARAM
     )
   
@@ -191,10 +196,13 @@ getDistances <- function(cells,
   distances <- distances |>
     dplyr::bind_rows() 
   
-  SingleCellExperiment::reducedDim(cells, "distances") <- distances[colnames(cells),]
+  SingleCellExperiment::reducedDim(cells, redDimName) <- distances[colnames(cells),]
   
   cells
 }
+
+
+
 
 
 
@@ -204,11 +212,11 @@ getDistances <- function(cells,
 #' Calculate the imhomogenous K function (a measure of cell type abundance) for
 #' each cell to other cell types
 #'
-#' @param singleCellData
+#' @param cells
 #'   A dataframe with a cellType column as well as x and y spatial coordinates.
 #'   The dataframe must contain a imageID column and cellID (unique cell
 #'   identifier's) column as well
-#' @param Rs
+#' @param r
 #'   Radius to include in that calculation of pairwise abundance (K-function)
 #'   between cells (can be a numeric or vector of radii)
 #' @param whichCellTypes
@@ -228,135 +236,55 @@ getDistances <- function(cells,
 #'
 #' @export
 #' @rdname getAbundances
-#' @importFrom tibble rownames_to_column
-#' @importFrom dplyr across bind_rows inner_join relocate contains mutate
-#' @importFrom stringr word
+#' @importFrom dplyr bind_rows
+#' @importFrom SingleCellExperiment reducedDim
 #' @importFrom SummarizedExperiment colData assayNames
-#' @importFrom BiocParallel bplapply MulticoreParam
-#' @importFrom magrittr %>%
-#' @importFrom S4Vectors metadata
-#' @importFrom S4Vectors metadata<-
+#' @importFrom BiocParallel bplapply
 getAbundances <- function(singleCellData,
-                          Rs = c(200),
-                          whichCellTypes = NULL,
+                          r = 200,
+                          # from = NULL,
+                          # to = NULL,
+                          distFun = "abundance",
+                          redDimName = "abundances",
                           nCores = 1) {
   
   x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
   
-  markersToUse <- rownames(singleCellData)
+  if(!is(cells, "SingleCellExperiment"))stop("Currently this only accepts SpatialExperiment or SingleCellExperiment")
+  
+  cd <- as.data.frame(SingleCellExperiment::colData(cells))
+  
+  if(!any(c(cellType, imageID, spatialCoords)%in%colnames(cd))) stop("Either imageID, cellType or spatialCoords is not in your colData")
+  
+  cd <- cd[, c(cellType, imageID, spatialCoords)]
+  colnames(cd) <- c("cellType", "imageID", "x", "y")
+  if(is.null(colnames(cells))) colnames(cells) <- seq_len(ncol(cells))
+  cd$cellID <- colnames(cells)
   
   # metadata_name <- paste0("Rs", Rs, "")
   
-  if(!"abundances" %in% names(reducedDims(singleCellData))) {
-    
-    if(!all(markersToUse %in% colnames(colData(singleCellData)))) {
-      singleCellDataClean <- singleCellData %>%
-        preProcessing()
-    } else {
-      singleCellDataClean <- singleCellData
-    }
-    
-  }
-  singleCellData <- as.data.frame(colData(singleCellDataClean))
+  cdFilt <- cd
+  maxDist <- r
+
+  if(is.null(maxDist))maxDist <- max(diff(range(cdFilt$x)), diff(range(cdFilt$y)))
   
-  if (!is.null(whichCellTypes)) {
-    if (length(whichCellTypes) >= 2) {
-      singleCellData <- singleCellData %>%
-        dplyr::filter(cellType %in% whichCellTypes)
-    } else {
-      warnings(
-        "The argument whichCellTypes needs to contain at least cellType",
-        " names in the vector"
-      )
-    }
-  }
-  
-  # Sourish: Make sure to have check to ensure rownames are not purely numbers
-  
-  singleCellDataK <- singleCellData %>%
-    split(~imageID) %>%
-    BiocParallel::bplapply(
-      lisaClust:::inhomLocalK,
-      Rs = Rs,
-      BPPARAM = BPPARAM
-    ) %>%
-    lapply(as.data.frame)
-  
-  
-  # Correcting column names when Rs greater than max Rs of image
-  # Nick: this is a nested nightmare 😨
-  # Sourish: Haha, I think this is a bug from the output of inhomLocalK from the lisaClust package that I tried to fix
-  correctedRadius <- singleCellDataK %>%
-    lapply(
-      function(x) {
-        unlist(
-          lapply(
-            colnames(x),
-            function(x) {
-              min(Rs[Rs >= as.numeric(stringr::word(x, 1, sep = "_"))])
-            }
-          )
-        )
-      }
+  distances <- cdFilt |>
+    split(~imageID) |>
+    BiocParallel::bplapply(distanceCalculator,
+                           maxDist = maxDist,
+                           distFun = distFun,
+                           BPPARAM = BPPARAM
     )
   
-  cellTypeName <- singleCellDataK %>%
-    lapply(function(x) word(colnames(x), 2, -1, sep = "_"))
-  correctedColumnNames <- correctedRadius %>%
-    mapply(
-      function(newRadius, cellTypeName) {
-        mapply(function(a, b) paste0(a, "_", b), newRadius, cellTypeName)
-      },
-      newRadius = .,
-      cellTypeName = cellTypeName,
-      SIMPLIFY = FALSE
-    )
-  
-  singleCellDataK <- singleCellDataK %>%
-    mapply(
-      function(x, newNames) x %>% purrr::set_names(newNames),
-      x = ., newNames = correctedColumnNames, SIMPLIFY = FALSE
-    ) 
-  singleCellDataK <- singleCellDataK %>%
-    mapply(
-      function(x, imageID) {
-        x %>%
-          dplyr::rename_all(~ paste0("abundance", .x)) %>%
-          dplyr::mutate(imageID = imageID)
-      },
-      x = ., imageID = names(.), SIMPLIFY = FALSE
-    ) 
-  singleCellDataK <- singleCellDataK %>%
-    dplyr::bind_rows() %>%
-    tibble::rownames_to_column("cellID") %>%
-    dplyr::mutate(dplyr::across(where(is.numeric), function(x) ifelse(is.na(x), 0, x)))
   
   
-  abundances <- singleCellDataK %>% select(c("cellID", contains("abundance")))
+  distances <- distances |>
+    dplyr::bind_rows() 
   
-  cellIDs <- colData(singleCellDataClean) %>% as.data.frame %>% select("cellID")
+  SingleCellExperiment::reducedDim(cells, redDimName) <- distances[colnames(cells),]
   
-  redDim <- left_join(cellIDs, abundances, by = "cellID")
-  
-  # redDim <- data.frame(matrix(NA, nrow = ncol(singleCellDataClean), ncol = ncol(abundances)))
-  # rownames(redDim) <- colnames(singleCellDataClean)
-  # matching_indices <- match(abundances$cellID, colnames(singleCellDataClean))
-  # 
-  # redDim[matching_indices, ] <- abundances
-  # colnames(redDim) <- colnames(abundances)
-  
-  # redDim <- redDim %>% select(-c("cellID"))
-  
-  
-  reducedDim(singleCellDataClean, "abundances") <- redDim
-  
-  singleCellDataK <- singleCellDataK %>%
-    dplyr::right_join(singleCellData, by = c("imageID", "cellID")) %>%
-    dplyr::relocate(imageID)
-  
-  # metadata(singleCellDataClean)[[metadata_name]] <- singleCellDataK
-  return(singleCellDataClean)
+  cells
 }
 
 
@@ -373,9 +301,6 @@ getAbundances <- function(singleCellData,
 #' @param markers
 #'   A string list of markers that proxy a cell's state. If NULL, all markers 
 #'   will be used.
-#' @param seed
-#'   A numeric value to allow for replicable results from the random forest
-#'   classification algorithm
 #' @param num.trees Number of trees to be used in the random forest classifier
 #' @param verbose
 #'   A logical indicating whether information about the final random forest
@@ -402,44 +327,19 @@ getAbundances <- function(singleCellData,
 #' @importFrom stringr str_replace
 #' @importFrom S4Vectors metadata
 #' @importFrom S4Vectors metadata<-
-calcContamination <- function(singleCellData,
-                              Rs = c(200),
+calcContamination <- function(cells,
                               markers = NULL,
-                              seed = 2022,
                               num.trees = 100,
                               verbose = FALSE,
-                              missingReplacement = 0) {
-  # if ("SingleCellExperiment" %in% class(singleCellData)) {
-  #   singleCellDataNew <- data.frame(
-  #     SummarizedExperiment::colData(singleCellData)
-  #   ) %>%
-  #     dplyr::mutate(
-  #       imageID = as.character(imageID), cellType = as.character(cellType)
-  #     )
-  # 
-  #   if ("intensities" %in% assayNames(singleCellData)) {
-  #     singleCellDataNew <- singleCellDataNew %>%
-  #       cbind(t(SummarizedExperiment::assay(singleCellData, "intensities")))
-  #     if (is.null(markers)) {
-  #       markers <- rownames(
-  #         SummarizedExperiment::assay(singleCellData, "intensities")
-  #       )
-  #     }
-  #   }
-  # 
-  # 
-  #   singleCellData <- singleCellDataNew
-  # }
+                              missingReplacement = 0,
+                              redDimName = "contanimations"
+) {
   
+  singleCellData <- cells
   if(is.null(markers)) {
     markers <- rownames(singleCellData)
   }
   
-  # metadata_name <- paste0("Rs", Rs, "")
-  
-  if("contamination" %in% names(reducedDims(singleCellData))) {
-    stop("Contamination scores have already been calculated")
-  }
   
   if(!all(markers %in% colnames(colData(singleCellData)))) {
     singleCellDataClean <- singleCellData %>%
@@ -453,9 +353,8 @@ calcContamination <- function(singleCellData,
   
   rfData <- singleCellData %>%
     dplyr::select(cellType, all_of(markers)) %>%
-    dplyr::mutate(dplyr::across(markers, function(x) ifelse(is.nan(x) | is.na(x), 0, x)))
+    dplyr::mutate(dplyr::across(any_of(markers), function(x) ifelse(is.nan(x) | is.na(x), 0, x)))
   
-  set.seed(seed)
   rfModel <- ranger::ranger(
     as.factor(cellType) ~ .,
     data = rfData,
@@ -513,37 +412,207 @@ calcContamination <- function(singleCellData,
   #   dplyr::left_join(rfData, by = c("cellID"))
 
   redDim <- rfData
+  rownames(rfData) <- colnames(cells)
   
   
-  reducedDim(singleCellDataClean, "contamination") <- redDim
+  reducedDim(cells, redDimName) <- redDim
   
-  
-
-  # if(!metadata_name %in% names(metadata(singleCellDataClean))) {
-  #   
-  #   distData <- colData(singleCellDataClean) 
-  #   
-  #   distData <- distData %>% as.data.frame() %>%
-  #     dplyr::left_join(rfData)
-  #   
-  #   metadata(singleCellDataClean)[[metadata_name]] <- distData
-  #   
-  # } else {
-  #   
-  #   distData <- metadata(singleCellDataClean)[[metadata_name]]
-  #   
-  #   distData <- distData %>% as.data.frame() %>%
-  #     dplyr::left_join(rfData)
-  #   
-  #   metadata(singleCellDataClean)[[metadata_name]] <- distData
-  #   
-  # }
-  
-  return(singleCellDataClean)
+  return(cells)
 }
 
 
 
+#' First layer wrapper function to build linear models measuring state changes
+#'
+#' Builds linear models measuring marker based state changes in a cell type
+#' based of the proximity or abundance of another cell type. The function
+#' provides the option to build robust and mixed linear model variants
+#'
+#' @param singleCellData
+#'   A dataframe with a imageID, cellType, and marker intensity column along
+#'   with covariates (e.g. distance or abundance of the nearest cell type) to
+#'   model cell state changes
+#' @param Rs
+#'   Radius to calculate pairwise distances between cells (can be a numeric or
+#'   vector of radii)
+#' @param markers
+#'  A string list of markers that proxy a cell's state. If NULL, all markers 
+#'  will be used.
+#' @param typeAll
+#'   A prefix that appears on the column names of all cell state modelling
+#'   covariates. The default value is "dist"
+#' @param covariates
+#'   A list of additional covariates to be included in the model being built.
+#' @param condition
+#'   A list of additional conditions to be included in the model being built.
+#' @param method
+#'  The type of linear model to be built. Current options include "lm", "rlm".
+#' @param isMixed
+#'   A logical indicating if a mixed effects model should be built - this will
+#'   build models for relationships on a global basis rather than on a image by
+#'   image level
+#' @param randomIntercepts
+#'   A string list of column names in the dataframe that should correspond to
+#'   the random intercepts
+#' @param cellTypesToModel
+#'   A string vector of the names of cell types to model cell state changes in.
+#'   The default argument is NULL which models are cell types
+#' @param verbose A logical indicating if messages should be printed
+#' @param timeout
+#'   A maximum time allowed to build each model. Setting this may be important
+#'   when building rlm mixed linear models
+#' @param nCores Number of cores for parallel processing
+#'
+#' @examples
+#' library(dplyr)
+#' data("kerenSCE")
+#'
+#' singleCellDataDistances <- getDistances(kerenSCE,
+#'   nCores = 1,
+#'   Rs = c(200),
+#'   whichCellTypes = c("Keratin_Tumour", "Macrophages")
+#' )
+#'
+#' imageModels <- getStateChanges(
+#'   singleCellData = singleCellDataDistances,
+#'   Rs = c(200),
+#'   typeAll = c("dist200"),
+#'   cellTypesToModel = "Macrophages",
+#'   nCores = 1
+#' )
+#'
+#' @export
+#' @rdname getStateChanges
+#' @importFrom BiocParallel bplapply MulticoreParam
+#' @importFrom dplyr
+#'   arrange group_by  summarise_at mutate bind_rows left_join filter left_join
+#' @importFrom tidyr gather
+#' @importFrom magrittr %>%
+#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata<-
+calcStateChanges <- function(cells,
+                            marker = NULL,
+                            from = NULL,
+                            to = NULL,
+                            image = NULL,
+                            type = "distances",
+                            assay = 1,
+                            cellType = "cellType",
+                            imageID = "imageID",
+                            contanimation = NULL,
+                            minCells = 20,
+                            verbose = FALSE,
+                            timeout = 10,
+                            nCores = 1) {
+  
+  if(is.null(marker)) {
+    marker <- rownames(cells)
+  }
+  
+  if(!is.null(image)){
+    cells <- cells[,colData(cells)[,imageID]%in%image]
+  }
+  
+  if(is.null(to)) {
+    to <- unique(colData(cells)[,cellType])
+  }
+  
+  if(is.null(from)) {
+    from <- to
+  }
+  
+  if(!is.null(contanimation)){
+    if(contanimation == TRUE) contanimation = "contanimations"
+  }
+  
+  cells <- cells[, colData(cells)[,cellType]%in%from]
+  distances <- SingleCellExperiment::reducedDim(cells, type)
+  distances <- distances[, to, drop = FALSE]
+  intensities <- as.data.frame(t(SummarizedExperiment::assay(cells, assay)))
+  intensities <- intensities[,marker,drop = FALSE]
+  
+  splitDist <- split(distances, ~ colData(cells)[, imageID] + colData(cells)[, cellType], sep = "51773")
+  splitInt <- split(intensities, ~ colData(cells)[, imageID] + colData(cells)[, cellType], sep = "51773")
+  if(is.null(contanimation)) {
+    contanimations <- data.frame(madeUp = rep(-99, ncol(cells)))
+  }else{
+    contanimations <- SingleCellExperiment::reducedDim(cells, contanimation)
+  }
+  
+  contanimations <- dplyr::select(contanimations, -cellID, -cellType, -rfMaxCellProb, -rfSecondLargestCellProb, -rfMainCellProb)
+  splitCon <- split(contanimations, ~ colData(cells)[, imageID] + colData(cells)[, cellType], sep = "51773")
+  
+  use <- unlist(lapply(splitDist, nrow)) > minCells
+  x <- runif(1)
+  BPPARAM <- .generateBPParam(cores = nCores)
+  
+  
+  allModels <- bpmapply(calculateChangesMarker, 
+                      distances =  splitDist[use], 
+                      intensities = splitInt[use],
+                      contaminations = splitCon[use],
+                      BPPARAM = BPPARAM,
+                      SIMPLIFY = FALSE
+  )
+  
+  allModels <- dplyr::bind_rows(allModels, .id = "tmp")
+  nam <- strsplit(allModels$tmp, 51773)
+  allModels$primaryCellType <- unlist(lapply(nam,function(x)x[2]))
+  allModels$image <- unlist(lapply(nam,function(x)x[1]))
+  allModels$fdr <- p.adjust(allModels$pval, "fdr")
+  df <- dplyr::select(allModels, image, primaryCellType, otherCellType, marker, coef, tval, pval, fdr)
+  df[order(df$pval),]
+}
+
+
+calculateChangesMarker <- function(distances, intensities, contaminations, nCores){
+   
+test <- apply(distances, 2, function(x){
+  if(length(unique(x))>1){
+    if(contaminations[1,1] == -99){design <- data.frame(coef = 1, cellType = x)
+    }else{
+      contaminations <- contaminations[, !is.na(colSums(contaminations)),drop = FALSE]
+      design <- data.frame(coef = 1, cellType = x, contaminations[,-ncol(contaminations)])
+    }
+    exprs <- t(intensities)
+    fit <- .quiet(limma::lmFit(exprs, design, trend = rep(1,nrow(exprs)), verbose = FALSE))
+    
+    df <- data.frame(
+    marker = colnames(intensities),
+    coef = fit$coef[,"cellType"],
+    tval = (fit$coef/fit$stdev.unscaled/fit$sigma)[,"cellType"]
+    )
+    df$pval <- 2 * pt(-abs(df$t), df = fit$df.residual)
+    rownames(df) <- NULL
+  
+    df
+  }
+  }, simplify = FALSE)
+  
+test <- dplyr::bind_rows(test, .id = "otherCellType")
+  
+  
+}
+                      
+                        
+.quiet <- function (x, print_cat = TRUE, message = TRUE, warning = TRUE) 
+{
+  stopifnot(is.logical(print_cat) && length(print_cat) == 1)
+  stopifnot(is.logical(message) && length(message) == 1)
+  stopifnot(is.logical(warning) && length(warning) == 1)
+  if (print_cat) 
+    sink(tempfile(), type = "out")
+  on.exit(if (print_cat) sink())
+  if (warning && message) 
+    invisible(force(suppressMessages(suppressWarnings(x))))
+  else if (warning && !message) 
+    invisible(suppressWarnings(force(x)))
+  else if (!warning && message) 
+    invisible(suppressMessages(force(x)))
+  else invisible(force(x))
+}                       
+                        
+                        
 
 
 
@@ -619,15 +688,14 @@ calcContamination <- function(singleCellData,
 #' @importFrom magrittr %>%
 #' @importFrom S4Vectors metadata
 #' @importFrom S4Vectors metadata<-
-getStateChanges <- function(singleCellData,
-                            Rs,
+getStateChanges <- function(cells,
                             markers = NULL,
-                            typeAll = c("dist"),
+                            type = "distances",
                             covariates = NULL,
                             condition = NULL,
                             method = "lm",
                             isMixed = FALSE,
-                            randomIntercepts = c("imageID"),
+                            randomIntercepts = "imageID",
                             cellTypesToModel = NULL,
                             verbose = FALSE,
                             timeout = 10,
@@ -638,12 +706,12 @@ getStateChanges <- function(singleCellData,
   # }
   
   if(is.null(markers)) {
-    markers <- rownames(singleCellData)
+    markers <- rownames(cells)
   }
   
   # metadata_name <- paste0("Rs", Rs, "")
   
-  SCE <- singleCellData 
+  SCE <- cells
   
   redDimNames <- names(reducedDims(SCE))
   singleCellData <- as.data.frame(colData(SCE))
@@ -680,8 +748,7 @@ getStateChanges <- function(singleCellData,
   }
   
   
-  allModels <- typeVector %>%
-    mapply(calculateStateModels, type = ., MoreArgs = list(
+  allModels <- mapply(calculateStateModels, type =  typeVector, MoreArgs = list(
       singleCellData = singleCellData,
       markers = markers,
       covariates = covariates,
@@ -710,13 +777,15 @@ getStateChanges <- function(singleCellData,
 #'   arrange group_by  summarise_at across mutate bind_rows left_join
 #' @importFrom tidyr gather
 #' @importFrom magrittr %>%
-calculateStateModels <- function(singleCellData,
+calculateStateModels <- function(cells,
                                  markers,
-                                 type = "dist200_",
+                                 type = "distances",
                                  covariates = NULL,
-                                 condition = NULL,
                                  method = "lm",
                                  isMixed = FALSE,
+                                 assay = 1,
+                                 cellType = "cellType",
+                                 imageID = "imageID",
                                  randomIntercepts = c("imageID"),
                                  verbose = TRUE,
                                  timeout = 10,
@@ -726,7 +795,7 @@ calculateStateModels <- function(singleCellData,
   BPPARAM <- .generateBPParam(cores = nCores)
   
   if (isMixed == TRUE) {
-    splitData <- split(singleCellData, ~cellType)
+    splitData <- split(cells, ~cells$cellType)
   } else {
     splitData <- split(singleCellData, ~imageID)
   }
@@ -1431,127 +1500,137 @@ listImageModelsCVFormat <- function(imageModels,
 #' @importFrom magrittr %>%
 #' @importFrom S4Vectors metadata
 #' @importFrom S4Vectors metadata<-
-visualiseImageRelationship <- function(data,
-                                       Rs,
-                                       imageID,
-                                       mainCellType,
-                                       interactingCellType,
-                                       depedentMarker,
-                                       sizeVariable = NULL,
+plotStateChanges <- function(cells,
+                                       image,
+                                       from,
+                                       to,
+                                       marker,
+                                       type = "distances",
+                                       assay = 1,
+                                       cellType = "cellType",
+                                       imageID = "imageID",
+                                       spatialCoords = c("x","y"),
+                                       size = 1,
                                        shape = NULL,
                                        interactive = FALSE,
                                        plotModelFit = FALSE,
-                                       method = "lm",
-                                       modelType = "dist200_") {
+                                       method = "lm") {
   
-  # metadata_name <- paste0("Rs", Rs, "")
-  
-  SCE <- data 
-  
-  redDimNames <- names(reducedDims(SCE))
-  singleCellData <- as.data.frame(colData(SCE))
-  
-  if ("contamination" %in% redDimNames) {
-    
-    contams <- reducedDim(SCE, "contamination") %>% select(-c("cellType"))
-    redDimNames <- redDimNames[!redDimNames %in% "contamination"]
-    for(name in redDimNames) {
-      singleCellData <- left_join(singleCellData, reducedDim(SCE, name), by = "cellID")
-    }
-    singleCellData <- left_join(singleCellData, contams, by = "cellID")
-    
-  } else {
-    
-    for(name in redDimNames) {
-      singleCellData <- left_join(singleCellData, reducedDim(SCE, name), by = "cellID")
-    }
-    
+
+  if(!imageID %in% colnames(colData(cells))) {
+    stop("The argument imageID needs to exist in the data")
+  }
+
+  if(!image %in% colData(cells)[,imageID]) {
+    stop("The image needs to exist in the data")
   }
   
-  data <- singleCellData
+  cells <- cells[, colData(cells)[,imageID] %in% image]
+  
+  if(!type %in% reducedDimNames(cells)) {
+    stop("The reduced dimension needs to exist in the data")
+  }
+  
+  
+  data <- data.frame(t(assay(cells, assay)), reducedDim(cells, type), colData(cells)) 
+  
+  data$imageID <- data[, imageID]
+  data$cellType <- data[, cellType]
   
   # data <- metadata(SCE)[[metadata_name]]
   
-  if(!depedentMarker %in% colnames(data)) {
-    stop("The argument depedentMarker needs to exist in the data")
+  if(!marker %in% colnames(data)) {
+    stop("The marker needs to exist in the data")
   }
-  if(!imageID %in% data$imageID) {
-    stop("The argument imageID needs to exist in the data")
+
+  if(!cellType %in% colnames(data)) {
+    stop("cellType needs to exist in the colData")
   }
   
-  data <- data[data$imageID == imageID, ]
-  data$OriginalMarker <- data[, depedentMarker, drop = TRUE]
+  if(!all(spatialCoords %in% colnames(data))) {
+    stop("spatialCoords needs to exist in the colData")
+  }
+  
+  data$x <- data[, spatialCoords[1]]
+  data$y <- data[, spatialCoords[2]]
+  
+  data$marker <- data[, marker, drop = TRUE]
   data$fittedValues <- NA
   
   relationshipFormula <- paste0(
-    depedentMarker, "~", paste0(modelType, interactingCellType) 
+    marker, "~", to 
   )
-  modelData <- data[data$cellType == mainCellType, ]
+  
+  modelData <- data[data[,cellType] == from, ]
   model <- lm(formula(relationshipFormula), modelData)
   
-  print(summary(model))
+  #print(summary(model))
   
-  data[data$cellType == mainCellType, "fittedValues"] <- predict(
+  data[data[,cellType] == from, "fittedValues"] <- predict(
     model,
-    data[data$cellType == mainCellType, ]
+    data[data$cellType == from, ]
   )
   
   
   if (plotModelFit == TRUE) {
-    data[data$cellType == mainCellType, depedentMarker] <- predict(
-      model, data[data$cellType == mainCellType, ]
+    data[data$cellType == from, marker] <- predict(
+      model, data[data$cellType == from, ]
     )
   }
   
+  
+  
   g1 <- ggplot2::ggplot() +
-    ggplot2::stat_density_2d(
-      data = data[data$cellType == interactingCellType, ],
+     ggplot2::stat_density_2d(
+      data = data[data$cellType == to, ],
       ggplot2::aes(
         x = x, y = y, fill = ..density..
       ),
       geom = "raster",
       contour = FALSE
-    ) +
-    ggplot2::scale_fill_distiller(palette = "Reds", direction = 1) +
+    )    +
+    ggplot2::geom_point(data = data[data$cellType == to, ], aes(x,y), size = size/2, colour = "darkblue")+
+    ggplot2::scale_fill_distiller(palette = "Blues", direction = 1) +
     ggplot2::geom_point(
-      data = data[data$cellType == mainCellType, ],
+      data = data[data$cellType == from, ],
       ggplot2::aes_string(
         x = "x", y = "y",
-        colour = depedentMarker,
-        size = sizeVariable,
-        shape = shape
-      )
+        colour = marker
+      ), 
+      size = size,
+      shape = shape
     ) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle(paste(
-      "Cell Points:", mainCellType, ",",
-      "Cell Density:", interactingCellType, ",",
+      "Cell Points:", from, ",",
+      "Cell Density:", to, ",",
       "Model Fit:", plotModelFit
     )) +
-    ggplot2::facet_wrap(~imageID, scales = "free")
+    ggplot2::facet_wrap(~imageID, scales = "free") +
+    scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
   
   
   g2 <- data %>%
-    dplyr::filter(cellType == mainCellType) %>%
+    dplyr::filter(cellType == from) %>%
     ggplot2::ggplot(
       ggplot2::aes_string(
-        x = paste0(modelType, interactingCellType),
-        y = "OriginalMarker"
+        x = to,
+        y = marker
       )
     ) +
     ggplot2::geom_point() +
     ggplot2::geom_smooth(method = lm) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
-    ggplot2::ylab(depedentMarker) +
+    ggplot2::ylab(marker) +
     ggplot2::ylim(-1, NA)
   
   
   
   g3 <- data %>%
-    dplyr::filter(cellType == mainCellType) %>%
+    dplyr::filter(cellType == from) %>%
     ggplot2::ggplot(ggplot2::aes_string(
-      x = "OriginalMarker",
+      x = marker,
       y = "fittedValues"
     )) +
     ggplot2::geom_point() +
@@ -1568,7 +1647,7 @@ visualiseImageRelationship <- function(data,
     g2 <- plotly::ggplotly(g2)
     g3 <- plotly::ggplotly(g3)
   }
-  list(g1, g2, g3)
+  list(image = g1, scatter = g2)
   # list(g1, g2, g3, g4)
 }
 
