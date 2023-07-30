@@ -348,6 +348,7 @@ This brings us to a key problem of cell segmentation - contamination.
 Contamination, or lateral marker spill over is an issue that results in a cell’s marker expressions being wrongly attributed to another adjacent cell. This issue arises from incorrect segmentation where components of one cell are wrongly determined as belonging to another cell. 
 Alternatively, this issue can arise when antibodies used to tag and measure marker expressions don't latch on properly to a cell of interest, thereby resulting in residual markers being wrongly assigned as belonging to a cell near the intended target cell. It is important that we either correct or account for this incorrect attribution of markers in our modelling process. This is critical in understanding whether significant cell-cell interactions detected are an artefact of technical measurement errors driven by spill over or are real biological changes that represent a shift in a cell’s state.
 
+
 To circumvent this problem, Statial provides a function that predicts the probability that a cell is any particular cell type. This comes in the format of the `calcContamination` function, which returns a dataframe of probabilities demarcating the chance of a cell being any particular cellType. It also provides the `rfMainCellProb` vector, which provides the probability that a cell is indeed the cell type it has been designated. 
 E.g. For a cell designated as CD8, rfMainCellProb could give a 80% chance that the cell is indeed CD8, due to contamination. We can then introduce these probabilities as covariates into our linear model.
 
@@ -477,14 +478,12 @@ survivalData <- kerenSCE %>%
   distinct() %>%
   remove_rownames()
 
-kerenSurv = Surv(survivalData$Survival_days_capped, survivalData$Censored)
-names(kerenSurv) = survivalData$imageID
-
 #Preparing features for Kontextual
 
 
 #Preparing features for Statial
 stateMat <- prepMatrix(stateChanges)
+
 
 # Ensuring rownames of kontextMat match up with rownames of the survival vector 
 stateMat = stateMat[names(kerenSurv), ]
