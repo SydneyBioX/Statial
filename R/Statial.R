@@ -309,7 +309,7 @@ getAbundances <- function(cells,
 #' @importFrom ranger ranger
 #' @importFrom tibble column_to_rownames rownames_to_column
 #' @importFrom stringr str_replace
-#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom SingleCellExperiment reducedDim reducedDim<-
 calcContamination <- function(cells,
                               markers = NULL,
                               num.trees = 100,

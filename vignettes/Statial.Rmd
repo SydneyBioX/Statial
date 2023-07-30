@@ -25,7 +25,8 @@ output:
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  cache = TRUE
 )
 library(BiocStyle)
 ```
@@ -326,38 +327,19 @@ p
 
 ```
 
-However, these significant results are occasionally isolated to a single image or patient, and it may sometimes be wiser to perform a more holistic analysis of all the images/patients to examine common interactions across a whole group. Additionally, patients can be divided into treatment groups to examine the effects of a treatment on cell-to-cell interactions. 
 
-Fortunately, `getStateChanges` provides the `isMixed` parameter for performing a holistic analysis. In this next section, we will employ a mixed effects model to examine the most significant cell-to-cell interactions shared across all images.
 
-```{r}
+Looking at the same top 10 most significant interactions, we can see that the results are vastly different. Running the mixed effects model appears to bring about some curious results. One of the most significant interactions occurs between B cells and CD4 T cells, where T cells are found to increase in CD20 expression when in close proximity to CD8 T cells. 
+Biologically, CD20 is a highly specific ligand for B cells, and under no biologically health circumstances are they expressed in T cells. 
 
-stateMat <- prepMatrix(stateChanges)
-
-results <- apply(stateMat, 2, function(x){
-  res <- t.test(x)
-  c(tval = res$stat, pval = res$p.val)
-  }) |> 
-  t() |> 
-  as.data.frame()
-
-results$adjP <- p.adjust(results$pval)
-
-  head(results[order(results$pval),])
-
-```
-
-Looking at the same top 10 most significant interactions, we can see that the results are vastly different. Running the mixed effects model appears to bring about some curious results. One of the most significant interactions occurs between B cells and CD8 T cells, where B cells are found to increase in CD8 expression when in close proximity to CD8 T cells. 
-Biologically, CD8 is a highly specific ligand for CD8 T cells, and under no biologically health circumstances are they expressed in B cells. 
-
-Could this potentially be an artefact of `getStateChanges`? Taking a look at an image through the `visualiseImageRelationships` function, we indeed observe an apparent localisation between CD8+ B cells and CD8 T cells.
+Could this potentially be an artefact of `getStateChanges`? Taking a look at an image through the `plotStateChanges` function, we indeed observe an apparent localisation between B cells and T cells.
 
 QUESTIONBOX: Feel free to play around with the imageID parameter to observe the effect in other imageIDs.
 
 
 
 
-So why are B cells expressing CD8?
+So why are T cells expressing CD20?
 This brings us to a key problem of cell segmentation - contamination.
 
 
@@ -457,7 +439,7 @@ names(kerenSurv) = survData$imageID
 kontextMat = prepMatrix(kerenKontextual)
 
 # Ensuring rownames of kontextMat match up with rownames of the survival vector 
-kontextMat = kontextMat[match(names(kerenSurv), rownames(kontextMat)), ]
+kontextMat = kontextMat[names(kerenSurv), ]
 
 
 

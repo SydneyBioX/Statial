@@ -42,7 +42,7 @@
 #' )
 #'
 #' @export
-#' @rdname kontextualCurve
+#' @rdname kontextCurve
 #' @importFrom stats sd
 #' @importFrom dplyr filter select group_by summarise
 kontextCurve <- function(cells,

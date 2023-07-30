@@ -10,6 +10,9 @@ getAbundances(
   r = 200,
   distFun = "abundance",
   redDimName = "abundances",
+  cellType = "cellType",
+  imageID = "imageID",
+  spatialCoords = c("x", "y"),
   nCores = 1
 )
 }
@@ -24,6 +27,12 @@ between cells (can be a numeric or vector of radii)}
 \item{distFun}{What distance function to use.}
 
 \item{redDimName}{Name of the reduced dimension to store in sce.}
+
+\item{cellType}{The name of the column in colData that stores the cell types.}
+
+\item{imageID}{The name of the column in colData that Stores the image ids.}
+
+\item{spatialCoords}{The names of the columns in colData that store the spatial coordinates.}
 
 \item{nCores}{Number of cores for parallel processing}
 }

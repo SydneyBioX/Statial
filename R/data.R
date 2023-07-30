@@ -1,26 +1,3 @@
-#' Head and neck cutaneous squamous cell carcinoma IMC data
-#'
-#' @description
-#' This is a subset of imaging mass cytometry dataset of head and neck cutaneous
-#' squamous cell carcinoma from Ferguson et al 2022. The object contains 5 images.
-#'
-#' @usage data(headSCE)
-#'
-#' @format headData a SingleCellExperiment object
-#' @aliases
-#' headSCE
-#'
-#' @references Ferguson, A. L., Sharman, A. R., Allen, R. O., Ye, T., Lee, J. H.,
-#' Low, T.-H. H., Ch'ng, S., Palme, C. E., Ashford, B., Ranson, M.,
-#' Clark, J. R., Patrick, E., Gupta, R., & Palendira, U. (2022).
-#' High-Dimensional and Spatial Analysis Reveals Immune Landscape–Dependent
-#' Progression in Cutaneous Squamous Cell Carcinoma. Clinical Cancer Research,
-#' OF1-OF12. ([DOI](https://doi.org/10.1158/1078-0432.Ccr-22-1332))
-#'
-"headSCE"
-
-
-
 #' MIBI-TOF Breast cancer image
 #'
 #' @description
