@@ -6,11 +6,12 @@
 \usage{
 Kontextual(
   cells,
-  parentDf = NULL,
   r,
+  parentDf = NULL,
   from = NULL,
   to = NULL,
   parent = NULL,
+  image = NULL,
   inhom = TRUE,
   edgeCorrect = FALSE,
   window = "convex",
@@ -29,15 +30,17 @@ Kontextual(
 data.frames containing columns specifying the imageID, cellType, and x and y
 spatial coordinates.}
 
-\item{parentDf}{A data frame from \code{\link[Statial]{parentCombinations}}}
+\item{r}{Radii to evaluated pairwise relationships between from and to cells.}
 
-\item{r}{Radius to evaluated pairwise relationships between from and to cells.}
+\item{parentDf}{A data frame from \code{\link[Statial]{parentCombinations}}}
 
 \item{from}{The first cell type to be evaluated in the pairwise relationship.}
 
 \item{to}{The second cell type to be evaluated in the pairwise relationship.}
 
 \item{parent}{The parent population of the from cell type (must include from cell type).}
+
+\item{image}{A vector of images to filter results to.}
 
 \item{inhom}{A logical value indicating whether to account for inhomogeneity.}
 
@@ -78,13 +81,14 @@ particular radius (r).
 # Load data
 data("kerenSCE")
 
+
 CD4_Kontextual <- Kontextual(
   cells = kerenSCE,
   r = 50,
   from = "Macrophages",
   to = "Keratin_Tumour",
   parent = c("Macrophages", "CD4_Cell"),
-  cores = 2
+  image = "6"
 )
 
 

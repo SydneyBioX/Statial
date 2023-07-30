@@ -5,27 +5,20 @@
 \title{Calculate the level of marker contamination of each cell}
 \usage{
 calcContamination(
-  singleCellData,
-  Rs = c(200),
+  cells,
   markers = NULL,
-  seed = 2022,
   num.trees = 100,
   verbose = FALSE,
-  missingReplacement = 0
+  missingReplacement = 0,
+  redDimName = "contaminations"
 )
 }
 \arguments{
-\item{singleCellData}{A dataframe with a cellType column as well as marker intensity information
-corresponding to each cell. The dataframe must contain a imageID column.}
+\item{cells}{A SingleCellExperiment or SpatialExperiment with a cellType column as well as marker intensity information
+corresponding to each cell.}
 
-\item{Rs}{Radius to calculate pairwise distances between cells (can be a numeric or
-vector of radii)}
-
-\item{markers}{A string list of markers that proxy a cell's state. If NULL, all markers 
+\item{markers}{A vector of markers that proxy a cell's state. If NULL, all markers 
 will be used.}
-
-\item{seed}{A numeric value to allow for replicable results from the random forest
-classification algorithm}
 
 \item{num.trees}{Number of trees to be used in the random forest classifier}
 
@@ -33,17 +26,17 @@ classification algorithm}
 model should be outputted.}
 
 \item{missingReplacement}{A default value to replace missing marker intensities for classification.}
+
+\item{redDimName}{The redDimName to store the output in the sce.}
 }
 \description{
 Calculates contamination scores using a random forest classification
 }
 \examples{
-library(dplyr)
 data("kerenSCE")
 
 singleCellDataDistancesContam <- calcContamination(
-  kerenSCE,
-  Rs = c(200)
+  kerenSCE
 )
 
 }
