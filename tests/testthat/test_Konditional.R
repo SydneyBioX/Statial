@@ -1,11 +1,11 @@
 
 
 test_that("Expecting an error when parentDf or to, from, parent is NULL", {
-  data("headSCE")
+  data("kerenSCE")
 
   testthat::expect_error(
     Kontextual(
-      cells = headSCE,
+      cells = kerenSCE,
       r = 50,
       parentDf = NULL,
       to = NULL,
@@ -16,14 +16,14 @@ test_that("Expecting an error when parentDf or to, from, parent is NULL", {
 })
 
 
-# test_that("Kontextual values from headSCE are the same as the saved ones", {
-#   data("headSCE")
+# test_that("Kontextual values from kerenSCE are the same as the saved ones", {
+#   data("kerenSCE")
 # 
 #   expected_data <- readRDS("CD4_Kontextual.rds")
 # 
 #   CD4_Kontextual <-
 #     Kontextual(
-#       cells = headSCE,
+#       cells = kerenSCE,
 #       r = 50,
 #       from = "TC_CD4",
 #       to = "SC5",
@@ -45,9 +45,9 @@ test_that("Expecting an error when parentDf or to, from, parent is NULL", {
 
 
 test_that("Expecting an error when dataset contains wrong column names", {
-  data("headSCE")
+  data("kerenSCE")
 
-  renamedSCE <- colData(headSCE) |>
+  renamedSCE <- colData(kerenSCE) |>
     data.frame() |>
     rename("imageName" = "imageID")
 
