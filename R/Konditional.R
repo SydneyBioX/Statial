@@ -10,10 +10,11 @@
 #' data.frames containing columns specifying the imageID, cellType, and x and y
 #' spatial coordinates.
 #' @param parentDf A data frame from \code{\link[Statial]{parentCombinations}}
-#' @param r Radius to evaluated pairwise relationships between from and to cells.
+#' @param r Radii to evaluated pairwise relationships between from and to cells.
 #' @param from The first cell type to be evaluated in the pairwise relationship.
 #' @param to The second cell type to be evaluated in the pairwise relationship.
 #' @param parent The parent population of the from cell type (must include from cell type).
+#' @param image A vector of images to filter results to.
 #' @param inhom  A logical value indicating whether to account for inhomogeneity.
 #' @param edgeCorrect A logical value indicating whether to perform edge correction.
 #' @param window Type of window for data, either `square`, `convex` or `concave`,
@@ -35,6 +36,7 @@
 #' @examples
 #' # Load data
 #' data("kerenSCE")
+#' 
 #'
 #' CD4_Kontextual <- Kontextual(
 #'   cells = kerenSCE,
@@ -42,7 +44,7 @@
 #'   from = "Macrophages",
 #'   to = "Keratin_Tumour",
 #'   parent = c("Macrophages", "CD4_Cell"),
-#'   cores = 2
+#'   image = "6"
 #' )
 #'
 #'
@@ -50,20 +52,19 @@
 #'
 #' @export Kontextual
 #' @rdname Kontextual
-#' @import dplyr
-#' @import tidyr
-#' @import BiocParallel
-#' @import SingleCellExperiment
+#' @importFrom BiocParallel bpmapply
+#' @importFrom SummarizedExperiment colData
 #' @importFrom tibble remove_rownames
 #' @importFrom methods is
 #' @importFrom stats runif
 
 Kontextual <- function(cells,
-                        parentDf = NULL,
                         r,
+                        parentDf = NULL,
                         from = NULL,
                         to = NULL,
                         parent = NULL,
+                        image = NULL,
                         inhom = TRUE,
                         edgeCorrect = FALSE,
                         window = "convex",
@@ -90,6 +91,12 @@ Kontextual <- function(cells,
       parent = I(list(parent))
     )
   }
+  
+  cells$imageID <- colData(cells)[,imageID]
+  cells$cellType <- colData(cells)[,cellType]
+  cellType <- "cellType"
+  imageID <- "imageID"
+  if(!is.null(image))cells <- cells[,cells$imageID %in% image]
 
 
   if (is(cells, "list")) {
@@ -104,12 +111,12 @@ Kontextual <- function(cells,
 
   if (is(cells, "SingleCellExperiment")) {
     cells <- cells |>
-      SingleCellExperiment::colData() |>
+      SummarizedExperiment::colData() |>
       data.frame()
   }
 
   if (is(cells, "SpatialExperiment")) {
-    cells <- cbind(colData(cells), spatialCoords(cells)) |>
+    cells <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
       data.frame()
   }
 
@@ -165,7 +172,7 @@ Kontextual <- function(cells,
   # Calculate conditional L values
   lVals <- bpmapply(
     KontextualCore,
-    image = kontextualDf$images,
+    images = kontextualDf$images,
     r = kontextualDf$r,
     from = kontextualDf$from,
     to = kontextualDf$to,
@@ -230,8 +237,7 @@ Kontextual <- function(cells,
 
 #' @noRd
 #'
-#' @import tidyverse
-KontextualCore <- function(image,
+KontextualCore <- function(images,
                             r,
                             from,
                             to,
@@ -242,7 +248,7 @@ KontextualCore <- function(image,
                             weightQuantile = .80,
                             ...) {
   # Returns NA if to and from cell types not in image
-  if (!(c(to, from) %in% unique(image$cellType) |> all())) {
+  if (!(c(to, from) %in% unique(images$cellType) |> all())) {
     condL <- data.frame(original = NA, kontextual = NA)
     rownames(condL) <- paste(from, "__", to)
     return(condL)
@@ -251,7 +257,7 @@ KontextualCore <- function(image,
   # Calculated the child and parent values for the image
   kontextualVal <-
     inhomLParent(
-      image,
+      images,
       Rs = r,
       from = from,
       to = to,
@@ -270,11 +276,11 @@ KontextualCore <- function(image,
 
   originalVal <-
     inhomLParent(
-      image,
+      images,
       Rs = r,
       from = from,
       to = to,
-      parent = unique(image$cellType),
+      parent = unique(images$cellType),
       edgeCorrect = edge,
       inhom = inhom,
       weightQuantile = 1,
@@ -294,7 +300,7 @@ KontextualCore <- function(image,
 
 #' @noRd
 #'
-#' @import tidyverse
+#' @importFrom dplyr rename
 validateDf <- function(cells, cellType, imageID, spatialCoords) {
   if (!("imageID" %in% names(cells)) ||
     !("cellType" %in% names(cells)) ||
@@ -333,7 +339,6 @@ validateDf <- function(cells, cellType, imageID, spatialCoords) {
 #'
 #' @export isKontextual
 #' @rdname isKontextual
-#' @import tidyverse
 isKontextual <- function(kontextualResult){
     
     colNames = c(
@@ -355,29 +360,54 @@ isKontextual <- function(kontextualResult){
 
 #' Convert Kontextual results to a matrix for classification
 #'
-#' @param kontextualResult a kontextual result data.frame
-#' @param type return the either the `kontextual` or `original` L-function values
-#' @param replaceVal value which NAs are replaced with
-#' @param imageID The column which contains image identifiers.
+#' @param result a kontextual or state changes result data.frame.
+#' @param replaceVal value which NAs are replaced with.
+#' @param column The column which contains the scores that you want to select.
+#' @param test A column containing which will be the column names of the expanded matrix.
 #'
 #' @examples
-#' 
+#' 1+1
 #'
-#' @export prepKontextMat
-#' @rdname prepKontextMat
-#' @import tidyverse
-prepKontextMat = function(kontextualResult,
-                          type = "kontextual",
-                          replaceVal = 0,
-                          imageID = "imageID") {
+#' @export prepMatrix
+#' @rdname prepMatrix
+#' @importFrom dplyr mutate
+prepMatrix = function(result,
+                      replaceVal = 0,
+                      column = NULL,
+                      test = NULL) {
+  
+  mat = NULL
+
+  if("kontextual"%in%colnames(result)){
     
-    kontextMat = kontextualResult |> 
+    mat <- result |> 
         # Implement support for multiple values in other columns.
-        select(!!imageID, "test", type) |> 
-        pivot_wider(names_from = "test", values_from = type) |> 
-        column_to_rownames(`imageID`) %>% 
-        replace(is.na(.), replaceVal)
+        dplyr::select(imageID, test, kontextual) |> 
+        tidyr::pivot_wider(names_from = test, values_from = kontextual, values_fill = replaceVal) |> 
+        tibble::column_to_rownames("imageID") 
     
-    return(kontextMat)
+  }
+  
+  if("primaryCellType"%in%colnames(result)){
+    
+    if(!is.null(column)){
+      result$type <- result[, column]
+    }else{
+      result$type <- result$coef
+      }
+    
+    mat <- result |> 
+      as.data.frame() |>
+      # Implement support for multiple values in other columns.
+      dplyr::mutate(test = paste(primaryCellType, otherCellType, marker, sep = "__")) |>
+      dplyr::select(imageID, test, type) |> 
+      tidyr::pivot_wider(names_from = test, values_from = type, values_fill = replaceVal) |> 
+      tibble::column_to_rownames("imageID")
+
+  }
+    
+    
+  
+  mat
 }
     

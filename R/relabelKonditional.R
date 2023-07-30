@@ -45,10 +45,8 @@
 #'
 #' @export
 #' @rdname relabelKontextual
-#' @import dplyr
-#' @import BiocParallel
-#' @import tidyverse
-
+#' @importFrom dplyr mutate
+#' @importFrom BiocParallel  bplapply
 relabelKontextual <- function(cells,
                                nSim = 1,
                                r,

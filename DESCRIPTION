@@ -19,7 +19,6 @@ Imports:
     BiocParallel,
     spatstat.geom,
     concaveman,
-    tidyverse,
     data.table,
     spatstat.explore,
     dplyr,
@@ -53,7 +52,8 @@ Suggests:
     knitr,
     testthat (>= 3.0.0),
     ClassifyR,
-    spicyR
+    spicyR,
+    ggsurvfit
 Description: Statial is a suite of functions for identifying changes in cell 
     state. The functionality provided by Statial provides robust quantification 
     of cell type localisation which are invariant to changes in tissue 

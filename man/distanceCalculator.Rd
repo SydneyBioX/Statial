@@ -4,13 +4,15 @@
 \alias{distanceCalculator}
 \title{Calculate pairwise distance between cell types}
 \usage{
-distanceCalculator(singleCellData, maxRS = 200)
+distanceCalculator(data, maxDist = 200, distFun = "min")
 }
 \arguments{
-\item{singleCellData}{the single cell data of interest}
+\item{data}{the single cell data of interest}
 
-\item{maxRS}{Maximum distance between pairs of points to be counted as close
+\item{maxDist}{Maximum distance between pairs of points to be counted as close
 pairs.}
+
+\item{distFun}{How to merge duplicate entries.}
 }
 \description{
 Calculates the euclidean distance from each cell to the nearest cell of each
