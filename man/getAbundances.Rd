@@ -5,18 +5,34 @@
 \title{Wrapper to calculate imhomogenous K function between a cell and surrounding
 types on each image}
 \usage{
-getAbundances(singleCellData, Rs = c(200), whichCellTypes = NULL, nCores = 1)
+getAbundances(
+  cells,
+  r = 200,
+  distFun = "abundance",
+  redDimName = "abundances",
+  cellType = "cellType",
+  imageID = "imageID",
+  spatialCoords = c("x", "y"),
+  nCores = 1
+)
 }
 \arguments{
-\item{singleCellData}{A dataframe with a cellType column as well as x and y spatial coordinates.
+\item{cells}{A dataframe with a cellType column as well as x and y spatial coordinates.
 The dataframe must contain a imageID column and cellID (unique cell
 identifier's) column as well}
 
-\item{Rs}{Radius to include in that calculation of pairwise abundance (K-function)
+\item{r}{Radius to include in that calculation of pairwise abundance (K-function)
 between cells (can be a numeric or vector of radii)}
 
-\item{whichCellTypes}{Character vector specifying what cell types to include in the calculation.
-If the argument is non-null, then at least two celltypes must be specified.}
+\item{distFun}{What distance function to use.}
+
+\item{redDimName}{Name of the reduced dimension to store in sce.}
+
+\item{cellType}{The name of the column in colData that stores the cell types.}
+
+\item{imageID}{The name of the column in colData that Stores the image ids.}
+
+\item{spatialCoords}{The names of the columns in colData that store the spatial coordinates.}
 
 \item{nCores}{Number of cores for parallel processing}
 }
@@ -29,9 +45,7 @@ library(dplyr)
 data("kerenSCE")
 
 singleCellDataCounts <- getAbundances(kerenSCE,
-  nCores = 1,
-  Rs = c(200),
-  whichCellTypes = c("Keratin_Tumour", "Macrophages")
+  r = 200,
 )
 
 }

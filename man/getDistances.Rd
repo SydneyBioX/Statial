@@ -4,34 +4,45 @@
 \alias{getDistances}
 \title{Wrapper to calculate pairwise distance between cell types by image}
 \usage{
-getDistances(singleCellData, Rs = c(200), whichCellTypes = NULL, nCores = 1)
+getDistances(
+  cells,
+  maxDist = NULL,
+  imageID = "imageID",
+  spatialCoords = c("x", "y"),
+  cellType = "cellType",
+  redDimName = "distances",
+  distFun = "min",
+  nCores = 1
+)
 }
 \arguments{
-\item{singleCellData}{A dataframe with a cellType column as well as x and y spatial coordinates.
+\item{cells}{A dataframe with a cellType column as well as x and y spatial coordinates.
 The dataframe must contain a imageID column and cellID (unique cell
 identifier's) column as well}
 
-\item{Rs}{Radius to calculate pairwise distances between cells (can be a numeric or
-vector of radii)}
+\item{maxDist}{The maximum distance considered.}
 
-\item{whichCellTypes}{Character vector specifying what cell types to include in the calculation.
-If the argument is non-null, then at least two cell types need to be
-specified}
+\item{imageID}{The name of the colData column that stores in the image ID.}
 
-\item{nCores}{Number of cores for parallel processing}
+\item{spatialCoords}{The columns that store the spatial coordinates.}
+
+\item{cellType}{The name of the colData column that stores the cell types.}
+
+\item{redDimName}{The name of the reduced dimension to store the distances in.}
+
+\item{distFun}{What distance function to use. Can be min or abundance.}
+
+\item{nCores}{Number of cores for parallel processing.}
 }
 \description{
 Calculates the euclidean distance from each cell to the nearest cell of each
 type
 }
 \examples{
-library(dplyr)
 data("kerenSCE")
 
-singleCellDataDistances <- getDistances(kerenSCE,
-  nCores = 1,
-  Rs = c(200),
-  whichCellTypes = c("Keratin_Tumour", "Macrophages")
+kerenSCE <- getDistances(kerenSCE,
+  maxDist = 200
 )
 
 }

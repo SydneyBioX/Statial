@@ -1,4 +1,8 @@
+```{r}
 
+colData(kerenSCE)$Censored <- colData(kerenSCEVig)$Censored
+
+```
 
 ```{r}
 #TODO: Add these functionalities into getDistances
