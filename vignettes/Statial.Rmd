@@ -43,6 +43,7 @@ library(SingleCellExperiment)
 library(ggplot2)
 library(ggsurvfit)
 library(survival)
+library(tibble)
 
 theme_set(theme_classic())
 nCores <- 4
