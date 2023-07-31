@@ -54,6 +54,7 @@
 #' @rdname Kontextual
 #' @importFrom BiocParallel bpmapply
 #' @importFrom SummarizedExperiment colData
+#' @importFrom SpatialExperiment spatialCoords
 #' @importFrom tibble remove_rownames
 #' @importFrom methods is
 #' @importFrom stats runif
