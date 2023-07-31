@@ -1,7 +1,7 @@
 Package: Statial
 Type: Package
 Title: A package to identify changes in cell state relative to spatial associations
-Version: 1.0.1
+Version: 1.2.1
 Date: 2022-09-19
 Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
     role = c("aut", "cre")),
@@ -13,7 +13,7 @@ Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
     role = c("aut")))
 VignetteBuilder: knitr
 Encoding: UTF-8
-biocViews: SingleCell, Spatial
+biocViews: SingleCell, Spatial, Classification
 Depends: R (>= 4.1.0)
 Imports: 
     BiocParallel,
@@ -30,30 +30,23 @@ Imports:
     ggplot2,
     methods,
     stats,
-    MASS,
-    MuMIn,
-    R.utils,
     SummarizedExperiment,
     S4Vectors,
-    bigstatsr,
-    lisaClust,
-    lmerTest,
-    parameters,
-    performance,
     plotly,
     purrr,
     ranger,
-    robustlmm,
-    sfsmisc,
-    heatmaply,
-    magrittr
+    magrittr,
+    limma,
+    SpatialExperiment
 Suggests: 
     BiocStyle,
     knitr,
     testthat (>= 3.0.0),
     ClassifyR,
     spicyR,
-    ggsurvfit
+    ggsurvfit,
+    lisaClust,
+    survival
 Description: Statial is a suite of functions for identifying changes in cell 
     state. The functionality provided by Statial provides robust quantification 
     of cell type localisation which are invariant to changes in tissue 
@@ -64,4 +57,4 @@ Description: Statial is a suite of functions for identifying changes in cell
 License: GPL-3
 RoxygenNote: 7.2.3
 Config/testthat/edition: 3
-LazyData: true
+
