@@ -43,7 +43,8 @@ Suggests:
     ClassifyR,
     spicyR,
     ggsurvfit,
-    lisaClust
+    lisaClust,
+    survival
 Description: Statial is a suite of functions for identifying changes in cell 
     state. The functionality provided by Statial provides robust quantification 
     of cell type localisation which are invariant to changes in tissue 
