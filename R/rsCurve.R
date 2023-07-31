@@ -121,8 +121,8 @@ kontextCurve <- function(cells,
 #' Plotting the original and kontextual L values over a range of radii.
 #'
 #' @description 
-#' This function takes outputs from \code{\link[Statial]{rsCurve}} and plots
-#' them in ggplot. If standard deviation is estimated in \code{\link[Statial]{rsCurve}},
+#' This function takes outputs from rsCurve and plots
+#' them in ggplot. If standard deviation is estimated in rsCurve,
 #' then confidence intervals will be constructed based on the standard deviation.
 #' If the confidence interval overlaps with 0, then the relationship is insignificant 
 #' for that radius.
