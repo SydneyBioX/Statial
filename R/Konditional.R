@@ -92,12 +92,19 @@ Kontextual <- function(cells,
     )
   }
   
-  cells$imageID <- colData(cells)[,imageID]
-  cells$cellType <- colData(cells)[,cellType]
+  if (is(cells, "list")) {
+    lapply(cells, function(x) {
+      x$imageID <- x[,imageID]
+      x$cellType <- x[,cellType]
+    })
+  } else {
+    cells$imageID <- colData(cells)[,imageID]
+    cells$cellType <- colData(cells)[,cellType]
+  }
+  
   cellType <- "cellType"
   imageID <- "imageID"
   if(!is.null(image))cells <- cells[,cells$imageID %in% image]
-
 
   if (is(cells, "list")) {
     cells <- lapply(
