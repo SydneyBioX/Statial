@@ -358,7 +358,7 @@ isKontextual <- function(kontextualResult){
     return(all(colNames %in% names(kontextualResult)))
 }
 
-#' Convert Kontextual results to a matrix for classification
+#' Convert Kontextual or state changes result to a matrix for classification
 #'
 #' @param result a kontextual or state changes result data.frame.
 #' @param replaceVal value which NAs are replaced with.
@@ -366,7 +366,20 @@ isKontextual <- function(kontextualResult){
 #' @param test A column containing which will be the column names of the expanded matrix.
 #'
 #' @examples
-#' 1+1
+#' data("kerenSCE")
+#' 
+#'
+#' CD4_Kontextual <- Kontextual(
+#'   cells = kerenSCE,
+#'   r = 50,
+#'   from = "Macrophages",
+#'   to = "Keratin_Tumour",
+#'   parent = c("Macrophages", "CD4_Cell"),
+#'   image = "6"
+#' )
+#'
+#'
+#' kontextMat = prepMatrix(CD4_Kontextual)
 #'
 #' @export prepMatrix
 #' @rdname prepMatrix

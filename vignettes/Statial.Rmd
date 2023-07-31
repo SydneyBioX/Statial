@@ -91,7 +91,6 @@ The definitions of cell types and cell states are somewhat ambiguous, cell types
 The first step in analysing these images is to organise all the cells present into cell state populations or clusters, e.g. all the different B cell types are put in a vector called bcells.
 
 ```{r}
-
 # Examine all cell types in image
 unique(kerenSCE$cellType)
 
@@ -183,6 +182,7 @@ p53_Kontextual <- Kontextual(
   from = "p53+Tumour",
   to = "Immune",
   parent = c("p53", "Keratin_Tumour"),
+  cellType = "cellTypeNew"
 )
 
 p53_Kontextual
@@ -391,13 +391,13 @@ The next steps will involve comparing survival time to see if these distance-to-
 
 # Relating `Statial` features to patient groups or outcomes.
 
-To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we can use the `colTest` function from `SpicyR`. To understand if features differ significantly between 2 patient groups, specify `type = "ttest"` in `colTest`. Here we examine which features are most associated with patient survival using the Kontextual values as example. To do so, the survival data is extracted from `kerenSCE` and converted to a survival object. In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepKontextMat`. Note, to extract the original L-function values, specify `type = "original"` in `prepKontextMat`. Finally, both the Kontextual matrix and survival object are passed into `colTest`, with `type = "coxph"` to obtain the survival results. 
+To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we can use the `colTest` function from `SpicyR`. To understand if features differ significantly between 2 patient groups, specify `type = "ttest"` in `colTest`. Here we examine which features are most associated with patient survival using the Kontextual values as example. To do so, the survival data is extracted from `kerenSCE` and converted to a survival object. In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepKontextMat`. Note, to extract the original L-function values, specify `type = "original"` in `prepKontextMat`. Finally, both the Kontextual matrix and survival object are passed into `colTest`, with `type = "survival"` to obtain the survival results. 
 
 As we can see from the results `Mesenchymal_Macrophages_tissue` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and Macrophages, relative to the parent population of all tissue cells. We can see that there is a negative coeffcient associated with this relationship, which tells us the increase in localisation of Mesenchymal and Macrophages lead to more favourable survival outcomes for patients.  
 
 
 ```{r}
-# Running survival analysis
+# Helper function to run coxPh models
 
 coxTests = function(measurementMat, Surv) {
   
@@ -425,6 +425,7 @@ coxTests = function(measurementMat, Surv) {
 
 
 ```{r}
+
 # Extracting survival data
 survData = kerenSCE |>
     colData() |> 
@@ -444,8 +445,9 @@ kontextMat = prepMatrix(kerenKontextual)
 kontextMat = kontextMat[names(kerenSurv), ]
 
 
-
+# Running survival analysis
 survivalResults = coxTests(kontextMat, kerenSurv)
+
 
 head(survivalResults)
 
@@ -515,7 +517,6 @@ lisaClust::hatchingPlot(kerenSCE,
   useImages = "5",
   line.spacing = 41, # spacing of lines
   nbp = 100 # smoothness of lines
-  
 ) 
 
 ```
