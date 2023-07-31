@@ -93,10 +93,12 @@ relabelResult <- relabelKontextual(
   cores = 2
 )
 
-data("kerenImage")
+data("kerenSCE")
+
+kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
 
 # Permute CD8 T cells and T cell labels in the image
-relabeledImage <- relabel(kerenImage, labels = c("p53", "Keratin+Tumour"))
+relabeledImage <- relabel(kerenImage6, labels = c("p53", "Keratin+Tumour"))
 plot(relabeledImage)
 
 }
