@@ -244,7 +244,7 @@ kerenSCE <- getAbundances(kerenSCE,
 
 ```
 
-First, let's examine the same effect observed earlier with Kontextual - the distance between p53-positive keratin/tumour cells and macrophages in the context of total keratin/tumour cells. 
+First, let's examine the same effect observed earlier with Kontextual - the distance between p53-positive keratin/tumour cells and macrophages in the context of total keratin/tumour cells for image 6 of the Keren et al. dataset. 
 
 ```{r}
 #This function takes approximately 5 minutes to run with 40 cores. 
@@ -286,7 +286,6 @@ p
 Beyond looking at single cell-to-cell interactions for a single image, we can also look at all interactions across all images. Statial provides the `getStateChanges` function for this exact purpose, allowing us to examine the most significant correlations between distance and marker expression.
 
 ```{r}
-#This function takes approximately 5 minutes to run with 40 cores. 
 stateChanges <- calcStateChanges(
   cells = kerenSCE,
   type = "distances",
@@ -303,17 +302,18 @@ stateChanges |>
 
 
 
-Let's take a look at the top 10 most significant gene-to-distance pairwise interactions. We can see that the most significant interaction involving keratin/tumour cells occurs between keratin/tumour cells and macrophages in image 27, where HLA Class I molecules in keratin/tumour cells are upregulated when nearby macrophage populations. 
+Let's take a look at the top 10 most significant gene-to-distance pairwise interactions. We can see that one of the most significant interaction involving keratin/tumour cells in image 6 
+occurs between keratin/tumour cells and macrophages in image 27, where HLA Class I molecules in keratin/tumour cells are upregulated when nearby macrophage populations. 
 We can examine this interaction further with the `plotStateChanges` function, showing us a clear visual correlation between macrophage density and HLA Class I expression.
 
-Biologically, HLA Class I is a ligand which exists on all nucleated cells, tasked with presenting internal cell antigens for recognition by the immune system, marking aberrant cells for destruction by either CD8+ T cells or NK cells. This increased expression of HLA Class I molecules on tumour cells is an interesting finding, and potentially uncovers a novel interaction between tumour cells and macrophages which drives aberrant HLA Class I expression.
+Biologically, HLA Class I is a ligand which exists on all nucleated cells, tasked with presenting internal cell antigens for recognition by the immune system, marking aberrant cells for destruction by either CD8+ T cells or NK cells. This increased expression of HLA Class I molecules on tumour cells is an interesting finding, and potentially uncovers a novel interaction between tumour cells and macrophages which drives aberrant HLA Class I expression in tumour cells.
 
 ```{r}
 
 p <- plotStateChanges(
   cells = kerenSCE,
   type = "distances",
-  image = "27",
+  image = "6",
   from = "Keratin_Tumour",
   to = "Macrophages",
   marker = "HLA_Class_1",
@@ -330,7 +330,7 @@ p
 
 
 Looking at the same top 10 most significant interactions, we can see that the results are vastly different. Running the mixed effects model appears to bring about some curious results. One of the most significant interactions occurs between B cells and CD4 T cells, where T cells are found to increase in CD20 expression when in close proximity to CD8 T cells. 
-Biologically, CD20 is a highly specific ligand for B cells, and under no biologically health circumstances are they expressed in T cells. 
+Biologically, CD20 is a highly specific ligand for B cells, and under no biologically healthy circumstances are they expressed in T cells. 
 
 Could this potentially be an artefact of `getStateChanges`? Taking a look at an image through the `plotStateChanges` function, we indeed observe an apparent localisation between B cells and T cells.
 
@@ -502,8 +502,6 @@ set.seed(51773)
 
 # Preparing features for lisaClust
 kerenSCE <- lisaClust::lisaClust(kerenSCE, k = 5)
-
-
 
 ```
 
