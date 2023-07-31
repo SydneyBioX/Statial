@@ -133,10 +133,12 @@ kontextCurve <- function(cells,
 #'  values over a range of radii
 #'
 #' @examples
-#' data("kerenImage")
+#' data("kerenSCE")
+#' 
+#' kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
 #'
 #' rsDf <- kontextCurve(
-#'   cells = kerenImage,
+#'   cells = kerenImage6,
 #'   from = "p53",
 #'   to = "Immune",
 #'   parent = c("p53", "Keratin+Tumour"),
