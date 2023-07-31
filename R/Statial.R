@@ -536,6 +536,9 @@ calcStateChanges <- function(cells,
 }
 
 
+
+
+#' @importFrom limma lmFit
 calculateChangesMarker <- function(distances, intensities, contaminations, nCores){
    
 test <- apply(distances, 2, function(x){

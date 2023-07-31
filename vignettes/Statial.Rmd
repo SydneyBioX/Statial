@@ -46,7 +46,7 @@ library(survival)
 library(tibble)
 
 theme_set(theme_classic())
-nCores <- 4
+nCores <- 1
 ```
 
 
@@ -66,7 +66,9 @@ There are over 37 trillion cells in the human body, each taking up different for
 
 # Loading example data
 
-In the following we will analyse breast cancer data from Keren et al. 2018. These images are stored in a `SingleCellExperiment` object. This object contains 57811 cells across 10 images and includes information on cell type and patient survival.
+In the following we will analyse breast cancer data from Keren et al. 2018. These images are stored in a `SingleCellExperiment` object. This object contains 57811 cells across 10 images and includes information on cell type and patient survival. 
+
+Note: The original dataset was reduced down from 41 images to 10 images for the purposes of this vignette, due to size restrictions. 
 
 ```{r}
 # Load head and neck data
@@ -476,7 +478,6 @@ survRelationship = ifelse(survRelationship > median(survRelationship), "Localise
 # Plotting Kaplan-Meier curve
 survfit2(kerenSurv ~ survRelationship) |>
     ggsurvfit() +
-    add_confidence_interval() +
     add_pvalue() +
     ggtitle("Mesenchymal__other immune__tissue")
 ```
@@ -572,18 +573,19 @@ kerenCV = crossValidate(
   selectionMethod  = "CoxPH",
   nFolds = 3,
   nFeatures = 10,
-  nRepeats = 10,
-  nCores = 1
+  nRepeats = 20,
+  nCores = 40,
+  #nCores = nCores
   )
 
 ```
 
 
 
-Here, we use the `performancePlot` function to assess the C-index from each repeat of the 3-fold cross-validation. We see that cell type proportions appears to capture the least amount of information predictive of patient survival. Features generated using Kontextual and Marker Means appear to be the most useful for predicting patient survival.
+Here, we use the `performancePlot` function to assess the C-index from each repeat of the 3-fold cross-validation. We can see the resulting C-indexes are very variable due to the dataset only containing 10 images. 
 
 
-```{r, fig.height= 5, fig.width=6}
+```{r}
 # Calculate AUC for each cross-validation repeat and plot.
 performancePlot(kerenCV,
   characteristicsList = list(x = "Assay Name")
