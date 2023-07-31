@@ -46,7 +46,7 @@ library(survival)
 library(tibble)
 
 theme_set(theme_classic())
-nCores <- 4
+nCores <- 1
 ```
 
 
@@ -66,7 +66,9 @@ There are over 37 trillion cells in the human body, each taking up different for
 
 # Loading example data
 
-In the following we will analyse breast cancer data from Keren et al. 2018. These images are stored in a `SingleCellExperiment` object. This object contains 170171 cells across 33 images and includes information on cell type and patient survival.
+In the following we will analyse breast cancer data from Keren et al. 2018. These images are stored in a `SingleCellExperiment` object. This object contains 57811 cells across 10 images and includes information on cell type and patient survival. 
+
+Note: The original dataset was reduced down from 41 images to 10 images for the purposes of this vignette, due to size restrictions. 
 
 ```{r}
 # Load head and neck data
@@ -218,11 +220,12 @@ kerenKontextual <- Kontextual(
   r = 50,
   cores = nCores
 )
+
 ```
 
 ```{r}
 data("kerenKontextual")
-head(kerenKontextual)
+head(kerenKontextual, 10)
 ```
 
 
@@ -404,7 +407,7 @@ The next steps will involve comparing survival time to see if these distance-to-
 
 To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we can use the `colTest` function from `SpicyR`. To understand if features differ significantly between 2 patient groups, specify `type = "ttest"` in `colTest`. Here we examine which features are most associated with patient survival using the Kontextual values as example. To do so, the survival data is extracted from `kerenSCE` and converted to a survival object. In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepKontextMat`. Note, to extract the original L-function values, specify `type = "original"` in `prepKontextMat`. Finally, both the Kontextual matrix and survival object are passed into `colTest`, with `type = "survival"` to obtain the survival results. 
 
-As we can see from the results `Mesenchymal_Macrophages_tissue` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and Macrophages, relative to the parent population of all tissue cells. We can see that there is a negative coeffcient associated with this relationship, which tells us the increase in localisation of Mesenchymal and Macrophages lead to more favourable survival outcomes for patients.  
+As we can see from the results `Mesenchymal__other immune__tissue` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and other immune cells, relative to the parent population of all tissue cells. We can see that there is a positive coeffcient associated with this relationship, which tells us the increase in localisation of Mesenchymal and Macrophages lead to poorer survival outcomes for patients.  
 
 
 ```{r}
@@ -463,53 +466,41 @@ survivalResults = coxTests(kontextMat, kerenSurv)
 head(survivalResults)
 
 ```
-The association between `Mesenchymal_Macrophages_tissue` and survival can also be visualised on a Kaplan-Meier curve. We must first extract the Kontextual values of this relationship across all images. Next we determine if Mesenchymal and Macrophages are relatively attracted or avoiding in each image, by comparing the Kontextual value in each image to the median Kontextual value. Finally we plot the Kaplan-Meier curve using the `ggsurvfit` package. 
+The association between `Mesenchymal__other immune__tissue` and survival can also be visualised on a Kaplan-Meier curve. We must first extract the Kontextual values of this relationship across all images. Next we determine if Mesenchymal and Macrophages are relatively attracted or avoiding in each image, by comparing the Kontextual value in each image to the median Kontextual value. Finally we plot the Kaplan-Meier curve using the `ggsurvfit` package. 
 
-As shown below, when Mesenchymal and Macrophages are relatively more localised to one another, patients tend to have better survival outcomes. When these cells are relatively dispersed, patients have a poorer survival outcome. 
+As shown below, when Mesenchymal and Macrophages are relatively more dispersed to one another, patients tend to have better survival outcomes. When these cells are relatively localised, patients have a poorer survival outcome. 
 
 ```{r}
 # Selecting most significant relationship
-survRelationship = kontextMat[["Mesenchymal__Macrophages__tissue"]]
+survRelationship = kontextMat[["Mesenchymal__other immune__tissue"]]
 survRelationship = ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
     
 # Plotting Kaplan-Meier curve
 survfit2(kerenSurv ~ survRelationship) |>
     ggsurvfit() +
-    add_confidence_interval() +
     add_pvalue() +
-    ggtitle("Mesenchymal__Macrophages__tissue")
+    ggtitle("Mesenchymal__other immune__tissue")
 ```
 
 
-# Cross Validation
+Similar survival analysis can be done using the state changes results. 
 
 ```{r}
-survivalData <- kerenSCE %>%
-  colData() %>%
-  as.data.frame() %>%
-  select(c("imageID", "Survival_days_capped", "Censored")) %>%
-  distinct() %>%
-  remove_rownames()
-
-#Preparing features for Kontextual
-
-
 #Preparing features for Statial
 stateMat <- prepMatrix(stateChanges)
 
-
-# Ensuring rownames of kontextMat match up with rownames of the survival vector 
+# Ensuring rownames of stateMat match up with rownames of the survival vector 
 stateMat = stateMat[names(kerenSurv), ]
 
 survivalResults = coxTests(stateMat, kerenSurv)
 
 head(survivalResults)
 
-
 ```  
   
-  
-# LisaClust
+# Region analysis using lisaClust
+
+Next we can cluster areas with similar spatial interactions to identify regions using lisaClust. Here we set `k = 5` to identify 5 regions. 
 
 ```{r}
 set.seed(51773)
@@ -519,7 +510,7 @@ kerenSCE <- lisaClust::lisaClust(kerenSCE, k = 5)
 
 ```
 
-
+The regions identified by licaClust can be visualised using the `hatchingPlot` function.
 ```{r, fig.height=5, fig.width=6.5}
 # Use hatching to visualise regions and cell types.
 lisaClust::hatchingPlot(kerenSCE,
@@ -530,6 +521,9 @@ lisaClust::hatchingPlot(kerenSCE,
 
 ```
 
+# Marker Means
+
+`Statial` provides functionality to identify the average marker expression of a given cell type in a given region, using the `getMarkerMeans` function. Similar to the analysis above, these features can also be used for survival analysis. 
 
 
 ```{r lisaClust}
@@ -545,7 +539,13 @@ head(survivalResults)
 
 ```
 
+# Patient classification
+
+Finally we demonstrate how we can use `ClassifyR` to perform patient classification with the features generated from `Statial`. In addition to the kontextual, state changes, and marker means values, we also calculate cell type proportions and region proportions using the `getProp` function in `spicyR`. Here we perform 3 fold cross validation with 10 repeats, using a CoxPH model for survival classification, feature selection is also performed by selecting the top 10 features per fold using a CoxPH model.
+
 ```{r}
+
+# Calculate cell type and region proportions
 cellTypeProp <- getProp(kerenSCE, 
                        feature = "cellType",
                        imageID = "imageID")
@@ -553,12 +553,14 @@ regionProp <- getProp(kerenSCE,
                        feature = "region",
                        imageID = "imageID")
 
+# Combine all the features into a list for classification 
 featureList <- list(states = stateMat, 
                      kontextual = kontextMat,
                      regionMarkerMeans = cellTypeRegionMeans,
                      cellTypeProp = cellTypeProp,
                      regionProp = regionProp)
 
+# Ensure the rownames of the features match the order of the survival vector
 featureList <- lapply(featureList, function(x)x[names(kerenSurv),])
 
 
@@ -571,17 +573,19 @@ kerenCV = crossValidate(
   selectionMethod  = "CoxPH",
   nFolds = 3,
   nFeatures = 10,
-  nRepeats = 10,
-  nCores = 1
+  nRepeats = 20,
+  nCores = 40,
+  #nCores = nCores
   )
 
 ```
 
 
 
-Here, we use the `performancePlot` function to assess the C-index from each repeat of the 3-fold cross-validation. We see that the lisaClust regions appear to capture the least amount of information that is predictive of diabetes progression status of the patients.
+Here, we use the `performancePlot` function to assess the C-index from each repeat of the 3-fold cross-validation. We can see the resulting C-indexes are very variable due to the dataset only containing 10 images. 
 
-```{r, fig.height= 5, fig.width=6}
+
+```{r}
 # Calculate AUC for each cross-validation repeat and plot.
 performancePlot(kerenCV,
   characteristicsList = list(x = "Assay Name")
