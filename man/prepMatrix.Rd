@@ -2,7 +2,7 @@
 % Please edit documentation in R/Konditional.R
 \name{prepMatrix}
 \alias{prepMatrix}
-\title{Convert Kontextual results to a matrix for classification}
+\title{Convert Kontextual or state changes result to a matrix for classification}
 \usage{
 prepMatrix(result, replaceVal = 0, column = NULL, test = NULL)
 }
@@ -16,9 +16,22 @@ prepMatrix(result, replaceVal = 0, column = NULL, test = NULL)
 \item{test}{A column containing which will be the column names of the expanded matrix.}
 }
 \description{
-Convert Kontextual results to a matrix for classification
+Convert Kontextual or state changes result to a matrix for classification
 }
 \examples{
-1+1
+data("kerenSCE")
+
+
+CD4_Kontextual <- Kontextual(
+  cells = kerenSCE,
+  r = 50,
+  from = "Macrophages",
+  to = "Keratin_Tumour",
+  parent = c("Macrophages", "CD4_Cell"),
+  image = "6"
+)
+
+
+kontextMat = prepMatrix(CD4_Kontextual)
 
 }

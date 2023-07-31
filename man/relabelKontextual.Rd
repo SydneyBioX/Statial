@@ -97,6 +97,10 @@ data("kerenSCE")
 
 kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
 
+kerenImage6 <- kerenImage6 |>
+         SingleCellExperiment::colData() |>
+         data.frame()
+
 # Permute CD8 T cells and T cell labels in the image
 relabeledImage <- relabel(kerenImage6, labels = c("p53", "Keratin+Tumour"))
 plot(relabeledImage)
