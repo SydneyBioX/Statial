@@ -658,6 +658,7 @@ test <- dplyr::bind_rows(test, .id = "otherCellType")
 #' @importFrom plotly ggplotly
 #' @importFrom S4Vectors metadata
 #' @importFrom S4Vectors metadata<-
+#' @importFrom SingleCellExperiment reducedDimNames
 plotStateChanges <- function(cells,
                                        image,
                                        from,
@@ -765,7 +766,7 @@ plotStateChanges <- function(cells,
       "Model Fit:", plotModelFit
     )) +
     ggplot2::facet_wrap(~imageID, scales = "free") +
-    scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
+    scale_colour_gradient(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
   
   
   g2 <- data %>%
