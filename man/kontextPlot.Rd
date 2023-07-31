@@ -21,10 +21,12 @@ If the confidence interval overlaps with 0, then the relationship is insignifica
 for that radius.
 }
 \examples{
-data("kerenImage")
+data("kerenSCE")
+
+kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
 
 rsDf <- kontextCurve(
-  cells = kerenImage,
+  cells = kerenImage6,
   from = "p53",
   to = "Immune",
   parent = c("p53", "Keratin+Tumour"),

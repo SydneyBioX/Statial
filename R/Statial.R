@@ -654,10 +654,11 @@ test <- dplyr::bind_rows(test, .id = "otherCellType")
 #' @importFrom dplyr filter left_join
 #' @importFrom ggplot2
 #'   ggplot scale_fill_distiller stat_density_2d geom_point theme_classic
-#'   aes_string ggtitle facet_wrap aes xlab ylab ggtitle autoplot
+#'   aes_string ggtitle facet_wrap aes xlab ylab ggtitle autoplot scale_colour_gradientn
 #' @importFrom plotly ggplotly
 #' @importFrom S4Vectors metadata
 #' @importFrom S4Vectors metadata<-
+#' @importFrom SingleCellExperiment reducedDimNames
 plotStateChanges <- function(cells,
                                        image,
                                        from,

@@ -245,7 +245,7 @@ kerenSCE <- getAbundances(kerenSCE,
 
 ```
 
-First, let's examine the same effect observed earlier with Kontextual - the distance between p53-positive keratin/tumour cells and macrophages in the context of total keratin/tumour cells. 
+First, let's examine the same effect observed earlier with Kontextual - the distance between p53-positive keratin/tumour cells and macrophages in the context of total keratin/tumour cells for image 6 of the Keren et al. dataset. 
 
 ```{r}
 #This function takes approximately 5 minutes to run with 40 cores. 
@@ -284,10 +284,9 @@ p <- plotStateChanges(
 p
 
 ```
-Beyond looking at single cell-to-cell interactions for a single image, we can also look at all interactions across all images. Statial provides the `getStateChanges` function for this exact purpose, allowing us to examine the most significant correlations between distance and marker expression.
+Beyond looking at single cell-to-cell interactions for a single image, we can also look at all interactions across all images. Statial provides the `getStateChanges` function for this exact purpose, allowing us to examine the most significant correlations between distance and marker expression. Here, we will focus on the most significant interactions in image 6 of the Keren et al. breast cancer dataset.
 
 ```{r}
-#This function takes approximately 5 minutes to run with 40 cores. 
 stateChanges <- calcStateChanges(
   cells = kerenSCE,
   type = "distances",
@@ -302,19 +301,18 @@ stateChanges |>
 ```
 
 
+Let's take a look at the top 10 most significant gene-to-distance pairwise interactions. In image 6, the majority of the top 10 most significant interactions occur between keratin/tumour cells and an immune population, and many of these interactions appear to involve the HLA class I ligand.
 
+We can examine some of these interactions further with the `plotStateChanges` function. Taking a closer examination of the relationship between macrophages and keratin/tumour HLA class I expression, the plot below shows us a clear visual correlation - as macrophage density increases, keratin/tumour cells increase their expression HLA class I.
 
-Let's take a look at the top 10 most significant gene-to-distance pairwise interactions. We can see that the most significant interaction involving keratin/tumour cells occurs between keratin/tumour cells and macrophages in image 27, where HLA Class I molecules in keratin/tumour cells are upregulated when nearby macrophage populations. 
-We can examine this interaction further with the `plotStateChanges` function, showing us a clear visual correlation between macrophage density and HLA Class I expression.
-
-Biologically, HLA Class I is a ligand which exists on all nucleated cells, tasked with presenting internal cell antigens for recognition by the immune system, marking aberrant cells for destruction by either CD8+ T cells or NK cells. This increased expression of HLA Class I molecules on tumour cells is an interesting finding, and potentially uncovers a novel interaction between tumour cells and macrophages which drives aberrant HLA Class I expression.
+Biologically, HLA Class I is a ligand which exists on all nucleated cells, tasked with presenting internal cell antigens for recognition by the immune system, marking aberrant cells for destruction by either CD8+ T cells or NK cells. This increased expression of HLA Class I molecules on tumour cells is an interesting finding, and potentially uncovers a novel interaction between tumour cells and macrophages which drives aberrant HLA Class I expression in tumour cells.
 
 ```{r}
 
 p <- plotStateChanges(
   cells = kerenSCE,
   type = "distances",
-  image = "27",
+  image = "6",
   from = "Keratin_Tumour",
   to = "Macrophages",
   marker = "HLA_Class_1",
@@ -328,29 +326,42 @@ p
 
 ```
 
+Now, we can take a look at the top 10 most significant results across all images. Immediately, we can appreciate that a couple of interactions appear a bit strange. One of the most significant interactions occurs between B cells and CD4 T cells, where CD4 T cells are found to increase in CD20 expression when in close proximity to B cells. Biologically, CD20 is a highly specific ligand for B cells, and under healthy circumstances are usually not expressed in T cells.
 
-
-Looking at the same top 10 most significant interactions, we can see that the results are vastly different. Running the mixed effects model appears to bring about some curious results. One of the most significant interactions occurs between B cells and CD4 T cells, where T cells are found to increase in CD20 expression when in close proximity to CD8 T cells. 
-Biologically, CD20 is a highly specific ligand for B cells, and under no biologically health circumstances are they expressed in T cells. 
-
-Could this potentially be an artefact of `getStateChanges`? Taking a look at an image through the `plotStateChanges` function, we indeed observe an apparent localisation between B cells and T cells.
+Could this potentially be an artefact of `getStateChanges`? We can examine the image through the `plotStateChanges` function, where we indeed observe an apparent localisation between B cells and T cells.
 
 QUESTIONBOX: Feel free to play around with the imageID parameter to observe the effect in other imageIDs.
 
+```{r}
 
+p <- plotStateChanges(
+  cells = kerenSCE,
+  type = "distances",
+  image = "35",
+  from = "CD4_Cell",
+  to = "B",
+  marker = "CD20",
+  size = 1,
+  shape = 19,
+  interactive = FALSE,
+  plotModelFit = FALSE,
+  method = "lm")
 
+p
+
+```
 
 So why are T cells expressing CD20?
 This brings us to a key problem of cell segmentation - contamination.
-
 
 # Contamination
 Contamination, or lateral marker spill over is an issue that results in a cell’s marker expressions being wrongly attributed to another adjacent cell. This issue arises from incorrect segmentation where components of one cell are wrongly determined as belonging to another cell. 
 Alternatively, this issue can arise when antibodies used to tag and measure marker expressions don't latch on properly to a cell of interest, thereby resulting in residual markers being wrongly assigned as belonging to a cell near the intended target cell. It is important that we either correct or account for this incorrect attribution of markers in our modelling process. This is critical in understanding whether significant cell-cell interactions detected are an artefact of technical measurement errors driven by spill over or are real biological changes that represent a shift in a cell’s state.
 
 
-To circumvent this problem, Statial provides a function that predicts the probability that a cell is any particular cell type. This comes in the format of the `calcContamination` function, which returns a dataframe of probabilities demarcating the chance of a cell being any particular cellType. It also provides the `rfMainCellProb` vector, which provides the probability that a cell is indeed the cell type it has been designated. 
-E.g. For a cell designated as CD8, rfMainCellProb could give a 80% chance that the cell is indeed CD8, due to contamination. We can then introduce these probabilities as covariates into our linear model.
+To circumvent this problem, Statial provides a function that predicts the probability that a cell is any particular cell type - `calcContamination`. `calcContamination` returns a dataframe of probabilities demarcating the chance of a cell being any particular cell type. This dataframe is stored under `contaminations` in the `reducedDim` slot of the `SingleCellExperiment` object. It also provides the `rfMainCellProb` column, which provides the probability that a cell is indeed the cell type it has been designated. E.g. For a cell designated as CD8, rfMainCellProb could give a 80% chance that the cell is indeed CD8, due to contamination. 
+
+We can then introduce these probabilities as covariates into our linear model by setting `contamination = TRUE` as a parameter in our `calcStateChanges` function. However, this is not a perfect solution for the issue of contamination. As we can see, despite factoring in contamination into our linear model, the correlation between B cell density and CD20 expression in CD4 T cells remains one of the most significant interactions in our model.
 
 ```{r}
 kerenSCE <- calcContamination(kerenSCE)
@@ -365,10 +376,12 @@ stateChangesCorrected <- calcStateChanges(
 stateChangesCorrected |> head(n = 20)
 
 ```
+However, this does not mean factoring in contamination into our linear model was ineffective. We can visualise this by plotting a ROC curve of true positives against false positives. In general, cell type specific markers such as CD4, CD8, and CD20 should not change in cells they are not specific to. Therefore, relationships detected to be significant involving these cell type markers are likely false positives and will be treated as such for the purposes of evaluation. Meanwhile, cell state markers are predominantly likely to be true positives.
 
+Plotting the relationship between false positives and true positives, we'd expect the contamination correction to be greatest in the relationships with the top 100 lowest p values, where we indeed see more true positives than false positives with contamination correction.
 
 ```{r}
-cellTypeMarkers <- c("CD3", "CD4", "CD8", "CD16", "CD56", "CD11c", "CD68", "CD45", "CD20")
+cellTypeMarkers <- c("CD3", "CD4", "CD8", "CD56", "CD11c", "CD68", "CD45", "CD20")
 
 values = c("blue", "red")
 names(values) <- c("None", "Corrected")
@@ -376,14 +389,12 @@ names(values) <- c("None", "Corrected")
 df <- rbind(data.frame(TP =cumsum(stateChanges$marker %in% cellTypeMarkers), FP = cumsum(!stateChanges$marker %in% cellTypeMarkers), type = "None"),
             data.frame(TP =cumsum(stateChangesCorrected$marker %in% cellTypeMarkers), FP = cumsum(!stateChangesCorrected$marker %in% cellTypeMarkers), type = "Corrected"))
 
+ggplot(df, aes(x = TP, y = FP, colour = type)) + geom_line()+ labs(y = "Cell state marker", x = "Cell type marker") + scale_colour_manual(values = values)
+
 ggplot(df, aes(x = TP, y = FP, colour = type)) + geom_line()+ xlim(0,100) + ylim(0,1000)+ labs(y = "Cell state marker", x = "Cell type marker") + scale_colour_manual(values = values)
-            
             
 
 ```
-
-
-
 
 The next steps will involve comparing survival time to see if these distance-to-gene interactions are biologically significant.
 
@@ -505,8 +516,6 @@ set.seed(51773)
 
 # Preparing features for lisaClust
 kerenSCE <- lisaClust::lisaClust(kerenSCE, k = 5)
-
-
 
 ```
 

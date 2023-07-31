@@ -2,6 +2,22 @@
 
 colData(kerenSCE)$Censored <- colData(kerenSCEVig)$Censored
 
+
+
+data("kerenSCE")
+
+kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+#'
+relabelResult <- relabelKontextual(
+  cells = kerenImage6,
+  nSim = 5,
+  r = 250,
+  from = "CD4_Cell",
+  to = "Keratin_Tumour",
+  parent = c("CD4_Cell", "Macrophages"),
+  cores = 2
+)
+
 ```
 
 ```{r}
