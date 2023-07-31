@@ -35,7 +35,9 @@ Imports:
     plotly,
     purrr,
     ranger,
-    magrittr
+    magrittr,
+    limma,
+    SpatialExperiment
 Suggests: 
     BiocStyle,
     knitr,
