@@ -101,13 +101,13 @@ tumour <- c("Keratin_Tumour", "Tumour")
 
 bcells <- c("B")
 tcells <- c("CD3_Cell", "CD4_Cell", "CD8_Cell", "Tregs")
-myeloid <- c("Dc/Mono", "DC", "Mono/Neu", "Macrophages", "other immune", "Neutrophils")
+myeloid <- c("Dc/Mono", "DC", "Mono/Neu", "Macrophages", "Neutrophils")
 
 endothelial <- c("Endothelial")
 mesenchymal <- c("Mesenchymal")
 
 tissue <- c(endothelial, mesenchymal)
-immune <- c(bcells, tcells, myeloid, "NK") # GC = granulocytes
+immune <- c(bcells, tcells, myeloid, "NK", "other immune") # NK = Natural Killer cells
 
 all <- c(tumour, tissue, immune, "Unidentified")
 ```
@@ -117,7 +117,7 @@ all <- c(tumour, tissue, immune, "Unidentified")
 
 # Kontextual Curve
 
-Here we examine an image from the Keren et al. 2018 dataset where the relationship between 2 cell types depends on a parent cell population. In the image below we can see that `p53` and `Immune` are dispersed. However when the behaviour of `p53` is placed in the context of the spatial behaviour of its parent population `Keratin+Tumour`, `p53` and `Immune` now appear localised.
+Here we examine image 6 from the Keren et al. dataset where the relationship between 2 cell types depends on a parent cell population. In the image below we can see that `p53` and `Immune` are dispersed. However when the behaviour of `p53` is placed in the context of the spatial behaviour of its parent population `Keratin+Tumour`, `p53` and `Immune` now appear localised.
 
 
 ```{r}
@@ -144,7 +144,7 @@ kerenImage6 |>
 ```
 
 
-The `rsCurve` function plots the L-function value and Kontextual values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Kontextual is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii.
+The `kontextCurve` function plots the L-function value and Kontextual values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Kontextual is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii.
 
 ```{r}
 
@@ -175,7 +175,7 @@ kontextPlot(curves)
 
 
 
-We can calculate these relationships for a single radius.
+We can calculate these relationships across all images for a single radius.
 
 ```{r}
 p53_Kontextual <- Kontextual(
@@ -232,7 +232,7 @@ head(kerenKontextual, 10)
 
 
 # Examining Cell-to-cell interactions with marker expression
-In the next section of this vignette, we will utilise multiplexed imaging data to computationally identify and quantify evidence of cell interactions that catalyse cell state changes. This approach measures how protein markers in a cell change with spatial proximity and abundance to other cell types. 
+In the next section of this vignette, we will utilise marker expression features from the Keren et al. dataset to computationally identify and quantify evidence of cell interactions that catalyse cell state changes. This approach measures how protein markers in a cell change with spatial proximity and abundance to other cell types. 
 The methods utilised here will provide a framework to explore how the dynamic behaviour of cells are altered by the agents they are surrounded by.
 
 The first step in analysing these changes is to calculate the spatial proximity (`getDistances`) and abundance (`getAbundances`) of each cell to every cell type. These values will then be stored in the `reducedDims` slot of the `SingleCellExperiment` object under the names `distances` and `abundances` respectively.
@@ -248,10 +248,11 @@ kerenSCE <- getAbundances(kerenSCE,
 
 ```
 
-First, let's examine the same effect observed earlier with Kontextual - the distance between p53-positive keratin/tumour cells and macrophages in the context of total keratin/tumour cells for image 6 of the Keren et al. dataset. 
+First, let's examine the same effect observed earlier with Kontextual - the localisation between p53-positive keratin/tumour cells and macrophages in the context of total keratin/tumour cells for image 6 of the Keren et al. dataset.
+
+Statial provides two main functions to assess this relationship - `calcStateChanges` and `plotStateChanges`. We can use `calcStateChanges` to examine the relationship between 2 cell types for 1 marker in a specific image. In this case, we're examining the relationship between keratin/tumour cells (`from = Keratin_Tumour`) and macrophages (`to = "Macrophages"`) for the marker p53 (`marker = "p53"`) in `image = "6"`. We can appreciate that the `fdr` statistic for this relationship is significant, with a negative tvalue, indicating that the expression of p53 in keratin/tumour cells decreases as distance from macrophages increases. 
 
 ```{r}
-#This function takes approximately 5 minutes to run with 40 cores. 
 stateChanges <- calcStateChanges(
   cells = kerenSCE,
   type = "distances",
@@ -265,11 +266,11 @@ stateChanges
 ```
 
 
-Statial provides a convenient function for observing this interaction - `plotStateChanges`. Here, we can specify the `imageID` and our main cell of interest, `primaryCellType` and our interacting cell type `otherCellType` and our marker of interest `marker`, in this case p53.
+Statial also provides a convenient function for visualising this interaction - `plotStateChanges`. Here, again we can specify `image = 6` and our main cell types of interest, keratin/tumour cells and macrophages, and our marker p53, in the same format as `calcStateChanges`.
 
-Through this analysis, we can observe that keratin/tumour cells closer to a group of macrophages tend to have higher expression of p53, as observed in the first graph. This relationship is outlined with the second graph, showing an overall decrease of p53 expression in keratin/tumour cells over distance to macrophages. The pvalue provided also shows us that this correlative interaction is statistically significant.
+Through this analysis, we can observe that keratin/tumour cells closer to a group of macrophages tend to have higher expression of p53, as observed in the first graph. This relationship is quantified with the second graph, showing an overall decrease of p53 expression in keratin/tumour cells as distance to macrophages increase.
 
-These results are similar to those provided with Kontextual, which calculates a similar localisation between p53+ keratin/tumour cells and macrophages.
+These results allow us to essentially arrive at the same result as Kontextual, which calculated a localisation between p53+ keratin/tumour cells and macrophages in the wider context of keratin/tumour cells.
 ```{r}
 p <- plotStateChanges(
   cells = kerenSCE,
@@ -287,7 +288,7 @@ p <- plotStateChanges(
 p
 
 ```
-Beyond looking at single cell-to-cell interactions for a single image, we can also look at all interactions across all images. Statial provides the `getStateChanges` function for this exact purpose, allowing us to examine the most significant correlations between distance and marker expression. Here, we will focus on the most significant interactions in image 6 of the Keren et al. breast cancer dataset.
+Beyond looking at single cell-to-cell interactions for a single image, we can also look at all interactions across all images. The `calcStateChanges` function provided by Statial can be expanded for this exact purpose - by not specifying cell types, a marker, or an image, `calcStateChanges` will examine the most significant correlations between distance and marker expression across the entire dataset. Here, we've filtered out the most significant interactions to only include those found within image 6 of the Keren et al. dataset.
 
 ```{r}
 stateChanges <- calcStateChanges(
@@ -331,9 +332,7 @@ p
 
 Now, we can take a look at the top 10 most significant results across all images. Immediately, we can appreciate that a couple of interactions appear a bit strange. One of the most significant interactions occurs between B cells and CD4 T cells, where CD4 T cells are found to increase in CD20 expression when in close proximity to B cells. Biologically, CD20 is a highly specific ligand for B cells, and under healthy circumstances are usually not expressed in T cells.
 
-Could this potentially be an artefact of `getStateChanges`? We can examine the image through the `plotStateChanges` function, where we indeed observe an apparent localisation between B cells and T cells.
-
-QUESTIONBOX: Feel free to play around with the imageID parameter to observe the effect in other imageIDs.
+Could this potentially be an artefact of `getStateChanges`? We can examine the image through the `plotStateChanges` function, where we indeed observe a strong increase in CD20 expression in T cells nearby B cell populations.
 
 ```{r}
 
