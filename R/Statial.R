@@ -746,7 +746,7 @@ plotStateChanges <- function(cells,
      ggplot2::stat_density_2d(
       data = data[data$cellType == to, ],
       ggplot2::aes(
-        x = x, y = y, fill = ..density..
+        x = x, y = y, fill = after_stat(density)
       ),
       geom = "raster",
       contour = FALSE
