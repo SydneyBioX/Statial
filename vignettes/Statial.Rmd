@@ -404,7 +404,7 @@ The next steps will involve comparing survival time to see if these distance-to-
 
 # Relating `Statial` features to patient groups or outcomes.
 
-To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we can use the `colTest` function from `SpicyR`. To understand if features differ significantly between 2 patient groups, specify `type = "ttest"` in `colTest`. Here we examine which features are most associated with patient survival using the Kontextual values as example. To do so, the survival data is extracted from `kerenSCE` and converted to a survival object. In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepKontextMat`. Note, to extract the original L-function values, specify `type = "original"` in `prepKontextMat`. Finally, both the Kontextual matrix and survival object are passed into `colTest`, with `type = "survival"` to obtain the survival results. 
+To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we've provided the helper function `coxTests` to understand if survival outcomes differ significantly between 2 patient groups. Here we examine which features are most associated with patient survival using the Kontextual values as example. To do so, the survival data is extracted from `kerenSCE` and converted to a survival object, `kerenSurv`. In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepMatrix`. Note, to extract the original L-function values, specify `column = "original"` in `prepMatrix`. Finally, both the Kontextual matrix and survival object are passed into `coxTests` to obtain the survival results. 
 
 As we can see from the results `Mesenchymal__other immune__tissue` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and other immune cells, relative to the parent population of all tissue cells. We can see that there is a positive coeffcient associated with this relationship, which tells us the increase in localisation of Mesenchymal and Macrophages lead to poorer survival outcomes for patients.  
 
@@ -439,7 +439,7 @@ coxTests = function(measurementMat, Surv) {
 
 ```{r}
 
-# Extracting survival data
+# Extracting survival data to create survival object
 survData = kerenSCE |>
     colData() |> 
     data.frame() |> 
@@ -460,7 +460,7 @@ kontextMat = kontextMat[names(kerenSurv), ]
 
 # Running survival analysis
 survivalResults = coxTests(kontextMat, kerenSurv)
-
+tmp = colTest(kontextMat, condition = kerenSurv, type = "ttest")
 
 head(survivalResults)
 
@@ -482,7 +482,9 @@ survfit2(kerenSurv ~ survRelationship) |>
 ```
 
 
-Similar survival analysis can be done using the state changes results. 
+Similar survival analysis can be done using the state changes results. Here, `prepMatrix` extracts the coefficients, or `coef` column of stateChanges by default. To use the t values instead, specify `column = "tval"` in the `prepMatrix` function.
+
+For our state changes results, `Keratin_Tumour__CD4_Cell__Keratin6` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Keratin6 expressing keratin/tumour cells and CD4 cells. We can see that there is a positive coeffcient associated with this relationship, which tells us that higher Keratin6 in keratin/tumour cells nearby CD4 populations lead to poorer survival outcomes for patients. 
 
 ```{r}
 #Preparing features for Statial
@@ -496,7 +498,21 @@ survivalResults = coxTests(stateMat, kerenSurv)
 head(survivalResults)
 
 ```  
-  
+Repeating the Kaplan-Meier curve visualisation for the state matrix. Here, localisation would refer to increased localisation between Keratin6 expressing keratin/tumour cells and CD4 cells, i.e. localisation means keratin/tumour cells tend to increase Keratin6 expression nearby CD4 cells, whilst dispersion would mean keratin/tumour cells do not tend to express Keratin6 near CD4 cell populations.
+
+As shown below, increased keratin6 expression in keratin/tumour cells near CD4 populations tends to worsen survival outcomes, whilst lower keratin6 expression appears to improve survival outcomes.
+```{r}
+survRelationship = stateMat[["Keratin_Tumour__CD4_Cell__Keratin6"]]
+survRelationship = ifelse(survRelationship > median(survRelationship), "Dispersed", "Localised")
+    
+# Plotting Kaplan-Meier curve
+survfit2(kerenSurv ~ survRelationship) |>
+    ggsurvfit() +
+    add_pvalue() +
+    ggtitle("Keratin_Tumour__CD4_Cell__Keratin6")
+
+```
+
 # Region analysis using lisaClust
 
 Next we can cluster areas with similar spatial interactions to identify regions using lisaClust. Here we set `k = 5` to identify 5 regions. 
