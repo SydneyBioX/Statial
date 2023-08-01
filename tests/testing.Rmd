@@ -18,6 +18,23 @@ relabelResult <- relabelKontextual(
   cores = 2
 )
 
+
+p <- plotStateChanges(
+  cells = kerenSCE,
+  type = "distances",
+  image = "29",
+  from = "Keratin_Tumour",
+  to = "CD4_Cell",
+  marker = "Keratin6",
+  size = 1,
+  shape = 19,
+  interactive = FALSE,
+  plotModelFit = FALSE,
+  method = "lm")
+
+p
+ kontextMat = prepMatrix(CD4_Kontextual)
+
 ```
 
 ```{r}
