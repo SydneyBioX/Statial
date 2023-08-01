@@ -332,7 +332,7 @@ p
 
 Now, we can take a look at the top 10 most significant results across all images. Immediately, we can appreciate that a couple of interactions appear a bit strange. One of the most significant interactions occurs between B cells and CD4 T cells, where CD4 T cells are found to increase in CD20 expression when in close proximity to B cells. Biologically, CD20 is a highly specific ligand for B cells, and under healthy circumstances are usually not expressed in T cells.
 
-Could this potentially be an artefact of `getStateChanges`? We can examine the image through the `plotStateChanges` function, where we indeed observe a strong increase in CD20 expression in T cells nearby B cell populations.
+Could this potentially be an artefact of `calcStateChanges`? We can examine the image through the `plotStateChanges` function, where we indeed observe a strong increase in CD20 expression in T cells nearby B cell populations.
 
 ```{r}
 
@@ -497,7 +497,7 @@ survivalResults = coxTests(stateMat, kerenSurv)
 head(survivalResults)
 
 ```  
-Repeating the Kaplan-Meier curve visualisation for the state matrix. Here, localisation would refer to increased localisation between Keratin6 expressing keratin/tumour cells and CD4 cells, i.e. localisation means keratin/tumour cells tend to increase Keratin6 expression nearby CD4 cells, whilst dispersion would mean keratin/tumour cells do not tend to express Keratin6 near CD4 cell populations.
+Again, we can also visualise the Kaplan-Meier curve visualisation for the most significant interaction. As `Kontextual` and `calcStateChanges` provides different outputs, localisation here refers to increased localisation between Keratin6 expressing keratin/tumour cells and CD4 cells, i.e. localisation means keratin/tumour cells tend to increase Keratin6 expression nearby CD4 cells, whilst dispersion would mean keratin/tumour cells do not tend to express Keratin6 near CD4 cell populations.
 
 As shown below, increased keratin6 expression in keratin/tumour cells near CD4 populations tends to worsen survival outcomes, whilst lower keratin6 expression appears to improve survival outcomes.
 ```{r}
