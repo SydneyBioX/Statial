@@ -588,8 +588,7 @@ kerenCV = crossValidate(
   nFolds = 3,
   nFeatures = 10,
   nRepeats = 20,
-  nCores = 1,
-  #nCores = nCores
+  nCores = 1
   )
 
 ```
