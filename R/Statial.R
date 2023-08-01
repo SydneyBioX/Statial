@@ -455,7 +455,7 @@ calcContamination <- function(cells,
 #' )
 #'
 #' @export
-#' @rdname getStateChanges
+#' @rdname calcStateChanges
 #' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom dplyr
 #'   arrange group_by  summarise_at mutate bind_rows left_join filter left_join
