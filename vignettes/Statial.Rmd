@@ -460,7 +460,6 @@ kontextMat = kontextMat[names(kerenSurv), ]
 
 # Running survival analysis
 survivalResults = coxTests(kontextMat, kerenSurv)
-tmp = colTest(kontextMat, condition = kerenSurv, type = "ttest")
 
 head(survivalResults)
 
