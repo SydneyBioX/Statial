@@ -11,3 +11,5 @@ testStatial.Rmd
 *.build*
 # vscode settings
 .vscode
+
+bench
