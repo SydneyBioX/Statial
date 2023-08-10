@@ -56,5 +56,5 @@ Description: Statial is a suite of functions for identifying changes in cell
     altered by the agents they are surrounded with.
 License: GPL-3
 RoxygenNote: 7.2.3
-URL: https://sydneybiox.github.io/Statial/
+URL: https://sydneybiox.github.io/Statial/, https://github.com/SydneyBioX/Statial
 Config/testthat/edition: 3
