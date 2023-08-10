@@ -251,7 +251,7 @@ getAbundances <- function(cells,
   if(is.null(colnames(cells))) colnames(cells) <- seq_len(ncol(cells))
   cd$cellID <- colnames(cells)
   
-  # metadata_name <- paste0("Rs", Rs, "")
+  cdFilt <- cd
   
   cdFilt <- cd
   maxDist <- r
