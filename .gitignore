@@ -6,9 +6,6 @@ Statial.Rproj
 .RData
 .DS_Store
 testStatial.Rmd
-*cache
-*_files
-*.build*
 # vscode settings
 .vscode
 
