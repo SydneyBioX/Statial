@@ -318,7 +318,7 @@ calcContamination <- function(cells,
                               num.trees = 100,
                               verbose = FALSE,
                               missingReplacement = 0,
-                              intensities = "intensities",
+                              assay = "intensities",
                               cellType = "cellType",
                               redDimName = "contaminations"
 ) {
@@ -331,7 +331,7 @@ calcContamination <- function(cells,
   
   if(!all(markers %in% colnames(colData(singleCellData)))) {
     singleCellDataClean <- singleCellData |>
-      preProcessing(intensities = intensities)
+      preProcessing(intensities = assay)
   } else {
     singleCellDataClean <- singleCellData
   }
