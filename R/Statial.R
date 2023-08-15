@@ -296,6 +296,8 @@ getAbundances <- function(cells,
 #'   model should be outputted.
 #' @param missingReplacement
 #'   A default value to replace missing marker intensities for classification.
+#' @param assay The assay in the sce that contains the marker expressions.
+#' @param cellType The name of the column in colData that stores the cell types.
 #' @param redDimName The redDimName to store the output in the sce.
 #'
 #' @examples
@@ -791,7 +793,8 @@ plotStateChanges <- function(cells,
     ggplot2::geom_smooth(method = lm) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
-    ggplot2::ylab(marker) +
+    ggplot2::ylab(paste(marker, "expression")) +
+    ggplot2::xlab(paste("Distance from ", to))
     ggplot2::ylim(-1, NA)
   
   
