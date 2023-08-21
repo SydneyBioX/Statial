@@ -90,7 +90,7 @@ kontextCurve <- function(cells,
     seDf <- relabelKontextual(
       cells = cells,
       nSim = nSim,
-      rs = rs,
+      r = rs,
       from = from,
       to = to,
       parent = parent,
