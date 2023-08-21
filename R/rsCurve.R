@@ -191,7 +191,7 @@ kontextPlot <- function(rsDf) {
       guides(alpha = "none") +
       labs(
         x = "Radius (r)",
-        y = "L(r) - r",
+        y = "Relationship value",
         fill = "Function",
         col = "Function"
       )
@@ -204,7 +204,7 @@ kontextPlot <- function(rsDf) {
       geom_smooth(formula = y ~ x, method = "loess", se = FALSE) +
       labs(
         x = "Radius (r)",
-        y = "L(r) - r",
+        y = "Relationship value",
         fill = "Function",
         col = "Function"
       )
