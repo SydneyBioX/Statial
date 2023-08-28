@@ -12,6 +12,7 @@
 #' @param from The first cell type to be evaluated in the pairwise relationship.
 #' @param to The second cell type to be evaluated in the pairwise relationship.
 #' @param parent The parent population of the from cell type (must include from cell type).
+#' @param image A vector of images to subset the results to. If NULL we default to all images.
 #' @param returnImages A logical value to indicate whether the function should
 #' return the randomised images along with the Kontextual values.
 #' @param inhom A logical value indicating whether to account for inhomogeneity.
@@ -53,6 +54,7 @@ relabelKontextual <- function(cells,
                                from,
                                to,
                                parent,
+                               image = NULL,
                                returnImages = FALSE,
                                inhom = TRUE,
                                edge = FALSE,
@@ -79,7 +81,8 @@ relabelKontextual <- function(cells,
             cells,
             imageID = imageID,
             cellType = cellType,
-            spatialCoords = spatialCoords
+            spatialCoords = spatialCoords,
+            image = image
         )
     }
     

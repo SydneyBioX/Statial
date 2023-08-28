@@ -60,11 +60,11 @@ kontextCurve <- function(cells,
                     cellType = "cellType",
                     ...) {
   
-  cells$imageID <- colData(cells)[,imageID]
-  cells$cellType <- colData(cells)[, cellType]
-  cellType <- "cellType"
-  imageID <- "imageID"
-  if(!is.null(image))cells <- cells[,cells$imageID %in% image]
+  # cells$imageID <- colData(cells)[,imageID]
+  # cells$cellType <- colData(cells)[, cellType]
+  # cellType <- "cellType"
+  # imageID <- "imageID"
+  # if(!is.null(image))cells <- cells[,cells$imageID %in% image]
   
   
   kontextualVals <- Kontextual(
@@ -72,6 +72,7 @@ kontextCurve <- function(cells,
     from = from,
     to = to,
     parent = parent,
+    image = image,
     r = rs,
     inhom = inhom,
     edgeCorrect = edge,
@@ -91,6 +92,7 @@ kontextCurve <- function(cells,
       cells = cells,
       nSim = nSim,
       r = rs,
+      image = image,
       from = from,
       to = to,
       parent = parent,

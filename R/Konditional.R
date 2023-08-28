@@ -14,7 +14,7 @@
 #' @param from The first cell type to be evaluated in the pairwise relationship.
 #' @param to The second cell type to be evaluated in the pairwise relationship.
 #' @param parent The parent population of the from cell type (must include from cell type).
-#' @param image A vector of images to filter results to.
+#' @param image A vector of images to subset the results to. If NULL we default to all images.
 #' @param inhom  A logical value indicating whether to account for inhomogeneity.
 #' @param edgeCorrect A logical value indicating whether to perform edge correction.
 #' @param window Type of window for data, either `square`, `convex` or `concave`,
@@ -54,7 +54,6 @@
 #' @rdname Kontextual
 #' @importFrom BiocParallel bpmapply
 #' @importFrom SummarizedExperiment colData
-#' @importFrom SpatialExperiment spatialCoords
 #' @importFrom tibble remove_rownames
 #' @importFrom methods is
 #' @importFrom stats runif
@@ -92,28 +91,22 @@ Kontextual <- function(cells,
       parent = I(list(parent))
     )
   }
+  # 
+  # cells$imageID <- colData(cells)[,imageID]
+  # cells$cellType <- colData(cells)[,cellType]
+  # cellType <- "cellType"
+  # imageID <- "imageID"
+  # if(!is.null(image))cells <- cells[,cells$imageID %in% image]
   
-  if (is(cells, "list")) {
-    lapply(cells, function(x) {
-      x$imageID <- x[,imageID]
-      x$cellType <- x[,cellType]
-    })
-  } else {
-    cells$imageID <- colData(cells)[,imageID]
-    cells$cellType <- colData(cells)[,cellType]
-  }
   
-  cellType <- "cellType"
-  imageID <- "imageID"
-  if(!is.null(image))cells <- cells[,cells$imageID %in% image]
-
   if (is(cells, "list")) {
     cells <- lapply(
       cells,
       validateDf,
       imageID = imageID,
       cellType = cellType,
-      spatialCoords = spatialCoords
+      spatialCoords = spatialCoords,
+      image = image
     )
   }
 
@@ -133,7 +126,8 @@ Kontextual <- function(cells,
       cells,
       imageID = imageID,
       cellType = cellType,
-      spatialCoords = spatialCoords
+      spatialCoords = spatialCoords,
+      image = image
     )
 
     cells <- mutate(cells, imageID = as.character(imageID))
@@ -309,7 +303,7 @@ KontextualCore <- function(images,
 #' @noRd
 #'
 #' @importFrom dplyr rename
-validateDf <- function(cells, cellType, imageID, spatialCoords) {
+validateDf <- function(cells, cellType, imageID, spatialCoords, image = NULL) {
   if (!("imageID" %in% names(cells)) ||
     !("cellType" %in% names(cells)) ||
     !("x" %in% names(cells)) ||
@@ -331,6 +325,9 @@ validateDf <- function(cells, cellType, imageID, spatialCoords) {
       stop("Please specifiy imageID or cellType or spatialCoords")
     }
   }
+
+  if(!is.null(image))cells <- cells[cells$imageID %in% image, ]
+  
   return(cells)
 }
 

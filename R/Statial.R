@@ -4,7 +4,7 @@
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SummarizedExperiment colData<-
-preProcessing <- function(SCE, intensities) {
+preProcessing <- function(SCE) {
   
   
   #Check if cellID exists in image already - if duplicated, reassign to
@@ -26,7 +26,7 @@ preProcessing <- function(SCE, intensities) {
   }
   
   
-  intensitiesData <- data.frame(t(assay(SCE, intensities)))
+  intensitiesData <- data.frame(t(assay(SCE, "intensities")))
   # spatialData <- data.frame(colData(SCE))
   
   # singleCellData <- cbind(spatialData[rownames(intensitiesData), ], intensitiesData)
@@ -51,8 +51,6 @@ preProcessing <- function(SCE, intensities) {
   return(SCE)
 }
 
-#TODO: unify things that you don't have to type imageID = "slide" every single
-#time. 
 
 #' Calculate pairwise distance between cell types
 #'
@@ -154,7 +152,7 @@ getDistances <- function(cells,
                          nCores = 1) {
   x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
-  #TODO: Make all functions accept dataframe + spatialExperiment with spatialCoords in spatialCoords slot
+  
   if(!is(cells, "SingleCellExperiment"))stop("Currently this only accepts SpatialExperiment or SingleCellExperiment")
   
   cd <- as.data.frame(SingleCellExperiment::colData(cells))
@@ -168,8 +166,6 @@ getDistances <- function(cells,
   
 
   cdFilt <- cd
-  
-  if(is(cdFilt$imageID, "factor"))cdFilt$imageID <- droplevels(cdFilt$imageID)
   
   
   if(is.null(maxDist))maxDist <- max(diff(range(cdFilt$x)), diff(range(cdFilt$y)))
@@ -255,8 +251,9 @@ getAbundances <- function(cells,
   if(is.null(colnames(cells))) colnames(cells) <- seq_len(ncol(cells))
   cd$cellID <- colnames(cells)
   
+  # metadata_name <- paste0("Rs", Rs, "")
+  
   cdFilt <- cd
-  if(is(cdFilt$imageID, "factor"))cdFilt$imageID <- droplevels(cdFilt$imageID)
   maxDist <- r
 
   if(is.null(maxDist))maxDist <- max(diff(range(cdFilt$x)), diff(range(cdFilt$y)))
@@ -296,8 +293,6 @@ getAbundances <- function(cells,
 #'   model should be outputted.
 #' @param missingReplacement
 #'   A default value to replace missing marker intensities for classification.
-#' @param assay The assay in the sce that contains the marker expressions.
-#' @param cellType The name of the column in colData that stores the cell types.
 #' @param redDimName The redDimName to store the output in the sce.
 #'
 #' @examples
@@ -320,8 +315,6 @@ calcContamination <- function(cells,
                               num.trees = 100,
                               verbose = FALSE,
                               missingReplacement = 0,
-                              assay = "intensities",
-                              cellType = "cellType",
                               redDimName = "contaminations"
 ) {
   
@@ -333,7 +326,7 @@ calcContamination <- function(cells,
   
   if(!all(markers %in% colnames(colData(singleCellData)))) {
     singleCellDataClean <- singleCellData |>
-      preProcessing(intensities = assay)
+      preProcessing()
   } else {
     singleCellDataClean <- singleCellData
   }
@@ -344,8 +337,6 @@ calcContamination <- function(cells,
   rfData <- singleCellData |>
     dplyr::select(cellType, all_of(markers)) |>
     dplyr::mutate(dplyr::across(any_of(markers), function(x) ifelse(is.nan(x) | is.na(x), 0, x)))
-  
-  rfData$cellType <- rfData[[cellType]]
   
   rfModel <- ranger::ranger(
     as.factor(cellType) ~ .,
@@ -550,29 +541,29 @@ calcStateChanges <- function(cells,
 #' @importFrom limma lmFit
 calculateChangesMarker <- function(distances, intensities, contaminations, nCores){
    
-  test <- apply(distances, 2, function(x){
-    if(length(unique(x))>1){
-      if(contaminations[1,1] == -99){design <- data.frame(coef = 1, cellType = x)
-      }else{
-        contaminations <- contaminations[, !is.na(colSums(contaminations)),drop = FALSE]
-        design <- data.frame(coef = 1, cellType = x, contaminations[,-ncol(contaminations)])
-      }
-      exprs <- t(intensities)
-      fit <- .quiet(limma::lmFit(exprs, design, trend = rep(1,nrow(exprs)), verbose = FALSE))
-      
-      df <- data.frame(
-      marker = colnames(intensities),
-      coef = fit$coef[,"cellType"],
-      tval = (fit$coef/fit$stdev.unscaled/fit$sigma)[,"cellType"]
-      )
-      df$pval <- 2 * pt(-abs(df$t), df = fit$df.residual)
-      rownames(df) <- NULL
-    
-      df
+test <- apply(distances, 2, function(x){
+  if(length(unique(x))>1){
+    if(contaminations[1,1] == -99){design <- data.frame(coef = 1, cellType = x)
+    }else{
+      contaminations <- contaminations[, !is.na(colSums(contaminations)),drop = FALSE]
+      design <- data.frame(coef = 1, cellType = x, contaminations[,-ncol(contaminations)])
     }
-    }, simplify = FALSE)
+    exprs <- t(intensities)
+    fit <- .quiet(limma::lmFit(exprs, design, trend = rep(1,nrow(exprs)), verbose = FALSE))
     
-  test <- dplyr::bind_rows(test, .id = "otherCellType")
+    df <- data.frame(
+    marker = colnames(intensities),
+    coef = fit$coef[,"cellType"],
+    tval = (fit$coef/fit$stdev.unscaled/fit$sigma)[,"cellType"]
+    )
+    df$pval <- 2 * pt(-abs(df$t), df = fit$df.residual)
+    rownames(df) <- NULL
+  
+    df
+  }
+  }, simplify = FALSE)
+  
+test <- dplyr::bind_rows(test, .id = "otherCellType")
   
   
 }
@@ -682,7 +673,7 @@ plotStateChanges <- function(cells,
                                        imageID = "imageID",
                                        spatialCoords = c("x","y"),
                                        size = 1,
-                                       shape = 19,
+                                       shape = NULL,
                                        interactive = FALSE,
                                        plotModelFit = FALSE,
                                        method = "lm") {
@@ -755,7 +746,7 @@ plotStateChanges <- function(cells,
      ggplot2::stat_density_2d(
       data = data[data$cellType == to, ],
       ggplot2::aes(
-        x = x, y = y, fill = ..density..
+        x = x, y = y, fill = after_stat(density)
       ),
       geom = "raster",
       contour = FALSE
@@ -793,8 +784,7 @@ plotStateChanges <- function(cells,
     ggplot2::geom_smooth(method = lm) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
-    ggplot2::ylab(paste(marker, "expression")) +
-    ggplot2::xlab(paste(from, "cell distance from ", to)) +
+    ggplot2::ylab(marker) +
     ggplot2::ylim(-1, NA)
   
   
