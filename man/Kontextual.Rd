@@ -40,7 +40,7 @@ spatial coordinates.}
 
 \item{parent}{The parent population of the from cell type (must include from cell type).}
 
-\item{image}{A vector of images to filter results to.}
+\item{image}{A vector of images to subset the results to. If NULL we default to all images.}
 
 \item{inhom}{A logical value indicating whether to account for inhomogeneity.}
 

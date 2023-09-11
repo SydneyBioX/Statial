@@ -10,8 +10,6 @@ calcContamination(
   num.trees = 100,
   verbose = FALSE,
   missingReplacement = 0,
-  assay = "intensities",
-  cellType = "cellType",
   redDimName = "contaminations"
 )
 }
@@ -28,10 +26,6 @@ will be used.}
 model should be outputted.}
 
 \item{missingReplacement}{A default value to replace missing marker intensities for classification.}
-
-\item{assay}{The assay in the sce that contains the marker expressions.}
-
-\item{cellType}{The name of the column in colData that stores the cell types.}
 
 \item{redDimName}{The redDimName to store the output in the sce.}
 }
