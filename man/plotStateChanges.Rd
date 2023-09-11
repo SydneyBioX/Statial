@@ -16,7 +16,7 @@ plotStateChanges(
   imageID = "imageID",
   spatialCoords = c("x", "y"),
   size = 1,
-  shape = 19,
+  shape = NULL,
   interactive = FALSE,
   plotModelFit = FALSE,
   method = "lm"

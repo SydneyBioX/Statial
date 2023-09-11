@@ -12,6 +12,7 @@ relabelKontextual(
   from,
   to,
   parent,
+  image = NULL,
   returnImages = FALSE,
   inhom = TRUE,
   edge = FALSE,
@@ -37,6 +38,8 @@ relabel(image, labels = NULL)
 
 \item{parent}{The parent population of the from cell type (must include from cell type).}
 
+\item{image}{A single image from a Single Cell Experiment object.}
+
 \item{returnImages}{A logical value to indicate whether the function should
 return the randomised images along with the Kontextual values.}
 
@@ -56,8 +59,6 @@ spatial dimansions in the data. Defaults to `c("x", "y")`.}
 "imageID".}
 
 \item{...}{Any arguments passed into \code{\link[Statial]{Kontextual}}}
-
-\item{image}{A single image from a Single Cell Experiment object.}
 
 \item{labels}{A vector of CellTypes labels to be permuted If NULL all cells
 labels will be radomised.}
