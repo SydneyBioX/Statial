@@ -495,6 +495,9 @@ calcStateChanges <- function(cells,
   
   if(is.null(to)) {
     to <- unique(colData(cells)[,cellType])
+    if(class(to) == "factor") {
+      to <- droplevels(to)
+    }
   }
   
   if(is.null(from)) {
@@ -549,7 +552,6 @@ calcStateChanges <- function(cells,
 
 #' @importFrom limma lmFit
 calculateChangesMarker <- function(distances, intensities, contaminations, nCores){
-   
   test <- apply(distances, 2, function(x){
     if(length(unique(x))>1){
       if(contaminations[1,1] == -99){design <- data.frame(coef = 1, cellType = x)
