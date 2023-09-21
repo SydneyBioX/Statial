@@ -757,7 +757,7 @@ plotStateChanges <- function(cells,
     )
   }
   
-  
+  var <- "purity_c"
   
   g1 <- ggplot2::ggplot() +
      ggplot2::stat_density_2d(
