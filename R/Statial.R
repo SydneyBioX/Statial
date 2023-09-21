@@ -786,7 +786,46 @@ plotStateChanges <- function(cells,
       "Model Fit:", plotModelFit
     )) +
     ggplot2::facet_wrap(~imageID, scales = "free") +
-    scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
+    # ggplot2::scale_color_viridis_c(option = "plasma") +
+    scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3))) +
+    theme(axis.text.x=element_blank(), #remove x axis labels
+          axis.ticks.x=element_blank(), #remove x axis ticks
+          axis.title.x=element_blank(), #remove x axis ticks
+          axis.text.y=element_blank(),  #remove y axis labels
+          axis.ticks.y=element_blank(),  #remove y axis ticks
+          axis.title.y=element_blank()  #remove y axis ticks
+    )
+  
+  
+  g4 <- ggplot2::ggplot() +
+    ggplot2::stat_density_2d(
+      data = data[data$cellType == to, ],
+      ggplot2::aes(
+        x = x, y = y, fill = ..density..
+      ),
+      geom = "raster",
+      contour = FALSE
+    ) +
+    ggplot2::geom_point(data = data[data$cellType == to, ], aes(x,y), size = size/2, colour = "darkblue")+
+    ggplot2::scale_fill_distiller(palette = "Blues", direction = 1) +
+    ggplot2::geom_point(
+      data = data[data$cellType == from, ],
+      ggplot2::aes_string(
+        x = "x", y = "y",
+        colour = var
+      ), 
+      size = size,
+      shape = shape
+    ) +
+    ggplot2::theme_classic() +
+    ggplot2::ggtitle(paste(
+      "Cell Points:", from, ",",
+      "Cell Density:", to, ",",
+      "Model Fit:", plotModelFit
+    )) +
+    ggplot2::facet_wrap(~imageID, scales = "free") +
+    # scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
+    ggplot2::scale_color_viridis_c(option = "rocket")
   
   
   g2 <- data %>%
@@ -794,31 +833,68 @@ plotStateChanges <- function(cells,
     ggplot2::ggplot(
       ggplot2::aes_string(
         x = to,
+        y = marker,
+        color = var
+      )
+    ) +
+    ggplot2::geom_point() +
+    ggplot2::scale_color_viridis_c(option = "rocket") +
+    ggplot2::geom_smooth(method = lm, formula = y ~ x) +
+    ggplot2::theme_classic() +
+    ggplot2::ggtitle("State Change Scatter Plot") +
+    ggplot2::ylab(paste(marker, "expression")) +
+    ggplot2::xlab(paste(from, " ", type, " to ", to)) +
+    ggplot2::ylim(-1, NA)
+  
+  
+  g3 <- data %>%
+    dplyr::filter(cellType == from) |>
+    ggplot2::ggplot(
+      ggplot2::aes_string(
+        x = to,
+        y = var,
+        color = marker
+      )
+    ) +
+    ggplot2::geom_point() +
+    ggplot2::geom_smooth(method = lm, formula = y ~ x) +
+    ggplot2::theme_classic() +
+    ggplot2::ggtitle("State Change Scatter Plot") +
+    ggplot2::ylab(paste(marker, "expression")) +
+    ggplot2::xlab(paste(from, " ", type, " to ", to)) +
+    ggplot2::ylim(0, 1)
+  
+  
+  g5 <- data %>%
+    dplyr::filter(cellType == from) |>
+    ggplot2::ggplot(
+      ggplot2::aes_string(
+        x = var,
         y = marker
       )
     ) +
     ggplot2::geom_point() +
-    ggplot2::geom_smooth(method = lm) +
+    ggplot2::geom_smooth(method = lm, formula = y ~ x) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
     ggplot2::ylab(paste(marker, "expression")) +
-    ggplot2::xlab(paste(from, "cell distance from ", to)) +
+    ggplot2::xlab("purity") +
     ggplot2::ylim(-1, NA)
   
   
   
-  g3 <- data |>
-    dplyr::filter(cellType == from) |>
-    ggplot2::ggplot(ggplot2::aes_string(
-      x = marker,
-      y = "fittedValues"
-    )) +
-    ggplot2::geom_point() +
-    ggplot2::geom_smooth(method = lm) +
-    ggplot2::theme_classic() +
-    ggplot2::xlab("True Values") +
-    ggplot2::ylab("Fitted Values") +
-    ggplot2::ggtitle("Predicted vs Real Values")
+  # g3 <- data |>
+  #   dplyr::filter(cellType == from) |>
+  #   ggplot2::ggplot(ggplot2::aes_string(
+  #     x = marker,
+  #     y = "fittedValues"
+  #   )) +
+  #   ggplot2::geom_point() +
+  #   ggplot2::geom_smooth(method = lm) +
+  #   ggplot2::theme_classic() +
+  #   ggplot2::xlab("True Values") +
+  #   ggplot2::ylab("Fitted Values") +
+  #   ggplot2::ggtitle("Predicted vs Real Values")
   
   # g4 <- ggplot2::autoplot(model) + ggplot2::theme_classic()
   
@@ -827,7 +903,7 @@ plotStateChanges <- function(cells,
     g2 <- plotly::ggplotly(g2)
     g3 <- plotly::ggplotly(g3)
   }
-  list(image = g1, scatter = g2)
+  list(image = g1, scatter = g2, contam_image = g4, marker = g5)
   # list(g1, g2, g3, g4)
 }
 
