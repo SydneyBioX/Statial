@@ -10,14 +10,16 @@ calcContamination(
   num.trees = 100,
   verbose = FALSE,
   missingReplacement = 0,
+  assay = "intensities",
+  cellType = "cellType",
   redDimName = "contaminations"
 )
 }
 \arguments{
-\item{cells}{A SingleCellExperiment or SpatialExperiment with a cellType column as well as marker intensity information
-corresponding to each cell.}
+\item{cells}{A SingleCellExperiment or SpatialExperiment with a cellType column as well
+as marker intensity information corresponding to each cell.}
 
-\item{markers}{A vector of markers that proxy a cell's state. If NULL, all markers 
+\item{markers}{A vector of markers that proxy a cell's state. If NULL, all markers
 will be used.}
 
 \item{num.trees}{Number of trees to be used in the random forest classifier}
@@ -26,6 +28,11 @@ will be used.}
 model should be outputted.}
 
 \item{missingReplacement}{A default value to replace missing marker intensities for classification.}
+
+\item{assay}{The assay in the SingleCellExperiment object that contains the desired
+marker expressions.}
+
+\item{cellType}{The name of the column in colData that stores the cell types.}
 
 \item{redDimName}{The redDimName to store the output in the sce.}
 }

@@ -4,7 +4,7 @@
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SummarizedExperiment colData<-
-preProcessing <- function(SCE) {
+preProcessing <- function(SCE, intensities) {
   
   
   #Check if cellID exists in image already - if duplicated, reassign to
@@ -26,7 +26,7 @@ preProcessing <- function(SCE) {
   }
   
   
-  intensitiesData <- data.frame(t(assay(SCE, "intensities")))
+  intensitiesData <- data.frame(t(assay(SCE, intensities)))
   # spatialData <- data.frame(colData(SCE))
   
   # singleCellData <- cbind(spatialData[rownames(intensitiesData), ], intensitiesData)
@@ -282,10 +282,10 @@ getAbundances <- function(cells,
 #' Calculates contamination scores using a random forest classification
 #'
 #' @param cells
-#'   A SingleCellExperiment or SpatialExperiment with a cellType column as well as marker intensity information
-#'   corresponding to each cell. 
+#'   A SingleCellExperiment or SpatialExperiment with a cellType column as well
+#'   as marker intensity information corresponding to each cell.
 #' @param markers
-#'   A vector of markers that proxy a cell's state. If NULL, all markers 
+#'   A vector of markers that proxy a cell's state. If NULL, all markers
 #'   will be used.
 #' @param num.trees Number of trees to be used in the random forest classifier
 #' @param verbose
@@ -293,6 +293,11 @@ getAbundances <- function(cells,
 #'   model should be outputted.
 #' @param missingReplacement
 #'   A default value to replace missing marker intensities for classification.
+#' @param assay
+#'   The assay in the SingleCellExperiment object that contains the desired
+#'   marker expressions.
+#' @param cellType
+#'   The name of the column in colData that stores the cell types.
 #' @param redDimName The redDimName to store the output in the sce.
 #'
 #' @examples
@@ -315,6 +320,8 @@ calcContamination <- function(cells,
                               num.trees = 100,
                               verbose = FALSE,
                               missingReplacement = 0,
+                              assay = "intensities",
+                              cellType = "cellType",
                               redDimName = "contaminations"
 ) {
   
@@ -326,7 +333,7 @@ calcContamination <- function(cells,
   
   if(!all(markers %in% colnames(colData(singleCellData)))) {
     singleCellDataClean <- singleCellData |>
-      preProcessing()
+      preProcessing(intensities = assay)
   } else {
     singleCellDataClean <- singleCellData
   }
@@ -337,6 +344,8 @@ calcContamination <- function(cells,
   rfData <- singleCellData |>
     dplyr::select(cellType, all_of(markers)) |>
     dplyr::mutate(dplyr::across(any_of(markers), function(x) ifelse(is.nan(x) | is.na(x), 0, x)))
+
+  rfData$cellType <- rfData[[cellType]]
   
   rfModel <- ranger::ranger(
     as.factor(cellType) ~ .,
@@ -426,7 +435,8 @@ calcContamination <- function(cells,
 #'  all cell types  will be used.
 #' @param image A vector of images to filter to. If null all images will be used.
 #' @param type What type of state change. This value should be in reduced dimensions.
-#' @param assay The assay in the sce that contains the marker expressions.
+#' @param assay 
+#'   The assay in the SingleCellExperiment object that contains the marker expressions.
 #' @param cellType The column in colData that stores the cell types.
 #' @param imageID The column in colData that stores the image ids.
 #' @param contamination If TRUE, use the contamination scores that have previously
@@ -533,7 +543,7 @@ calcStateChanges <- function(cells,
   nam <- strsplit(allModels$tmp, 51773)
   allModels$primaryCellType <- unlist(lapply(nam,function(x)x[2]))
   allModels$imageID <- unlist(lapply(nam,function(x)x[1]))
-  allModels$fdr <- p.adjust(allModels$pval, "fdr")
+  allModels$fdr <- stats::p.adjust(allModels$pval, "fdr")
   df <- dplyr::select(allModels, imageID, primaryCellType, otherCellType, marker, coef, tval, pval, fdr)
   df[order(df$pval),]
 }
@@ -676,7 +686,7 @@ plotStateChanges <- function(cells,
                                        imageID = "imageID",
                                        spatialCoords = c("x","y"),
                                        size = 1,
-                                       shape = NULL,
+                                       shape = 19,
                                        interactive = FALSE,
                                        plotModelFit = FALSE,
                                        method = "lm") {
@@ -787,7 +797,8 @@ plotStateChanges <- function(cells,
     ggplot2::geom_smooth(method = lm) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
-    ggplot2::ylab(marker) +
+    ggplot2::ylab(paste(marker, "expression")) +
+    ggplot2::xlab(paste(from, "cell distance from ", to)) +
     ggplot2::ylim(-1, NA)
   
   

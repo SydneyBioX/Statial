@@ -39,7 +39,7 @@ all cell types  will be used.}
 
 \item{type}{What type of state change. This value should be in reduced dimensions.}
 
-\item{assay}{The assay in the sce that contains the marker expressions.}
+\item{assay}{The assay in the SingleCellExperiment object that contains the marker expressions.}
 
 \item{cellType}{The column in colData that stores the cell types.}
 
