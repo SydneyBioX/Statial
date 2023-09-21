@@ -486,6 +486,9 @@ calcStateChanges <- function(cells,
   
   if(is.null(to)) {
     to <- unique(colData(cells)[,cellType])
+    if(class(to) == "factor") {
+      to <- droplevels(to)
+    }
   }
   
   if(is.null(from)) {
