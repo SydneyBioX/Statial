@@ -10,6 +10,9 @@ author:
 - name: Sourish Iyengar
   affiliation:
   - School of Mathematics and Statistics, University of Sydney, Australia
+- name: Alex Qin
+  affiliation:  
+  - School of Mathematics and Statistics, University of Sydney, Australia
 - name: Ellis Patrick
   affiliation:
   - &WIMR Westmead Institute for Medical Research, University of Sydney, Australia
