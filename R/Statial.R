@@ -730,6 +730,12 @@ plotStateChanges <- function(cells,
   data$marker <- data[, marker, drop = TRUE]
   data$fittedValues <- NA
   
+  contams <- reducedDim(cells, "contaminations")
+  names(contams)[names(contams) == "rfMainCellProb"] <- "purity"
+  colnames(contams) <- paste(colnames(contams), "c", sep = "_")
+  
+  data <- cbind(data, contams)
+  
   relationshipFormula <- paste0(
     marker, "~", to 
   )
