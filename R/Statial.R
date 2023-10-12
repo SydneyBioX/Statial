@@ -757,7 +757,8 @@ plotStateChanges <- function(cells,
     )
   }
   
-  var <- "purity_c"
+  var <- "CD8.T_c"
+  status <- "status"
   
   g1 <- ggplot2::ggplot() +
      ggplot2::stat_density_2d(
@@ -787,14 +788,7 @@ plotStateChanges <- function(cells,
     )) +
     ggplot2::facet_wrap(~imageID, scales = "free") +
     # ggplot2::scale_color_viridis_c(option = "plasma") +
-    scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3))) +
-    theme(axis.text.x=element_blank(), #remove x axis labels
-          axis.ticks.x=element_blank(), #remove x axis ticks
-          axis.title.x=element_blank(), #remove x axis ticks
-          axis.text.y=element_blank(),  #remove y axis labels
-          axis.ticks.y=element_blank(),  #remove y axis ticks
-          axis.title.y=element_blank()  #remove y axis ticks
-    )
+    scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
   
   
   g4 <- ggplot2::ggplot() +
@@ -880,8 +874,32 @@ plotStateChanges <- function(cells,
     ggplot2::ylab(paste(marker, "expression")) +
     ggplot2::xlab("purity") +
     ggplot2::ylim(-1, NA)
+
+  g7 <- data %>%
+    dplyr::filter(cellType == from) |>
+      mutate(status = case_when(
+      CD8A > 0.5 ~ "Positive",
+      TRUE ~ "Negative"
+    )) |>
+    ggplot2::ggplot(
+      ggplot2::aes_string(
+        x = status,
+        y = var
+      )
+    ) +
+    ggplot2::geom_boxplot() +
+    # ggplot2::geom_smooth(method = lm, formula = y ~ x) +
+    ggplot2::theme_classic()
+    # ggplot2::ggtitle("State Change Scatter Plot") +
+    # ggplot2::ylab(paste(marker, "expression")) +
+    # ggplot2::xlab("purity") +
+    # ggplot2::ylim(-1, NA)
+
+
   
-  
+  g6 <- grid.arrange(g1 + xlim(0, 1500) + ylim(4000, NA), 
+                     g4 + xlim(0, 1500) + ylim(4000, NA), 
+                     ncol = 2)
   
   # g3 <- data |>
   #   dplyr::filter(cellType == from) |>
@@ -903,7 +921,7 @@ plotStateChanges <- function(cells,
     g2 <- plotly::ggplotly(g2)
     g3 <- plotly::ggplotly(g3)
   }
-  list(image = g1, scatter = g2, contam_image = g4, marker = g5)
+  list(image = g1, scatter = g2, contam_image = g4, marker = g5, compare = g6, boxplot = g7)
   # list(g1, g2, g3, g4)
 }
 
