@@ -159,9 +159,9 @@ We can calculate these relationships across all images for a single radius.
 p53_Kontextual <- Kontextual(
   cells = kerenSCE,
   r = 50,
-  from = "p53+Tumour",
+  from = "p53_Tumour",
   to = "Immune",
-  parent = c("p53", "Keratin_Tumour"),
+  parent = c("p53_Tumour", "Tumour"),
   cellType = "cellTypeNew"
 )
 
@@ -175,9 +175,9 @@ The `kontextCurve` function plots the L-function value and Kontextual values ove
 
 curves <- kontextCurve(
   cells = kerenSCE,
-  from = "p53+Tumour",
+  from = "p53_Tumour",
   to = "Immune",
-  parent = c("p53+Tumour", "Keratin_Tumour"),
+  parent = c("p53_Tumour", "Tumour"),
   rs = seq(10, 510, 100),
   image = "6",
   cellType = "cellTypeNew",
@@ -269,30 +269,33 @@ head(survivalResults)
 
 ```
 
-As we can see from the results `Mesenchymal__Macrophages__tissue` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and macrophage cells, relative to the parent population of all tissue cells. We can see that there is a negative coefficient associated with this relationship, which tells us a decrease in localisation of Mesenchymal and Macrophages leads to poorer survival outcomes for patients.
+As we can see from the results `Mesenchymal__Dc/Mono__mesenchymal` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and macrophage cells, relative to the parent population of all tissue cells. We can see that there is a negative coefficient associated with this relationship, which tells us a decrease in localisation of Mesenchymal and Macrophages leads to poorer survival outcomes for patients.
 
-The association between `Mesenchymal__Macrophages__tissue` and survival can also be visualised on a Kaplan-Meier curve. We must first extract the Kontextual values of this relationship across all images. Next we determine if Mesenchymal and Macrophages are relatively attracted or avoiding in each image, by comparing the Kontextual value in each image to the median Kontextual value. Finally we plot the Kaplan-Meier curve using the `ggsurvfit` package.
+The association between `Mesenchymal__Dc/Mono__mesenchymal` and survival can also be visualised on a Kaplan-Meier curve. We must first extract the Kontextual values of this relationship across all images. Next we determine if Mesenchymal and Macrophages are relatively attracted or avoiding in each image, by comparing the Kontextual value in each image to the median Kontextual value. Finally we plot the Kaplan-Meier curve using the `ggsurvfit` package.
 
 As shown below, when Mesenchymal and Macrophages are relatively more dispersed to one another, patients tend to have worse survival outcomes.
 
 ```{r, fig.width=5, fig.height=4}
 # Selecting most significant relationship
-survRelationship = kontextMat[["Mesenchymal__Macrophages__tissue"]]
+survRelationship = kontextMat[["Mesenchymal__Dc/Mono__mesenchymal"]]
 survRelationship = ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
     
 # Plotting Kaplan-Meier curve
 survfit2(kerenSurv ~ survRelationship) |>
     ggsurvfit() +
     add_pvalue() +
-    ggtitle("Mesenchymal__Macrophages__tissue")
+    ggtitle("Mesenchymal__Dc/Mono__mesenchymal")
 ```
 
 
 
 
-# Examining Cell-to-cell interactions with marker expression
-In the next section of this vignette, we will utilise marker expression features from the Keren et al. dataset to computationally identify and quantify evidence of cell interactions that catalyse cell state changes. This approach measures how protein markers in a cell change with spatial proximity and abundance to other cell types. 
-The methods utilised here will provide a framework to explore how the dynamic behaviour of cells are altered by the agents they are surrounded by.
+# SpatioMark: Identifying continuous changes in cell state
+
+Changes in cell states can be analytically framed as the change in abundance of a gene or protein within a particular cell type. We can use marker expression to identify and quantify evidence of cell interactions that catalyse cell state changes. 
+This approach measures how protein markers in a cell change with spatial proximity and abundance to other cell types. The methods utilised here will thereby provide a framework to explore how the dynamic behaviour of cells are altered by the agents they are surrounded by.
+
+## Continuous cell state changes within a single image
 
 The first step in analysing these changes is to calculate the spatial proximity (`getDistances`) and abundance (`getAbundances`) of each cell to every cell type. These values will then be stored in the `reducedDims` slot of the `SingleCellExperiment` object under the names `distances` and `abundances` respectively.
 ```{r}
@@ -347,6 +350,8 @@ p <- plotStateChanges(
 p
 
 ```
+## Continuous cell state changes across all images
+
 Beyond looking at single cell-to-cell interactions for a single image, we can also look at all interactions across all images. The `calcStateChanges` function provided by Statial can be expanded for this exact purpose - by not specifying cell types, a marker, or an image, `calcStateChanges` will examine the most significant correlations between distance and marker expression across the entire dataset. Here, we've filtered out the most significant interactions to only include those found within image 6 of the Keren et al. dataset.
 
 ```{r}
@@ -387,12 +392,12 @@ p
 
 ```
 
-Now, we can take a look at the top 10 most significant results across all images. 
+Next, let's take a look at the top 10 most significant results across all images. 
 ```{r}
 stateChanges |> head(n = 10)
 ```
 
-Immediately, we can appreciate that a couple of interactions appear a bit strange. One of the most significant interactions occurs between B cells and CD4 T cells, where CD4 T cells are found to increase in CD20 expression when in close proximity to B cells. Biologically, CD20 is a highly specific ligand for B cells, and under healthy circumstances are usually not expressed in T cells.
+Immediately, we can appreciate that a couple of these interactions are not biologically plausible. One of the most significant interactions occurs between B cells and CD4 T cells in image 35, where CD4 T cells are found to increase in CD20 expression when in close proximity to B cells. Biologically, CD20 is a highly specific ligand for B cells, and under healthy circumstances are usually not expressed in T cells.
 
 Could this potentially be an artefact of `calcStateChanges`? We can examine the image through the `plotStateChanges` function, where we indeed observe a strong increase in CD20 expression in T cells nearby B cell populations.
 
@@ -465,78 +470,33 @@ ggplot(df, aes(x = TP, y = FP, colour = type)) + geom_line()+ xlim(0,100) + ylim
             
 ```
 
-# Relating `Statial` features to patient groups or outcomes.
+## Associate continuous state changes with survival outcomes
 
-To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we've provided the helper function `coxTests` to understand if survival outcomes differ significantly between 2 patient groups. Here we examine which features are most associated with patient survival using the Kontextual values as example. To do so, the survival data is extracted from `kerenSCE` and converted to a survival object, `kerenSurv`. In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepMatrix`. Note, to extract the original L-function values, specify `column = "original"` in `prepMatrix`. Finally, both the Kontextual matrix and survival object are passed into `coxTests` to obtain the survival results. 
+Similiar to `Kontextual`, we can run a similar survival analysis using our state changes results. Here, `prepMatrix` extracts the coefficients, or the `coef` column of `stateChanges` by default. To use the t values instead, specify `column = "tval"` in the `prepMatrix` function. 
 
-As we can see from the results `Mesenchymal__other immune__tissue` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and other immune cells, relative to the parent population of all tissue cells. We can see that there is a positive coeffcient associated with this relationship, which tells us the increase in localisation of Mesenchymal and Macrophages lead to poorer survival outcomes for patients.  
 
 ```{r}
-
-# Extracting survival data to create survival object
-survData = kerenSCE |>
-    colData() |> 
-    data.frame() |> 
-    select(imageID, Survival_days_capped, Censored) |> 
-    unique()
-
-# Creating survival vector
-kerenSurv = Surv(survData$Survival_days_capped, survData$Censored)
-names(kerenSurv) = survData$imageID
-
-
-# Converting Kontextual result into data matrix
-kontextMat = prepMatrix(kerenKontextual)
-
-# Ensuring rownames of kontextMat match up with rownames of the survival vector 
-kontextMat = kontextMat[names(kerenSurv), ]
-
-
-# Running survival analysis
-survivalResults = coxTests(kontextMat, kerenSurv)
-
-head(survivalResults)
-
-```
-The association between `Mesenchymal__other immune__tissue` and survival can also be visualised on a Kaplan-Meier curve. We must first extract the Kontextual values of this relationship across all images. Next we determine if Mesenchymal and Macrophages are relatively attracted or avoiding in each image, by comparing the Kontextual value in each image to the median Kontextual value. Finally we plot the Kaplan-Meier curve using the `ggsurvfit` package. 
-
-As shown below, when Mesenchymal and Macrophages are relatively more dispersed to one another, patients tend to have better survival outcomes. When these cells are relatively localised, patients have a poorer survival outcome. 
-
-```{r}
-# Selecting most significant relationship
-survRelationship = kontextMat[["Mesenchymal__other immune__tissue"]]
-survRelationship = ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
-    
-# Plotting Kaplan-Meier curve
-survfit2(kerenSurv ~ survRelationship) |>
-    ggsurvfit() +
-    add_pvalue() +
-    ggtitle("Mesenchymal__other immune__tissue")
-```
-
-
-Similar survival analysis can be done using the state changes results. Here, `prepMatrix` extracts the coefficients, or `coef` column of stateChanges by default. To use the t values instead, specify `column = "tval"` in the `prepMatrix` function.
-
-For our state changes results, `Keratin_Tumour__CD4_Cell__Keratin6` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Keratin6 expressing keratin/tumour cells and CD4 cells. We can see that there is a positive coeffcient associated with this relationship, which tells us that higher Keratin6 in keratin/tumour cells nearby CD4 populations lead to poorer survival outcomes for patients. 
-
-```{r}
-#Preparing features for Statial
+# Preparing features for Statial
 stateMat <- prepMatrix(stateChanges)
 
-# Ensuring rownames of stateMat match up with rownames of the survival vector 
-stateMat = stateMat[names(kerenSurv), ]
+# Ensuring rownames of stateMat match up with rownames of the survival vector
+stateMat <- stateMat[names(kerenSurv), ]
 
-survivalResults = coxTests(stateMat, kerenSurv)
+# Remove some very small values
+stateMat <- stateMat[,colMeans(abs(stateMat)>0.0001)>.8]
+
+survivalResults <- colTest(stateMat, kerenSurv, type = "survival")
 
 head(survivalResults)
 
-```  
-Again, we can also visualise the Kaplan-Meier curve visualisation for the most significant interaction. As `Kontextual` and `calcStateChanges` provides different outputs, localisation here refers to increased localisation between Keratin6 expressing keratin/tumour cells and CD4 cells, i.e. localisation means keratin/tumour cells tend to increase Keratin6 expression nearby CD4 cells, whilst dispersion would mean keratin/tumour cells do not tend to express Keratin6 near CD4 cell populations.
+```
 
-As shown below, increased keratin6 expression in keratin/tumour cells near CD4 populations tends to worsen survival outcomes, whilst lower keratin6 expression appears to improve survival outcomes.
-```{r}
+For our state changes results, `Keratin_Tumour__CD4_Cell__Keratin6` is the most significant pairwise relationship which contributes to patient survival. That is, the relationship between HLA class I expression in keratin/tumour cells and their spatial proximity to mesenchymal cells. As there is a negative coeffcient associated with this relationship, which tells us that higher HLA class I expression in keratin/tumour cells nearby mesenchymal cell populations lead to poorer survival outcomes for patients.
+
+```{r, fig.width=5, fig.height=4}
+# Selecting the most significant relationship
 survRelationship = stateMat[["Keratin_Tumour__CD4_Cell__Keratin6"]]
-survRelationship = ifelse(survRelationship > median(survRelationship), "Dispersed", "Localised")
+survRelationship = ifelse(survRelationship > median(survRelationship), "Higher expression in close cells", "Lower expression in close cells")
     
 # Plotting Kaplan-Meier curve
 survfit2(kerenSurv ~ survRelationship) |>
@@ -581,7 +541,7 @@ cellTypeRegionMeans <- getMarkerMeans(kerenSCE,
                               cellType = "cellType",
                               region = "region")
 
-survivalResults = coxTests(cellTypeRegionMeans[names(kerenSurv),], kerenSurv)
+survivalResults = colTest(cellTypeRegionMeans[names(kerenSurv),], kerenSurv, type = "survival")
 
 head(survivalResults)
 
@@ -606,7 +566,8 @@ featureList <- list(states = stateMat,
                      kontextual = kontextMat,
                      regionMarkerMeans = cellTypeRegionMeans,
                      cellTypeProp = cellTypeProp,
-                     regionProp = regionProp)
+                     regionProp = regionProp
+                    )
 
 # Ensure the rownames of the features match the order of the survival vector
 featureList <- lapply(featureList, function(x)x[names(kerenSurv),])
@@ -619,7 +580,7 @@ kerenCV = crossValidate(
   outcome = kerenSurv,
   classifier = "CoxPH",
   selectionMethod  = "CoxPH",
-  nFolds = 3,
+  nFolds = 5,
   nFeatures = 10,
   nRepeats = 20,
   nCores = 1

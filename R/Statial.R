@@ -797,7 +797,7 @@ plotStateChanges <- function(cells,
     ggplot2::geom_smooth(method = lm) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
-    ggplot2::ylab(paste(marker, "expression")) +
+    ggplot2::ylab(paste(marker, "expression in ", from)) +
     ggplot2::xlab(paste(from, "cell distance from ", to)) +
     ggplot2::ylim(-1, NA)
   
