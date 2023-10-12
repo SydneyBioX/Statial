@@ -36,7 +36,16 @@ knitr::opts_chunk$set(
 library(BiocStyle)
 ```
 
+# Installation
+```{r eval = FALSE}
+# Install the package from Bioconductor
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install("Statial")
+```
 
+# Load packages
 ```{r warning = FALSE, message = FALSE}
 # Loading required packages
 library(Statial)
@@ -55,25 +64,17 @@ nCores <- 1
 ```
 
 
-# Installation
-```{r eval = FALSE}
-# Install the package from Bioconductor
-if (!requireNamespace("BiocManager", quietly = TRUE)) {
-  install.packages("BiocManager")
-}
-BiocManager::install("Statial")
-```
-
-
 # Overview
 
 There are over 37 trillion cells in the human body, each taking up different forms and functions. The behaviour of these cells can be described by canonical characteristics, but their functions can also dynamically change based on their environmental context, leading to cells with diverse states. Understanding changes in cell state and the interplay between cells is key to understanding their mechanisms of action and how they contribute to human disease. `Statial` is a suite of functions for identifying changes in cell state. This guide will provide a step-by-step overview of some key functions within `Statial`. 
 
 # Loading example data
 
-In the following we will analyse breast cancer data from Keren et al. 2018. These images are stored in a `SingleCellExperiment` object. This object contains 57811 cells across 10 images and includes information on cell type and patient survival. 
+To illustrate the functionality of Statial we will use a multiplexed ion beam imaging by time-of-flight (MIBI-TOF) dataset profiling tissue from triple-negative breast cancer patients$^1$ by Keren et al., 2018. This dataset simultaneously quantifies *in situ* expression of 36 proteins in 34 immune rich patients. *Note:* The data contains some "uninformative" probes and the original cohort included 41 patients.
 
-Note: The original dataset was reduced down from 41 images to 10 images for the purposes of this vignette, due to size restrictions. 
+These images are stored in a `SingleCellExperiment` object called `kerenSCE`. This object contains 57811 cells across 10 images and includes information on cell type and patient survival. 
+
+*Note:* The original dataset was reduced down from 41 images to 10 images for the purposes of this vignette, due to size restrictions. 
 
 ```{r}
 # Load head and neck data
@@ -83,19 +84,18 @@ kerenSCE
 ```
 
 
-# Evaluating cell localisation 
+# Kontextual: Identifying discrete changes in cell state
 
 `Kontextual` is a method to evaluate the localisation relationship between two cell types in an image. `Kontextual` builds on the L-function by contextualising the relationship between two cell types in reference to the typical spatial behaviour of a  $3^{rd}$ cell type/population. By taking this approach, `Kontextual` is invariant to changes in the window of the image as well as tissue structures which may be present. 
 
 The definitions of cell types and cell states are somewhat ambiguous, cell types imply well defined groups of cells that serve different roles from one another, on the other hand cell states imply that cells are a dynamic entity which cannot be discretised, and thus exist in a continuum. For the purposes of using `Kontextual` we treat cell states as identified clusters of cells, where larger clusters represent a "parent" cell population, and finer sub-clusters representing a "child" cell population. For example a CD4 T cell may be considered a child to a larger parent population of Immune cells. `Kontextual` thus aims to see how a child population of cells deviate from the spatial behaviour of their parent population, and how that influences the localisation between the child cell state and another cell state.
 
+## Cell type hierarchy
 
+A key input for Kontextual is an annotation of cell type hierarchies. We will need these to organise all the cells present into cell state populations or clusters, e.g. all the different B cell types are put in a vector called bcells.
 
-# Kontextual
-
-
-
-The first step in analysing these images is to organise all the cells present into cell state populations or clusters, e.g. all the different B cell types are put in a vector called bcells.
+For the purposes of this vignette, these will be manually defined. 
+Alternatively, you can use the `treeKor` bioconductor package [treekoR](http://www.bioconductor.org/packages/release/bioc/html/treekoR.html) to define these hierarchies in a data driven way.
 
 ```{r}
 # Examine all cell types in image
@@ -117,68 +117,41 @@ immune <- c(bcells, tcells, myeloid, "NK", "other immune") # NK = Natural Killer
 all <- c(tumour, tissue, immune, "Unidentified")
 ```
 
-`Kontextual` accepts a `SingleCellExperiment` object, or a single image, or list of images from a `SingleCellExperiment` object, this gets passed into the `cells` argument. The two cell types which will be evaluated are specified in the `to` and `from` arguments. A parent population must also be specified in the `parent` argument, note the parent cell population must include the `to` cell type.  The argument `r` will specify the radius which the cell relationship will be evaluated on. `Kontextual` supports parallel processing, the number of cores can be specified using the `cores` argument. `Kontextual` can take a single value or multiple values for each argument and will test all combinations of the arguments specified. 
+## Discrete cell state changes within a single image
 
-
-# Kontextual Curve
-
-Here we examine image 6 from the Keren et al. dataset where the relationship between 2 cell types depends on a parent cell population. In the image below we can see that `p53` and `Immune` are dispersed. However when the behaviour of `p53` is placed in the context of the spatial behaviour of its parent population `Keratin+Tumour`, `p53` and `Immune` now appear localised.
+Here we examine an image highlighted in the Keren et al. 2018 manuscript where the relationship between two cell types depends on a parent cell population. In image 6 of the Keren et al. dataset, we can see that *p53+ tumour cells* and *immune cells* are dispersed. However when the behaviour of *p53+ tumour cells* are placed in the context of the spatial behaviour of its broader parent population *tumour cells*, *p53+ tumour cells* and *immune* would appear localised.w
 
 
 ```{r}
-#Select image 6 from the kerenSCE dataset
-kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
-
-#Select for all cells that express higher than baseline level of p53
-p53Pos = assay(kerenImage6)["p53",]  |> 
-  as.numeric() > -0.300460
-kerenImage6$cellType[p53Pos & kerenImage6$cellType %in% c("Keratin_Tumour")] <- "p53+Tumour"
-
-#Group all immune cells under the name "Immune"
-kerenImage6$cellType[kerenImage6$cellType %in% immune] <- "Immune"
-
-kerenImage6 |>
-  colData() %>%
-  as.data.frame() %>%
-  filter(cellType %in% c("Keratin_Tumour", "Immune", "p53+Tumour")) %>%
-  arrange(cellType) %>%
-  ggplot(aes(x = x, y = y, color = cellType)) +
-  geom_point(size = 1) +
-  scale_colour_manual(values = c("#505050", "#D6D6D6", "#64BC46"))
-
-```
-
-
-The `kontextCurve` function plots the L-function value and Kontextual values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Kontextual is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii.
-
-```{r}
-
-#Select for all cells that express higher than baseline level of p53
+# Lets define a new cell type vector
 kerenSCE$cellTypeNew <- kerenSCE$cellType
-p53Pos = assay(kerenSCE)["p53",]  |> 
-  as.numeric() > -0.300460
-kerenSCE$cellTypeNew[p53Pos & kerenSCE$cellType %in% c("Keratin_Tumour")] <- "p53+Tumour"
+
+# Select for all cells that express higher than baseline level of p53
+p53Pos = assay(kerenSCE)["p53",] > -0.300460
+
+# Find p53+ tumour cells
+kerenSCE$cellTypeNew[kerenSCE$cellType %in% tumour] <- "Tumour"
+kerenSCE$cellTypeNew[p53Pos & kerenSCE$cellType %in% tumour] <- "p53_Tumour"
 
 #Group all immune cells under the name "Immune"
+
 kerenSCE$cellTypeNew[kerenSCE$cellType %in% immune] <- "Immune"
 
+# Plot image 6
 
-curves <- kontextCurve(
-  cells = kerenSCE,
-  from = "p53+Tumour",
-  to = "Immune",
-  parent = c("p53+Tumour", "Keratin_Tumour"),
-  rs = seq(10, 510, 100),
-  image = "6",
-  cellType = "cellTypeNew",
-  cores = nCores
-)
+kerenSCE |>
+  colData() |>
+  as.data.frame() |>
+  filter(imageID == "6") |>
+  filter(cellTypeNew %in% c("Immune", "Tumour", "p53_Tumour")) |>
+  arrange(cellTypeNew) |>
+  ggplot(aes(x = x, y = y, color = cellTypeNew)) +
+  geom_point(size = 1) +
+  scale_colour_manual(values = c("#505050", "#64BC46","#D6D6D6")) + guides(colour = guide_legend(title = "Cell types", override.aes = list(size=3)))
 
-kontextPlot(curves)
 ```
 
-
-
+`Kontextual` accepts a `SingleCellExperiment` object, a single image, or list of images from a `SingleCellExperiment` object, which gets passed into the `cells` argument. The two cell types which will be evaluated are specified in the `to` and `from` arguments. A parent population must also be specified in the `parent` argument, note the parent cell population must include the `to` cell type.  The argument `r` will specify the radius which the cell relationship will be evaluated on. `Kontextual` supports parallel processing, the number of cores can be specified using the `cores` argument. `Kontextual` can take a single value or multiple values for each argument and will test all combinations of the arguments specified. 
 
 We can calculate these relationships across all images for a single radius.
 
@@ -195,6 +168,25 @@ p53_Kontextual <- Kontextual(
 p53_Kontextual
 
 ```
+
+The `kontextCurve` function plots the L-function value and Kontextual values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Kontextual is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii.
+
+```{r}
+
+curves <- kontextCurve(
+  cells = kerenSCE,
+  from = "p53+Tumour",
+  to = "Immune",
+  parent = c("p53+Tumour", "Keratin_Tumour"),
+  rs = seq(10, 510, 100),
+  image = "6",
+  cellType = "cellTypeNew",
+  cores = nCores
+)
+
+kontextPlot(curves)
+```
+
 Alternatively all pairwise cell relationships and their corresponding parent in the dataset can be tested. A data frame with all pairwise combinations can be creating using the `parentCombinations` function. This function takes in a vector of all the cells, as well as all the parent vectors set up earlier. As shown below the output is a data frame specifying the `to`, `from`, and `parent` arguments for `Kontextual`.
 
 ```{r}
@@ -213,9 +205,9 @@ parentDf <- parentCombinations(
 
 ```
 
+## Discrete cell state changes across all images
 
 Rather than specifying `to`, `from`, and `parent` in Kontextual, the output from `parentCombinations` can be inputed into `Kontextual` using the `parentDf` argument, to examine all pairwise relationships in the dataset. This chunk will take a signficant amount of time to run, for demonstration the results have been saved and are loaded in.
-
 
 ```{r eval=FALSE}
 # Running Kontextual on all relationships across all images.
@@ -225,12 +217,74 @@ kerenKontextual <- Kontextual(
   r = 50,
   cores = nCores
 )
-
 ```
 
 ```{r}
 data("kerenKontextual")
-head(kerenKontextual, 10)
+bigDiff <- (kerenKontextual$original - kerenKontextual$kontextual)
+head(kerenKontextual[order(bigDiff),], 10)
+```
+
+## Associate discrete state changes with survival outcomes
+
+To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we can use the `colTest` function from `SpicyR`. To understand if survival outcomes differ significantly between 2 patient groups, specify `type = "survival"` in `colTest`. Here we examine which features are most associated with patient survival using the Kontextual values as an example. To do so, survival data is extracted from `kerenSCE` and converted into the survival object `kerenSurv`.
+
+```{r}
+
+# Extracting survival data
+survData = kerenSCE |>
+    colData() |> 
+    data.frame() |> 
+    select(imageID, Survival_days_capped, Censored) |> 
+    unique()
+
+# Creating survival vector
+kerenSurv = Surv(survData$Survival_days_capped, survData$Censored)
+names(kerenSurv) = survData$imageID
+
+```
+
+In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepMatrix`. Note, to extract the original L-function values, specify `column = "original"` in `prepMatrix`.
+
+```{r}
+# Converting Kontextual result into data matrix
+kontextMat = prepMatrix(kerenKontextual)
+
+# Ensuring rownames of kontextMat match up with rownames of the survival vector 
+kontextMat = kontextMat[names(kerenSurv), ]
+
+# Replace NAs with 0
+kontextMat[is.na(kontextMat )] <- 0
+
+```
+
+Finally, both the Kontextual matrix and survival object are passed into `colTest`, with `type = "survival"` to obtain the survival results.
+
+```{r}
+# Running survival analysis
+survivalResults = spicyR::colTest(kontextMat, kerenSurv, type = "survival")
+
+
+head(survivalResults)
+
+```
+
+As we can see from the results `Mesenchymal__Macrophages__tissue` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and macrophage cells, relative to the parent population of all tissue cells. We can see that there is a negative coefficient associated with this relationship, which tells us a decrease in localisation of Mesenchymal and Macrophages leads to poorer survival outcomes for patients.
+
+The association between `Mesenchymal__Macrophages__tissue` and survival can also be visualised on a Kaplan-Meier curve. We must first extract the Kontextual values of this relationship across all images. Next we determine if Mesenchymal and Macrophages are relatively attracted or avoiding in each image, by comparing the Kontextual value in each image to the median Kontextual value. Finally we plot the Kaplan-Meier curve using the `ggsurvfit` package.
+
+As shown below, when Mesenchymal and Macrophages are relatively more dispersed to one another, patients tend to have worse survival outcomes.
+
+```{r, fig.width=5, fig.height=4}
+# Selecting most significant relationship
+survRelationship = kontextMat[["Mesenchymal__Macrophages__tissue"]]
+survRelationship = ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
+    
+# Plotting Kaplan-Meier curve
+survfit2(kerenSurv ~ survRelationship) |>
+    ggsurvfit() +
+    add_pvalue() +
+    ggtitle("Mesenchymal__Macrophages__tissue")
 ```
 
 
@@ -302,19 +356,17 @@ stateChanges <- calcStateChanges(
   nCores = 1,
   minCells = 100)
 
-stateChanges |> head(n = 10)
-
 stateChanges |> 
   filter(imageID == 6) |>
   head(n = 10)
 ```
 
 
-Let's take a look at the top 10 most significant gene-to-distance pairwise interactions. In image 6, the majority of the top 10 most significant interactions occur between keratin/tumour cells and an immune population, and many of these interactions appear to involve the HLA class I ligand.
+In image 6, the majority of the top 10 most significant interactions occur between keratin/tumour cells and an immune population, and many of these interactions appear to involve the HLA class I ligand.
 
 We can examine some of these interactions further with the `plotStateChanges` function. Taking a closer examination of the relationship between macrophages and keratin/tumour HLA class I expression, the plot below shows us a clear visual correlation - as macrophage density increases, keratin/tumour cells increase their expression HLA class I.
 
-Biologically, HLA Class I is a ligand which exists on all nucleated cells, tasked with presenting internal cell antigens for recognition by the immune system, marking aberrant cells for destruction by either CD8+ T cells or NK cells. This increased expression of HLA Class I molecules on tumour cells is an interesting finding, and potentially uncovers a novel interaction between tumour cells and macrophages which drives aberrant HLA Class I expression in tumour cells.
+Biologically, HLA Class I is a ligand which exists on all nucleated cells, tasked with presenting internal cell antigens for recognition by the immune system, marking aberrant cells for destruction by either CD8+ T cells or NK cells.
 
 ```{r}
 
@@ -335,7 +387,12 @@ p
 
 ```
 
-Now, we can take a look at the top 10 most significant results across all images. Immediately, we can appreciate that a couple of interactions appear a bit strange. One of the most significant interactions occurs between B cells and CD4 T cells, where CD4 T cells are found to increase in CD20 expression when in close proximity to B cells. Biologically, CD20 is a highly specific ligand for B cells, and under healthy circumstances are usually not expressed in T cells.
+Now, we can take a look at the top 10 most significant results across all images. 
+```{r}
+stateChanges |> head(n = 10)
+```
+
+Immediately, we can appreciate that a couple of interactions appear a bit strange. One of the most significant interactions occurs between B cells and CD4 T cells, where CD4 T cells are found to increase in CD20 expression when in close proximity to B cells. Biologically, CD20 is a highly specific ligand for B cells, and under healthy circumstances are usually not expressed in T cells.
 
 Could this potentially be an artefact of `calcStateChanges`? We can examine the image through the `plotStateChanges` function, where we indeed observe a strong increase in CD20 expression in T cells nearby B cell populations.
 
@@ -361,7 +418,7 @@ p
 So why are T cells expressing CD20?
 This brings us to a key problem of cell segmentation - contamination.
 
-# Contamination
+# Contamination (Lateral marker spill over)
 Contamination, or lateral marker spill over is an issue that results in a cell’s marker expressions being wrongly attributed to another adjacent cell. This issue arises from incorrect segmentation where components of one cell are wrongly determined as belonging to another cell. 
 Alternatively, this issue can arise when antibodies used to tag and measure marker expressions don't latch on properly to a cell of interest, thereby resulting in residual markers being wrongly assigned as belonging to a cell near the intended target cell. It is important that we either correct or account for this incorrect attribution of markers in our modelling process. This is critical in understanding whether significant cell-cell interactions detected are an artefact of technical measurement errors driven by spill over or are real biological changes that represent a shift in a cell’s state.
 
@@ -383,7 +440,9 @@ stateChangesCorrected <- calcStateChanges(
 stateChangesCorrected |> head(n = 20)
 
 ```
-However, this does not mean factoring in contamination into our linear model was ineffective. We can visualise this by plotting a ROC curve of true positives against false positives. In general, cell type specific markers such as CD4, CD8, and CD20 should not change in cells they are not specific to. Therefore, relationships detected to be significant involving these cell type markers are likely false positives and will be treated as such for the purposes of evaluation. Meanwhile, cell state markers are predominantly likely to be true positives.
+However, this does not mean factoring in contamination into our linear model was ineffective. 
+
+Whilst our correction attempts do not rectify every relationship which arises due to contamination, we show that a significant portion of these relationships are rectified. We can show this by plotting a ROC curve of true positives against false positives. In general, cell type specific markers such as CD4, CD8, and CD20 should not change in cells they are not specific to. Therefore, relationships detected to be significant involving these cell type markers are likely false positives and will be treated as such for the purposes of evaluation. Meanwhile, cell state markers are predominantly likely to be true positives.
 
 Plotting the relationship between false positives and true positives, we'd expect the contamination correction to be greatest in the relationships with the top 100 lowest p values, where we indeed see more true positives than false positives with contamination correction.
 
@@ -397,50 +456,20 @@ df <- rbind(data.frame(TP =cumsum(stateChanges$marker %in% cellTypeMarkers), FP 
             data.frame(TP =cumsum(stateChangesCorrected$marker %in% cellTypeMarkers), FP = cumsum(!stateChangesCorrected$marker %in% cellTypeMarkers), type = "Corrected"))
 
 ggplot(df, aes(x = TP, y = FP, colour = type)) + geom_line()+ labs(y = "Cell state marker", x = "Cell type marker") + scale_colour_manual(values = values)
-
-ggplot(df, aes(x = TP, y = FP, colour = type)) + geom_line()+ xlim(0,100) + ylim(0,1000)+ labs(y = "Cell state marker", x = "Cell type marker") + scale_colour_manual(values = values)
-            
-
 ```
 
-The next steps will involve comparing survival time to see if these distance-to-gene interactions are biologically significant.
+Here, we zoom in on the ROC curve where the top 100 lowest p values occur, where we indeed see more true positives than false positives with contamination correction.
 
-
+```{r}
+ggplot(df, aes(x = TP, y = FP, colour = type)) + geom_line()+ xlim(0,100) + ylim(0,1000)+ labs(y = "Cell state marker", x = "Cell type marker") + scale_colour_manual(values = values)
+            
+```
 
 # Relating `Statial` features to patient groups or outcomes.
 
 To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we've provided the helper function `coxTests` to understand if survival outcomes differ significantly between 2 patient groups. Here we examine which features are most associated with patient survival using the Kontextual values as example. To do so, the survival data is extracted from `kerenSCE` and converted to a survival object, `kerenSurv`. In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepMatrix`. Note, to extract the original L-function values, specify `column = "original"` in `prepMatrix`. Finally, both the Kontextual matrix and survival object are passed into `coxTests` to obtain the survival results. 
 
 As we can see from the results `Mesenchymal__other immune__tissue` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and other immune cells, relative to the parent population of all tissue cells. We can see that there is a positive coeffcient associated with this relationship, which tells us the increase in localisation of Mesenchymal and Macrophages lead to poorer survival outcomes for patients.  
-
-
-```{r}
-# Helper function to run coxPh models
-
-coxTests = function(measurementMat, Surv) {
-  
-  result = apply(measurementMat, 2, function(measurementCol) {
-    fit = coxph(Surv ~ measurementCol)
-    summary(fit)$coefficients[1, c(1, 3, 5)]
-  })
-  
-  result = result |> 
-    t() |> 
-    data.frame() |> 
-    rownames_to_column() 
-  
-  colnames(result) = c("imageID", "coef", "se.coef", "p.value")
-  result$`adj.p.value` = p.adjust(result$`p.value`, "fdr")
-  
-  result = result |> arrange(p.value)
-  
-  result[,sapply(result,is.numeric)] <- signif(result[,sapply(result,is.numeric)],2)
-  
-  return(result)
-}
-
-```
-
 
 ```{r}
 
