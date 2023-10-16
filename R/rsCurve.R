@@ -46,26 +46,19 @@
 #' @importFrom stats sd
 #' @importFrom dplyr filter select group_by summarise
 kontextCurve <- function(cells,
-                    from,
-                    to,
-                    parent,
-                    image = NULL,
-                    rs = seq(10, 100, 10),
-                    inhom = TRUE,
-                    edge = FALSE,
-                    se = FALSE,
-                    nSim = 20,
-                    cores = 1,
-                    imageID = "imageID",
-                    cellType = "cellType",
-                    ...) {
-  
-  # cells$imageID <- colData(cells)[,imageID]
-  # cells$cellType <- colData(cells)[, cellType]
-  # cellType <- "cellType"
-  # imageID <- "imageID"
-  # if(!is.null(image))cells <- cells[,cells$imageID %in% image]
-  
+                         from,
+                         to,
+                         parent,
+                         image = NULL,
+                         rs = seq(10, 100, 10),
+                         inhom = TRUE,
+                         edge = FALSE,
+                         se = FALSE,
+                         nSim = 20,
+                         cores = 1,
+                         imageID = "imageID",
+                         cellType = "cellType",
+                         ...) {
   
   kontextualVals <- Kontextual(
     cells = cells,
@@ -82,11 +75,11 @@ kontextCurve <- function(cells,
     cellType = cellType,
     ...
   )
-
+  
   rsDf <- kontextualVals |>
     dplyr::select("r", "original", "kontextual")
-
-   
+  
+  
   if (se == TRUE) {
     seDf <- relabelKontextual(
       cells = cells,
@@ -102,7 +95,7 @@ kontextCurve <- function(cells,
       cores = cores,
       ...
     )
-
+    
     seDf <- seDf |>
       dplyr::filter(type != "original") |>
       dplyr::select("r", "original", "kontextual") |>
@@ -111,10 +104,10 @@ kontextCurve <- function(cells,
         "originalSd" = sd(original),
         "kontextualSd" = sd(kontextual)
       )
-
+    
     rsDf <- merge(rsDf, seDf, by = "r")
   }
-
+  
   return(rsDf)
 }
 

@@ -59,31 +59,33 @@
 #' @importFrom stats runif
 
 Kontextual <- function(cells,
-                        r,
-                        parentDf = NULL,
-                        from = NULL,
-                        to = NULL,
-                        parent = NULL,
-                        image = NULL,
-                        inhom = TRUE,
-                        edgeCorrect = FALSE,
-                        window = "convex",
-                        window.length = NA,
-                        weightQuantile = .80,
-                        includeZeroCells = TRUE,
-                        includeOriginal = TRUE,
-                        spatialCoords = c("x", "y"),
-                        cellType = "cellType",
-                        imageID = "imageID",
-                        cores = 1) {
+                       r,
+                       parentDf = NULL,
+                       from = NULL,
+                       to = NULL,
+                       parent = NULL,
+                       image = NULL,
+                       inhom = TRUE,
+                       edgeCorrect = FALSE,
+                       window = "convex",
+                       window.length = NA,
+                       weightQuantile = .80,
+                       includeZeroCells = TRUE,
+                       includeOriginal = TRUE,
+                       spatialCoords = c("x", "y"),
+                       cellType = "cellType",
+                       imageID = "imageID",
+                       cores = 1)
+{
+  
   if (is.null(parentDf) &
-    is.null(from) &
-    is.null(to) &
-    is.null(parent)) {
+      is.null(from) &
+      is.null(to) &
+      is.null(parent)) {
     stop("Please specificy a parentDf (obtained from parentCombinations), or from, to, and parent cellTypes")
   } else if (!is.null(from) &
-    !is.null(to) &
-    !is.null(parent)
+             !is.null(to) &
+             !is.null(parent)
   ) {
     parentDf <- data.frame(
       from = from,
@@ -91,13 +93,6 @@ Kontextual <- function(cells,
       parent = I(list(parent))
     )
   }
-  # 
-  # cells$imageID <- colData(cells)[,imageID]
-  # cells$cellType <- colData(cells)[,cellType]
-  # cellType <- "cellType"
-  # imageID <- "imageID"
-  # if(!is.null(image))cells <- cells[,cells$imageID %in% image]
-  
   
   if (is(cells, "list")) {
     cells <- lapply(
@@ -109,18 +104,18 @@ Kontextual <- function(cells,
       image = image
     )
   }
-
+  
   if (is(cells, "SingleCellExperiment")) {
     cells <- cells |>
       SummarizedExperiment::colData() |>
       data.frame()
   }
-
+  
   if (is(cells, "SpatialExperiment")) {
     cells <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
       data.frame()
   }
-
+  
   if (is(cells, "data.frame")) {
     cells <- validateDf(
       cells,
@@ -129,24 +124,49 @@ Kontextual <- function(cells,
       spatialCoords = spatialCoords,
       image = image
     )
-
+    
     cells <- mutate(cells, imageID = as.character(imageID))
     cells <- split(cells, cells$imageID)
   }
-
+  
   if (!is(cells, "list")) {
     stop("Cells must be one of the following: SingleCellExperiment, SpatialExperiment, or a list of data.frames with imageID, cellType, and x and y columns")
   }
-
-
-
+  
+  
+  # Specify cores for parrellel computing
+  x <- runif(1) # nolint
+  BPPARAM <- Statial:::.generateBPParam(cores = cores)
+  
+  
   images <- cells
-
+ 
+  
+  # Calculate close pairs for all images
+  closePairs <- bplapply(images, function(image){
+    
+    ow <- Statial::makeWindow(image, window, window.length)
+    
+    imagePPP = spatstat.geom::ppp(
+      x = image$x,
+      y = image$y,
+      window = ow,
+      marks = image$cellType
+    )
+    
+    closePairs <- spatstat.geom::closepairs(imagePPP, max(r, na.rm = TRUE), what = "ijd", distinct = FALSE) |> 
+      data.frame() 
+    
+    return(closePairs)
+  }, BPPARAM = BPPARAM)
+  
+  
   imagesInfo <- data.frame(
     imageID = names(images),
-    images = I(images)
+    images = I(images),
+    closePairs = I(closePairs)
   )
-
+  
   # Create all combinations of specified parameters
   allCombinations <- expand_grid(
     parentDf,
@@ -158,48 +178,40 @@ Kontextual <- function(cells,
     weightQuantile = weightQuantile,
     includeZeroCells = includeZeroCells
   )
-
+  
   # Create data frame for mapply
   kontextualDf <- merge(imagesInfo, allCombinations, all = TRUE) |>
     mutate("test" = paste(from, "__", to, sep = ""))
-
+  
   if ("parent_name" %in% names(kontextualDf)) {
     kontextualDf <- mutate(kontextualDf, "test" = paste(test, "__", parent_name, sep = ""))
   }
-
-  x <- runif(1) # nolint
-
-  BPPARAM <- .generateBPParam(cores = cores)
-
+  
+  
   # Calculate conditional L values
   lVals <- bpmapply(
     KontextualCore,
     images = kontextualDf$images,
     r = kontextualDf$r,
+    closePairs = kontextualDf$closePairs,
     from = kontextualDf$from,
     to = kontextualDf$to,
     parent = kontextualDf$parent,
-    inhom = kontextualDf$inhom,
-    edge = kontextualDf$edge,
-    window = kontextualDf$window,
-    window.length = kontextualDf$window.length,
-    weightQuantile = kontextualDf$weightQuantile,
-    includeZeroCells = kontextualDf$includeZeroCells,
     SIMPLIFY = FALSE,
-    MoreArgs = list(includeOriginal = includeOriginal),
     BPPARAM = BPPARAM
   )
-
+  
+  
   # Combine data.frame rows
   lVals <- lVals |>
     bind_rows()
-
+  
   lValsClean <- kontextualDf |>
     mutate("parent_name" = "") |>
     select(-c("images", "from", "to", "parent_name", "parent")) |>
     cbind(lVals) |>
     remove_rownames()
-
+  
   if (includeOriginal == FALSE) {
     lValsClean <- lValsClean |>
       select(
@@ -244,6 +256,7 @@ KontextualCore <- function(images,
                             from,
                             to,
                             parent,
+                            closePairs,
                             inhom = TRUE,
                             edge = FALSE,
                             includeOriginal = TRUE,
@@ -255,47 +268,24 @@ KontextualCore <- function(images,
     rownames(condL) <- paste(from, "__", to)
     return(condL)
   }
-
+  
   # Calculated the child and parent values for the image
-  kontextualVal <-
-    inhomLParent(
-      images,
-      Rs = r,
-      from = from,
-      to = to,
-      parent = parent,
-      edgeCorrect = edge,
-      inhom = inhom,
-      weightQuantile = weightQuantile,
-      ...
-    )
-
-
-  if (includeOriginal == FALSE) {
-    condL <- data.frame(kontextual = kontextualVal)
-    return(condL)
-  }
-
-  originalVal <-
-    inhomLParent(
-      images,
-      Rs = r,
-      from = from,
-      to = to,
-      parent = unique(images$cellType),
-      edgeCorrect = edge,
-      inhom = inhom,
-      weightQuantile = 1,
-      original = TRUE,
-      ...
-    )
-
+  kontextualVals = calcKontextual(data = images,
+                                 child1 = from,
+                                 child2 = to,
+                                 parent = parent,
+                                 r = r,
+                                 closePairs = closePairs,
+                                 ...)
+  
   # return data frame of original and kontextual values.
   condL <- data.frame(
-    original = originalVal,
-    kontextual = kontextualVal
+    original = kontextualVals["L"],
+    kontextual = kontextualVals["Kontextual"]
   )
-
+  
+  rownames(condL) = paste(from, "__", to)
+  
   return(condL)
 }
 

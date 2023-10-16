@@ -49,66 +49,66 @@
 #' @importFrom dplyr mutate
 #' @importFrom BiocParallel  bplapply
 relabelKontextual <- function(cells,
-                               nSim = 1,
-                               r,
-                               from,
-                               to,
-                               parent,
-                               image = NULL,
-                               returnImages = FALSE,
-                               inhom = TRUE,
-                               edge = FALSE,
-                               cores = 1,
-                               spatialCoords = c("x", "y"),
-                               cellType = "cellType",
-                               imageID = "imageID",
-                               ...) {
-    
-    
-    if (is(cells, "SingleCellExperiment")) {
-        cells <- cells |>
-            SingleCellExperiment::colData() |>
-            data.frame()
-    }
-    
-    if (is(cells, "SpatialExperiment")) {
-        cells <- cbind(colData(cells), spatialCoords(cells)) |>
-            data.frame()
-    }
-    
-    if (is(cells, "data.frame")) {
-        cells <- validateDf(
-            cells,
-            imageID = imageID,
-            cellType = cellType,
-            spatialCoords = spatialCoords,
-            image = image
-        )
-    }
-    
-    if (!is(cells, "data.frame")) {
-        stop("Cells must be one of the following: SingleCellExperiment, SpatialExperiment, or a list of data.frames with imageID, cellType, and x and y columns")
-    }
-
+                              nSim = 1,
+                              r,
+                              from,
+                              to,
+                              parent,
+                              image = NULL,
+                              returnImages = FALSE,
+                              inhom = TRUE,
+                              edge = FALSE,
+                              cores = 1,
+                              spatialCoords = c("x", "y"),
+                              cellType = "cellType",
+                              imageID = "imageID",
+                              ...) {
+  
+  
+  if (is(cells, "SingleCellExperiment")) {
+    cells <- cells |>
+      SingleCellExperiment::colData() |>
+      data.frame()
+  }
+  
+  if (is(cells, "SpatialExperiment")) {
+    cells <- cbind(colData(cells), spatialCoords(cells)) |>
+      data.frame()
+  }
+  
+  if (is(cells, "data.frame")) {
+    cells <- validateDf(
+      cells,
+      imageID = imageID,
+      cellType = cellType,
+      spatialCoords = spatialCoords,
+      image = image
+    )
+  }
+  
+  if (!is(cells, "data.frame")) {
+    stop("Cells must be one of the following: SingleCellExperiment, SpatialExperiment, or a list of data.frames with imageID, cellType, and x and y columns")
+  }
+  
   imageArray <- replicate(nSim, cells, simplify = FALSE)
-
-
+  
+  
   # relabel cells in parent population for all images in imageArray
   relabeled <- bplapply(imageArray,
-    relabel,
-    labels = parent,
-    BPPARAM = MulticoreParam(workers = cores)
+                        relabel,
+                        labels = parent,
+                        BPPARAM = MulticoreParam(workers = cores)
   )
-
+  
   relabeled <- c(list(cells), relabeled)
   names(relabeled) <- as.character(seq_along(relabeled))
-
+  
   parentDf <- data.frame(
     from = from,
     to = to,
     parent = I(list(parent))
   )
-
+  
   # Calculated the child and parent values for the relabeled images
   relabeledDf <- Kontextual(
     cells = relabeled,
@@ -119,15 +119,15 @@ relabelKontextual <- function(cells,
     cores = cores,
     ...
   )
-
+  
   relabeledDf <- relabeledDf |>
     select("imageID", "original", "kontextual", "r") |>
     mutate(type = ifelse(imageID == 1, "original", "randomised"))
-
+  
   if (returnImages) {
     return(list(relabeledDf, relabeled))
   }
-
+  
   return(relabeledDf)
 }
 
