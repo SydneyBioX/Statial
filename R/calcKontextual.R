@@ -10,6 +10,7 @@ calcKontextual <- function(data,
                           closePairs = NULL,
                           window = "convex",
                           window.length = NULL,
+                          inhom = FALSE,
                           returnWeight = FALSE){
   
   if (is(data, "ppp")) {
@@ -83,9 +84,11 @@ calcKontextual <- function(data,
   
   Kontextual <- .Kontext(closePairs, counts, child1, child2, parent, r, Area, returnWeight)
 
-  L <- .Lfunction(closePairs, counts, child1, child2, r, Area) 
-  
-  
+  if (inhom) {
+    L <- .Linhomfunction(closePairs, counts, child1, child2, r, Area) 
+  } else{
+    L <- .Lfunction(closePairs, counts, child1, child2, r, Area) 
+  }
   
   if(returnWeight){
     return(Kontext)
@@ -195,7 +198,7 @@ PPPdf <- function(ppp) {
 #' @noRd
 #' @import spatstat.geom
 
-borderEdge <- function(X, maxD) {
+.borderEdge <- function(X, maxD) {
   W <- X$window
   bW <- spatstat.geom::union.owin(
     spatstat.geom::border(W, maxD, outside = FALSE),
