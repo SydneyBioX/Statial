@@ -6,6 +6,7 @@ Statial.Rproj
 .RData
 .DS_Store
 testStatial.Rmd
+vignettes/Statial_cache
 # vscode settings
 .vscode
 
