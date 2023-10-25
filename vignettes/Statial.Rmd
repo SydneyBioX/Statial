@@ -158,7 +158,7 @@ We can calculate these relationships across all images for a single radius.
 ```{r}
 p53_Kontextual <- Kontextual(
   cells = kerenSCE,
-  r = 50,
+  r = 100,
   from = "p53_Tumour",
   to = "Immune",
   parent = c("p53_Tumour", "Tumour"),
@@ -178,7 +178,7 @@ curves <- kontextCurve(
   from = "p53_Tumour",
   to = "Immune",
   parent = c("p53_Tumour", "Tumour"),
-  rs = seq(10, 510, 100),
+  rs = seq(50, 510, 50),
   image = "6",
   cellType = "cellTypeNew",
   cores = nCores

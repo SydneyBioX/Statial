@@ -133,6 +133,8 @@ Kontextual <- function(cells,
     stop("Cells must be one of the following: SingleCellExperiment, SpatialExperiment, or a list of data.frames with imageID, cellType, and x and y columns")
   }
   
+
+  
   
   # Specify cores for parrellel computing
   x <- runif(1) # nolint
@@ -296,13 +298,10 @@ KontextualCore <- function(images,
 #'
 #' @importFrom dplyr rename
 validateDf <- function(cells, cellType, imageID, spatialCoords, image = NULL) {
-  if (!("imageID" %in% names(cells)) ||
-    !("cellType" %in% names(cells)) ||
-    !("x" %in% names(cells)) ||
-    !("y" %in% names(cells))) {
+
     result <- try(
       {
-        cells <- cells |>
+        cells <- cells[, c(cellType, imageID, spatialCoords)] |> 
           rename(
             "cellType" = cellType,
             "imageID" = imageID,
@@ -316,7 +315,6 @@ validateDf <- function(cells, cellType, imageID, spatialCoords, image = NULL) {
     if (is(result, "try-error")) {
       stop("Please specifiy imageID or cellType or spatialCoords")
     }
-  }
 
   if(!is.null(image))cells <- cells[cells$imageID %in% image, ]
   
