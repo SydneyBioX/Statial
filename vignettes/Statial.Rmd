@@ -350,6 +350,7 @@ p <- plotStateChanges(
 p
 
 ```
+
 ## Continuous cell state changes across all images
 
 Beyond looking at single cell-to-cell interactions for a single image, we can also look at all interactions across all images. The `calcStateChanges` function provided by Statial can be expanded for this exact purpose - by not specifying cell types, a marker, or an image, `calcStateChanges` will examine the most significant correlations between distance and marker expression across the entire dataset. Here, we've filtered out the most significant interactions to only include those found within image 6 of the Keren et al. dataset.
@@ -423,7 +424,7 @@ p
 So why are T cells expressing CD20?
 This brings us to a key problem of cell segmentation - contamination.
 
-# Contamination (Lateral marker spill over)
+## Contamination (Lateral marker spill over)
 Contamination, or lateral marker spill over is an issue that results in a cell’s marker expressions being wrongly attributed to another adjacent cell. This issue arises from incorrect segmentation where components of one cell are wrongly determined as belonging to another cell. 
 Alternatively, this issue can arise when antibodies used to tag and measure marker expressions don't latch on properly to a cell of interest, thereby resulting in residual markers being wrongly assigned as belonging to a cell near the intended target cell. It is important that we either correct or account for this incorrect attribution of markers in our modelling process. This is critical in understanding whether significant cell-cell interactions detected are an artefact of technical measurement errors driven by spill over or are real biological changes that represent a shift in a cell’s state.
 
