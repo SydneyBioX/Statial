@@ -11,7 +11,7 @@ kontextCurve(
   parent,
   image = NULL,
   rs = seq(10, 100, 10),
-  inhom = TRUE,
+  inhom = FALSE,
   edge = FALSE,
   se = FALSE,
   nSim = 20,
