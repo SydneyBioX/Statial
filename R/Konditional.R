@@ -125,7 +125,7 @@ Kontextual <- function(cells,
       image = image
     )
     
-    cells <- mutate(cells, imageID = as.character(imageID))
+    #cells <- mutate(cells, imageID = as.character(imageID))
     cells <- split(cells, cells$imageID)
   }
   

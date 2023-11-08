@@ -145,6 +145,8 @@ calcKontextual <- function(data,
 #' Calculates kontextual value
 #' @noRd
 .Kontext <- function(closePairs, counts, child1, child2, parent, r, Area, returnWeight){
+  #child1 is root cell
+  #child2 is child cell
 
   
   nParent = sum(counts$cellTypeI %in% parent)
@@ -158,18 +160,18 @@ calcKontextual <- function(data,
   
   lambdaParent = countsParent/(pi*r^2)
   
-  lambdaChild1 = (lambdaParent/nParent)*nChild1
-  lambdaChild2 = lambdaParent
+  lambdaChild1 = lambdaParent
+  lambdaChild2 = (lambdaParent/nParent)*nChild2
   
-  closePairsShort <- closePairs[closePairs$cellTypeI==child2 & closePairs$cellTypeJ==child1,]
+  closePairsShort <- closePairs[closePairs$cellTypeI==child1 & closePairs$cellTypeJ==child2,]
 
-  closePairsShort$weightParent <- (closePairsShort$edge * lambdaChild2[closePairsShort$i])/(lambdaChild1[closePairsShort$j])
+  closePairsShort$weightParent <- (closePairsShort$edge * lambdaChild1[closePairsShort$i])/(lambdaChild2[closePairsShort$j])
   
   
   numerator <- sum(closePairsShort$weightParent)
   
   # Weighted mean over child 2
-  denominator <- sum(lambdaChild2[counts$cellTypeI == child2]) #*lambda2
+  denominator <- sum(lambdaChild1[counts$cellTypeI == child1])
   
   # Turn this into centered L.
   sqrt(numerator/denominator/pi) - r
