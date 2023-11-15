@@ -159,8 +159,8 @@ We can calculate these relationships across all images for a single radius.
 p53_Kontextual <- Kontextual(
   cells = kerenSCE,
   r = 100,
-  from = "p53_Tumour",
-  to = "Immune",
+  from = "Immune",
+  to = "p53_Tumour",
   parent = c("p53_Tumour", "Tumour"),
   cellType = "cellTypeNew"
 )
@@ -169,14 +169,14 @@ p53_Kontextual
 
 ```
 
-The `kontextCurve` function plots the L-function value and Kontextual values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Kontextual is able to correctly identify localisation between `p53` and `Immune` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `p53` and `Immune` looks dispersed. The original L-function is not able to identify localisation at any value of radii.
+The `kontextCurve` function plots the L-function value and Kontextual values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Kontextual is able to correctly identify localisation between `Immune` and `p53` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `Immune` and `p53` looks dispersed. The original L-function is not able to identify localisation at any value of radii.
 
 ```{r}
 
 curves <- kontextCurve(
   cells = kerenSCE,
-  from = "p53_Tumour",
-  to = "Immune",
+  from = "Immune",
+  to = "p53_Tumour",
   parent = c("p53_Tumour", "Tumour"),
   rs = seq(50, 510, 50),
   image = "6",
@@ -214,9 +214,12 @@ Rather than specifying `to`, `from`, and `parent` in Kontextual, the output from
 kerenKontextual <- Kontextual(
   cells = kerenSCE,
   parentDf = parentDf,
-  r = 50,
+  r = 100,
   cores = nCores
 )
+
+
+
 ```
 
 ```{r}
@@ -236,10 +239,11 @@ survData = kerenSCE |>
     colData() |> 
     data.frame() |> 
     select(imageID, Survival_days_capped, Censored) |> 
+    mutate(event = 1 - Censored) |> 
     unique()
 
 # Creating survival vector
-kerenSurv = Surv(survData$Survival_days_capped, survData$Censored)
+kerenSurv = Surv(survData$Survival_days_capped, survData$event)
 names(kerenSurv) = survData$imageID
 
 ```
@@ -269,22 +273,21 @@ head(survivalResults)
 
 ```
 
-As we can see from the results `Mesenchymal__Dc/Mono__mesenchymal` is the most significant pairwise relationship which contributes to patient survival. That is the relationship between Mesenchymal cells and macrophage cells, relative to the parent population of all tissue cells. We can see that there is a negative coefficient associated with this relationship, which tells us a decrease in localisation of Mesenchymal and Macrophages leads to poorer survival outcomes for patients.
+As we can see from the results `CD8_Cell__Neutrophils__myeloid` is the one of the most significant pairwise relationship which contributes to patient survival. That is the relationship between CD8 T cells and Neutrophils, relative to the parent population of all myeloid cells. We can see that there is a negative coefficient associated with this relationship, which tells us an increase in localisation of CD8 T cells and Neutrophils leads to poorer survival outcomes for patients.
 
-The association between `Mesenchymal__Dc/Mono__mesenchymal` and survival can also be visualised on a Kaplan-Meier curve. We must first extract the Kontextual values of this relationship across all images. Next we determine if Mesenchymal and Macrophages are relatively attracted or avoiding in each image, by comparing the Kontextual value in each image to the median Kontextual value. Finally we plot the Kaplan-Meier curve using the `ggsurvfit` package.
+The association between `CD8_Cell__Neutrophils__myeloid` and survival can also be visualised on a Kaplan-Meier curve. We must first extract the Kontextual values of this relationship across all images. Next we determine if CD8 T cells and Neutrophils are relatively attracted or avoiding in each image, by comparing the Kontextual value in each image to the median Kontextual value. Finally we plot the Kaplan-Meier curve using the `ggsurvfit` package.
 
-As shown below, when Mesenchymal and Macrophages are relatively more dispersed to one another, patients tend to have worse survival outcomes.
+As shown below, when Neutrophils and Dc/Mono are relatively more localised to one another, patients tend to have worse survival outcomes.
 
 ```{r, fig.width=5, fig.height=4}
 # Selecting most significant relationship
-survRelationship = kontextMat[["Mesenchymal__Dc/Mono__mesenchymal"]]
+survRelationship = kontextMat[["CD8_Cell__Neutrophils__myeloid"]]
 survRelationship = ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
     
 # Plotting Kaplan-Meier curve
 survfit2(kerenSurv ~ survRelationship) |>
     ggsurvfit() +
-    add_pvalue() +
-    ggtitle("Mesenchymal__Dc/Mono__mesenchymal")
+    ggtitle("CD8_Cell__Neutrophils__myeloid")
 ```
 
 

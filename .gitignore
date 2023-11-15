@@ -11,3 +11,5 @@ vignettes/Statial_cache
 .vscode
 
 bench
+/doc/
+/Meta/
