@@ -475,6 +475,7 @@ calcStateChanges <- function(cells,
                             from = NULL,
                             to = NULL,
                             image = NULL,
+                            contaminationUse = NULL,
                             type = "distances",
                             assay = 1,
                             cellType = "cellType",
@@ -520,7 +521,7 @@ calcStateChanges <- function(cells,
     contaminations <- data.frame(madeUp = rep(-99, ncol(cells)))
   }else{
     contaminations <- SingleCellExperiment::reducedDim(cells, contamination)
-    contaminations <- dplyr::select(contaminations, -cellID, -cellType, -rfMaxCellProb, -rfSecondLargestCellProb, -rfMainCellProb)
+    contaminations <- dplyr::select(contaminations, -cellID, -cellType, -rfMaxCellProb, -rfSecondLargestCellProb)
   }
   
     splitCon <- split(contaminations, ~ colData(cells)[, imageID] + colData(cells)[, cellType], sep = "51773")
@@ -529,11 +530,17 @@ calcStateChanges <- function(cells,
   x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
   
-  
+  if(is.null(contaminationUse)) {
+    contaminationUse = 0
+  }
+  contUse <- rep(contaminationUse, length(use)) |> as.list()
+  names(contUse) <- names(splitDist[use])
+  # browser()
   allModels <- bpmapply(calculateChangesMarker, 
                       distances =  splitDist[use], 
                       intensities = splitInt[use],
                       contaminations = splitCon[use],
+                      # contUse = contUse,
                       BPPARAM = BPPARAM,
                       SIMPLIFY = FALSE
   )
@@ -552,14 +559,24 @@ calcStateChanges <- function(cells,
 
 #' @importFrom limma lmFit
 calculateChangesMarker <- function(distances, intensities, contaminations, nCores){
+  # browser()
   test <- apply(distances, 2, function(x){
     if(length(unique(x))>1){
       if(contaminations[1,1] == -99){design <- data.frame(coef = 1, cellType = x)
       }else{
         contaminations <- contaminations[, !is.na(colSums(contaminations)),drop = FALSE]
+        # if(!contUse == 0) {
+        #   design <- data.frame(coef = 1, cellType = x, contaminations[,contUse])
+        #   browser()
+        # }else{
         design <- data.frame(coef = 1, cellType = x, contaminations[,-ncol(contaminations)])
+        design <- data.frame(coef = 1, cellType = x, contaminations[,"rfMainCellProb"])
+        # }
       }
       exprs <- t(intensities)
+      if(any(is.na(design))) {
+        design$cellType[is.na(design$cellType)] = 0
+      }
       fit <- .quiet(limma::lmFit(exprs, design, trend = rep(1,nrow(exprs)), verbose = FALSE))
       
       df <- data.frame(
