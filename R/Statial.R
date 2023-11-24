@@ -561,6 +561,11 @@ test <- apply(distances, 2, function(x){
       contaminations <- contaminations[, !is.na(colSums(contaminations)),drop = FALSE]
       design <- data.frame(coef = 1, cellType = x, contaminations[,-ncol(contaminations)])
     }
+    
+    if(any(is.na(design))) {
+      design$cellType[is.na(design$cellType)] = 0
+    }
+    
     exprs <- t(intensities)
     fit <- .quiet(limma::lmFit(exprs, design, trend = rep(1,nrow(exprs)), verbose = FALSE))
     
