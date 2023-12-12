@@ -39,7 +39,7 @@ p <- profvis(
     kerenKontextual <- Kontextual(
         cells = kerenSCE,
         parentDf = parentDf,
-        r = 100,
+        r = 30,
         cores = 1
     )
 )
