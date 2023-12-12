@@ -1,7 +1,9 @@
 library(profvis)
 devtools::load_all()
+library(tidySingleCellExperiment)
 
 data(kerenSCE)
+
 
 tumour <- c("Keratin_Tumour", "Tumour")
 
@@ -13,15 +15,18 @@ endothelial <- c("Endothelial")
 mesenchymal <- c("Mesenchymal")
 
 tissue <- c(endothelial, mesenchymal)
-immune <- c(bcells, tcells, myeloid, "NK", "other immune")
+immune <- c(bcells, myeloid, "NK", "other immune")
 
 all <- c(tumour, tissue, immune, "Unidentified")
+
+kerenSCE <- kerenSCE |>
+    filter(imageID %in% c(5, 6)) |>
+    filter(!(cellType %in% tcells))
 
 parentDf <- parentCombinations(
     all = all,
     tumour,
     bcells,
-    tcells,
     myeloid,
     endothelial,
     mesenchymal,
