@@ -37,7 +37,7 @@ parentDf <- parentCombinations(
 
 kerenKontextual <- Kontextual(
     cells = kerenSCE,
-    parentDf = parentDf,
+    parentDf = parentDf[1:10, ],
     r = 60,
     cores = 1
 )

@@ -161,12 +161,13 @@ Kontextual <- function(cells,
 
     closePairs <- spatstat.geom::closepairs(imagePPP, max(r, na.rm = TRUE), what = "ijd", distinct = FALSE) |> 
       data.frame() 
-
-    cellTypes <- imagePPP$cellType
-    names(cellTypes) <- imagePPP$cellID
+    # browser() 
+    
+    cellTypes <- image$cellType
+    names(cellTypes) <- image$cellID
     closePairs$cellTypeI <- cellTypes[(closePairs$i)]
     closePairs$cellTypeJ <- cellTypes[(closePairs$j)]
-    closePairs$i <- factor(closePairs$i, levels = imagePPP$cellID)
+    closePairs$i <- factor(closePairs$i, levels = image$cellID)
     
     edge <- .borderEdge(imagePPP, r)
     edge <- as.data.frame(edge)

@@ -1,0 +1,68 @@
+
+
+```{r}
+library(profvis)
+devtools::load_all("/dskh/nobackup/farhana/Statial")
+library(tidySingleCellExperiment)
+
+data(kerenSCE)
+
+
+# Set up cell populations
+tumour <- c("Keratin_Tumour", "Tumour")
+
+bcells <- c("B")
+tcells <- c("CD3_Cell", "CD4_Cell", "CD8_Cell", "Tregs")
+myeloid <- c("Dc/Mono", "DC", "Mono/Neu", "Macrophages", "Neutrophils")
+
+endothelial <- c("Endothelial")
+mesenchymal <- c("Mesenchymal")
+
+tissue <- c(endothelial, mesenchymal)
+immune <- c(bcells, tcells, myeloid, "NK", "other immune") # NK = Natural Killer cells
+
+all <- c(tumour, tissue, immune, "Unidentified")
+
+kerenSCE <- kerenSCE |> 
+    filter(imageID %in% c(5, 6))
+
+parentDf <- parentCombinations(
+  all = all,
+  tumour,
+  bcells,
+  tcells,
+  myeloid,
+  endothelial,
+  mesenchymal,
+  tissue,
+  immune
+)
+
+```
+
+
+```{r}
+devtools::load_all("/dskh/nobackup/farhana/Statial")
+
+
+kerenKontextual <- Kontextual(
+    cells = kerenSCE,
+    parentDf = parentDf[1:10, ],
+    r = 30,
+    cores = 1
+)
+
+
+p <- profvis(
+    kerenKontextual <- Kontextual(
+        cells = kerenSCE,
+        parentDf = parentDf,
+        r = 30,
+        cores = 1
+    )
+)
+
+htmlwidgets::saveWidget(p, "profile.html")
+
+```
+
