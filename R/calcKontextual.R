@@ -48,8 +48,15 @@ calcKontextual <- function(data,
     # Calculate pairwise relationships between all cells for a r
     closePairs <- spatstat.geom::closepairs(X, r, what = "ijd", distinct = FALSE) |> 
       data.frame()
+
+    edge <- .borderEdge(imagePPP, r)
+    edge <- as.data.frame(edge)
+    edge$i <- factor(data$cellID, levels = data$cellID)
+    edge$edge <- 1/edge$edge
+  
+    closePairs <- left_join(closePairs, edge[,c("i", "edge")], by = "i")
   } else {
-    closePairs <- closePairs |> 
+    closePairs <- closePairs |>
       filter(d < r)
   }
   
