@@ -53,14 +53,6 @@ calcKontextual <- function(data,
     closePairs <- closePairs |>
       filter(d < r)
   }
-  
-  
-  # Add cell type names to closePairs
-  cellTypes <- data$cellType
-  names(cellTypes) <- data$cellID
-  closePairs$cellTypeI <- cellTypes[(closePairs$i)]
-  closePairs$cellTypeJ <- cellTypes[(closePairs$j)]
-  closePairs$i <- factor(closePairs$i, levels = data$cellID)
 
   # Count the number of each cell type near each cell.  
   # data.table would make this faster too.
