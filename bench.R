@@ -5,6 +5,7 @@ library(tidySingleCellExperiment)
 data(kerenSCE)
 
 
+# Set up cell populations
 tumour <- c("Keratin_Tumour", "Tumour")
 
 bcells <- c("B")
@@ -15,31 +16,27 @@ endothelial <- c("Endothelial")
 mesenchymal <- c("Mesenchymal")
 
 tissue <- c(endothelial, mesenchymal)
-immune <- c(bcells, myeloid, "NK", "other immune")
+immune <- c(bcells, tcells, myeloid, "NK", "other immune") # NK = Natural Killer cells
 
 all <- c(tumour, tissue, immune, "Unidentified")
 
-kerenSCE <- kerenSCE |>
-    filter(imageID %in% c(5, 6)) |>
-    filter(!(cellType %in% tcells))
-
 parentDf <- parentCombinations(
-    all = all,
-    tumour,
-    bcells,
-    myeloid,
-    endothelial,
-    mesenchymal,
-    tissue,
-    immune
+  all = all,
+  tumour,
+  bcells,
+  tcells,
+  myeloid,
+  endothelial,
+  mesenchymal,
+  tissue,
+  immune
 )
-
 
 p <- profvis(
     kerenKontextual <- Kontextual(
         cells = kerenSCE,
         parentDf = parentDf,
-        r = 30,
+        r = 60,
         cores = 1
     )
 )
