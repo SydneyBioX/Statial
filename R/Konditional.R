@@ -21,10 +21,6 @@
 #'  passed into \code{\link[Statial]{makeWindow}}
 #' @param window.length A tuning parameter for controlling the level of concavity when estimating concave windows.
 #' Passed into \code{\link[Statial]{makeWindow}}
-#' @param weightQuantile A decimal value indicating what quantile of parent
-#' density used to weight the `from` cells.
-#' @param includeZeroCells A logical value indicating whether to include cells
-#' with zero counts in the pairwise association calculation.
 #' @param includeOriginal A logical value to return the original L function
 #' values along with the kontextual values.
 #' @param spatialCoords The columns which contain the x and y spatial coordinates.
@@ -69,8 +65,6 @@ Kontextual <- function(cells,
                        edgeCorrect = TRUE,
                        window = "convex",
                        window.length = NA,
-                       weightQuantile = .80,
-                       includeZeroCells = TRUE,
                        includeOriginal = TRUE,
                        spatialCoords = c("x", "y"),
                        cellType = "cellType",
@@ -130,72 +124,98 @@ Kontextual <- function(cells,
   if (!is(cells, "list")) {
     stop("Cells must be one of the following: SingleCellExperiment, SpatialExperiment, or a list of data.frames with imageID, cellType, and x and y columns")
   }
-
-
-
-
+  
+  
+  
   # Specify cores for parrellel computing
   x <- runif(1) # nolint
   BPPARAM <- Statial:::.generateBPParam(cores = cores)
 
   cells <- lapply(cells, function(image) {
     image$cellID <- factor(seq_len(nrow(image)))
-    image
+    return(image)
   })
 
   images <- cells
-
-  # Calculate close pairs for all images
-  closePairs <- bplapply(images, function(image) {
+  
+  # Convert images to PPP objects
+  imagesPPP <- bplapply(images, function(image){
+    # make window
     ow <- Statial::makeWindow(image, window, window.length)
-
+    
+    # Define marks
+    marks = data.frame(
+      cellType = image$cellType,
+      cellID = image$cellID
+    )
+    
+    # Make PPP object
     imagePPP <- spatstat.geom::ppp(
       x = image$x,
       y = image$y,
       window = ow,
-      marks = image$cellType
+      marks = marks
     )
+    
+    return(imagePPP)
+  }, BPPARAM = BPPARAM ) 
+  
 
+  # Calculate Areas
+  Areas = bplapply(imagesPPP, function(image) {
+    return(spatstat.geom::area(image))
+  }, BPPARAM = BPPARAM )
+
+  # MAYBE CLOSE PAIRS NEED TO BE A MAPPLY TO ALLOW FOR MULTIPLE R
+  
+  # Calculate close pairs for all images
+  closePairs <- bplapply(imagesPPP, function(imagePPP) {
+
+    # Calculate close pairs
     closePairs <- spatstat.geom::closepairs(
       imagePPP, max(r, na.rm = TRUE),
       what = "ijd", distinct = FALSE
     ) |>
       data.frame()
 
-    cellTypes <- image$cellType
-    names(cellTypes) <- image$cellID
+    cellTypes <- imagePPP$marks$cellType
+    names(cellTypes) <- imagePPP$marks$cellID
     closePairs$cellTypeI <- cellTypes[(closePairs$i)]
     closePairs$cellTypeJ <- cellTypes[(closePairs$j)]
-    closePairs$i <- factor(closePairs$i, levels = image$cellID)
-
-    edge <- .borderEdge(imagePPP, r)
-    edge <- as.data.frame(edge)
-    edge$i <- factor(image$cellID, levels = image$cellID)
-    edge$edge <- 1 / edge$edge
-
+    closePairs$i <- factor(closePairs$i, levels = imagePPP$marks$cellID)
+    
+    # Perform edge correction (if needed)
+    if(edgeCorrect){
+      edge <- .borderEdge(imagePPP, r)
+      edge <- as.data.frame(edge)
+      edge$i <- factor(imagePPP$marks$cellID, levels = imagePPP$marks$cellID)
+      edge$edge <- 1 / edge$edge
+    } else {
+      edge = data.frame(
+        i = factor(imagePPP$marks$cellID, levels = imagePPP$marks$cellID),
+        edge = 1
+      )
+    }
+  
     closePairs <- left_join(closePairs, edge[, c("i", "edge")], by = "i")
 
-
     return(closePairs)
+    
   }, BPPARAM = BPPARAM)
 
 
   imagesInfo <- data.frame(
     imageID = names(images),
     images = I(images),
-    closePairs = I(closePairs)
+    closePairs = I(closePairs),
+    area = I(Areas)
   )
 
   # Create all combinations of specified parameters
   allCombinations <- expand_grid(
     parentDf,
     r = r,
-    inhom = inhom,
-    edge = edgeCorrect,
-    window = window,
-    window.length = window.length,
-    weightQuantile = weightQuantile,
-    includeZeroCells = includeZeroCells
+    inhomL = inhom
   )
 
   # Create data frame for mapply
@@ -209,8 +229,7 @@ Kontextual <- function(cells,
     )
   }
 
-
-  # Calculate conditional L values
+  # Calculate Kontextual values
   lVals <- bpmapply(
     KontextualCore,
     images = kontextualDf$images,
@@ -219,7 +238,8 @@ Kontextual <- function(cells,
     from = kontextualDf$from,
     to = kontextualDf$to,
     parent = kontextualDf$parent,
-    inhom = kontextualDf$inhom,
+    inhom = kontextualDf$inhomL,
+    area = kontextualDf$area,
     SIMPLIFY = FALSE,
     BPPARAM = BPPARAM
   )
@@ -241,13 +261,7 @@ Kontextual <- function(cells,
         "imageID",
         "test",
         "kontextual",
-        "r",
-        "weightQuantile",
-        "inhom",
-        "edge",
-        "includeZeroCells",
-        "window",
-        "window.length"
+        "r"
       )
   } else {
     lValsClean <- lValsClean |>
@@ -257,12 +271,7 @@ Kontextual <- function(cells,
         "original",
         "kontextual",
         "r",
-        "weightQuantile",
-        "inhom",
-        "edge",
-        "includeZeroCells",
-        "window",
-        "window.length"
+        "inhomL"
       )
   }
 
@@ -280,37 +289,61 @@ KontextualCore <- function(images,
                            to,
                            parent,
                            closePairs,
+                           area,
                            inhom = FALSE,
                            edge = FALSE,
                            includeOriginal = TRUE,
-                           weightQuantile = .80,
+                           returnWeight = FALSE,
                            ...) {
+  
   # Returns NA if to and from cell types not in image
   if (!(c(to, from) %in% unique(images$cellType) |> all())) {
     condL <- data.frame(original = NA, kontextual = NA)
     rownames(condL) <- paste(from, "__", to)
     return(condL)
   }
-
-  # Calculated the child and parent values for the image
-  kontextualVals <- calcKontextual(
-    data = images,
-    child1 = from,
-    child2 = to,
-    parent = parent,
-    r = r,
-    closePairs = closePairs,
-    inhom = inhom,
-    ...
-  )
-
+  
+  
+  child1 = from
+  child2 = to
+  
+  # Ensure closepairs is at the correct radius
+  closePairs <- closePairs |>
+    filter(d < r)
+  
+  # Count the number of each cell type near each cell.
+  # data.table would make this faster too.
+  counts <- closePairs |>
+    group_by(i, cellTypeI, cellTypeJ) |>
+    summarise(n = sum(edge), .groups = "drop") |>
+    pivot_wider(id_cols = c("i", "cellTypeI"), names_from = cellTypeJ, values_from = n, values_fill = 0) |>
+    as.data.frame()
+  
+  ########
+  # Calculate statistics
+  ########
+  
+  Kontextual <- .Kontext(closePairs, counts, child1, child2, parent, r, returnWeight)
+  
+  if (inhom) {
+    L <- .Linhomfunction(closePairs, counts, child1, child2, r, area)
+  } else {
+    L <- .Lfunction(closePairs, counts, child1, child2, r, area)
+  }
+  
+  if (returnWeight) {
+    return(Kontext)
+  }
+  
+  
   # return data frame of original and kontextual values.
   condL <- data.frame(
-    original = kontextualVals["L"],
-    kontextual = kontextualVals["Kontextual"]
+    original = L,
+    kontextual = Kontextual
   )
 
   rownames(condL) <- paste(from, "__", to)
+
 
   return(condL)
 }
@@ -359,15 +392,8 @@ isKontextual <- function(kontextualResult) {
   colNames <- c(
     "imageID",
     "test",
-    "original",
     "kontextual",
-    "r",
-    "weightQuantile",
-    "inhom",
-    "edge",
-    "includeZeroCells",
-    "window",
-    "window.length"
+    "r"
   )
 
   return(all(colNames %in% names(kontextualResult)))

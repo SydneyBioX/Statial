@@ -1,97 +1,13 @@
-#' @noRd
-#' @importFrom methods is
-#' @importFrom stats quantile
-
-calcKontextual <- function(data,
-                           child1,
-                           child2,
-                           parent,
-                           r,
-                           closePairs = NULL,
-                           window = "convex",
-                           window.length = NULL,
-                           inhom = FALSE,
-                           returnWeight = FALSE) {
-  if (is(data, "ppp")) {
-    data <- PPPdf(data)
-  }
-
-  # if class is data frame it show make window etc.
-  ow <- Statial::makeWindow(data, window, window.length)
-
-  if (is.null(r)) {
-    r <- 50
-  }
-
-  # Filter data, !!!!!! wouldn't do this if looping later.
-  #  data <- data[data$cellType%in%c(child1, child2, parent),]
-
-  # Create ppp
-  X <-
-    spatstat.geom::ppp(
-      x = data$x,
-      y = data$y,
-      window = ow,
-      marks = data$cellType
-    )
-
-  Area <- spatstat.geom::area(X)
-
-  if (is.null(closePairs)) {
-    # Calculate pairwise relationships between all cells for a r
-    closePairs <- spatstat.geom::closepairs(X, r, what = "ijd", distinct = FALSE) |>
-      data.frame()
-
-    edge <- .borderEdge(imagePPP, r)
-    edge <- as.data.frame(edge)
-    edge$i <- factor(data$cellID, levels = data$cellID)
-    edge$edge <- 1 / edge$edge
-
-    closePairs <- left_join(closePairs, edge[, c("i", "edge")], by = "i")
-  } else {
-    closePairs <- closePairs |>
-      filter(d < r)
-  }
-
-  # Count the number of each cell type near each cell.
-  # data.table would make this faster too.
-  counts <- closePairs |>
-    group_by(i, cellTypeI, cellTypeJ) |>
-    summarise(n = sum(edge), .groups = "drop") |>
-    pivot_wider(id_cols = c("i", "cellTypeI"), names_from = cellTypeJ, values_from = n, values_fill = 0) |>
-    as.data.frame()
-
-  ########
-  # Calculate statistics
-  ########
-
-  Kontextual <- .Kontext(closePairs, counts, child1, child2, parent, r, Area, returnWeight)
-
-  if (inhom) {
-    L <- .Linhomfunction(closePairs, counts, child1, child2, r, Area)
-  } else {
-    L <- .Lfunction(closePairs, counts, child1, child2, r, Area)
-  }
-
-  if (returnWeight) {
-    return(Kontext)
-  }
-
-  return(c(L = L, Kontextual = Kontextual))
-}
-
-
-
 #' Calculates l function
 #' @noRd
-.Lfunction <- function(closePairs, counts, child1, child2, r, Area) {
+.Lfunction <- function(closePairs, counts, child1, child2, r, area) {
   nChild1 <- sum(counts$cellTypeI == child1)
   nChild2 <- sum(counts$cellTypeI == child2)
 
   # Adds up number of cell type 2 within cell type
   numerator <- sum(counts[counts$cellType == child1, child2])
 
-  lambda2 <- nChild2 / Area
+  lambda2 <- nChild2 / area
   kvalue <- (numerator / lambda2) * (1 / nChild1)
 
   sqrt(kvalue / pi) - r
@@ -99,7 +15,7 @@ calcKontextual <- function(data,
 
 #' Calculates inhomogenous L function
 #' @noRd
-.Linhomfunction <- function(closePairs, counts, child1, child2, r, Area) {
+.Linhomfunction <- function(closePairs, counts, child1, child2, r, area) {
   nChild1 <- sum(counts$cellTypeI == child1)
   nChild2 <- sum(counts$cellTypeI == child2)
 
@@ -122,7 +38,7 @@ calcKontextual <- function(data,
 
 #' Calculates kontextual value
 #' @noRd
-.Kontext <- function(closePairs, counts, child1, child2, parent, r, Area, returnWeight) {
+.Kontext <- function(closePairs, counts, child1, child2, parent, r, returnWeight) {
   # child1 is root cell
   # child2 is child cell
 
