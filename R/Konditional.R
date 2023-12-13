@@ -139,10 +139,13 @@ Kontextual <- function(cells,
   # Specify cores for parrellel computing
   x <- runif(1) # nolint
   BPPARAM <- Statial:::.generateBPParam(cores = cores)
-  
+
+  cells <- lapply(cells, function(image) {
+    image$cellID <- factor(seq_len(nrow(image)))
+    image
+  })
   
   images <- cells
- 
   
   # Calculate close pairs for all images
   closePairs <- bplapply(images, function(image){
@@ -155,13 +158,19 @@ Kontextual <- function(cells,
       window = ow,
       marks = image$cellType
     )
-    
+
     closePairs <- spatstat.geom::closepairs(imagePPP, max(r, na.rm = TRUE), what = "ijd", distinct = FALSE) |> 
       data.frame() 
 
+    cellTypes <- imagePPP$cellType
+    names(cellTypes) <- imagePPP$cellID
+    closePairs$cellTypeI <- cellTypes[(closePairs$i)]
+    closePairs$cellTypeJ <- cellTypes[(closePairs$j)]
+    closePairs$i <- factor(closePairs$i, levels = imagePPP$cellID)
+    
     edge <- .borderEdge(imagePPP, r)
     edge <- as.data.frame(edge)
-    edge$i <- factor(data$cellID, levels = data$cellID)
+    edge$i <- factor(image$cellID, levels = image$cellID)
     edge$edge <- 1/edge$edge
   
     closePairs <- left_join(closePairs, edge[,c("i", "edge")], by = "i")

@@ -16,13 +16,7 @@ calcKontextual <- function(data,
   if (is(data, "ppp")) {
     data <- PPPdf(data)
   }
-  
-  
-  ####### !!!!!!! I dumped this because of errors  
-  # if (!("cellID" %in% names(data))) {
-  data$cellID <- factor(seq_len(nrow(data)))
-  #  }
-  
+
   # if class is data frame it show make window etc.
   ow <- Statial::makeWindow(data, window, window.length)
   

@@ -20,6 +20,9 @@ immune <- c(bcells, tcells, myeloid, "NK", "other immune") # NK = Natural Killer
 
 all <- c(tumour, tissue, immune, "Unidentified")
 
+kerenSCE <- kerenSCE |> 
+    filter(imageID %in% c(5, 6))
+
 parentDf <- parentCombinations(
   all = all,
   tumour,
@@ -31,6 +34,14 @@ parentDf <- parentCombinations(
   tissue,
   immune
 )
+
+kerenKontextual <- Kontextual(
+    cells = kerenSCE,
+    parentDf = parentDf,
+    r = 60,
+    cores = 1
+)
+
 
 p <- profvis(
     kerenKontextual <- Kontextual(
