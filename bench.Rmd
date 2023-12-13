@@ -66,3 +66,34 @@ htmlwidgets::saveWidget(p, "profile.html")
 
 ```
 
+```{r}
+devtools::load_all("/dskh/nobackup/farhana/Statial")
+
+
+kerenKontextual <- Kontextual(
+    cells = kerenSCE,
+    parentDf = parentDf[1:10, ],
+    r = 30,
+    cores = 1
+)
+
+devtools::load_all("/dskh/nobackup/farhana/proj-Statial/Statial")
+
+kerenKontextualOld <- Kontextual(
+    cells = kerenSCE,
+    parentDf = parentDf[1:10, ],
+    r = 30,
+    cores = 1
+)
+
+
+
+
+```
+
+```{r}
+kerenKontextual
+
+
+```
+
