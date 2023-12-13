@@ -9,6 +9,7 @@ testStatial.Rmd
 vignettes/Statial_cache
 # vscode settings
 .vscode
+profile.html
 
 bench
 /doc/
