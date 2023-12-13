@@ -158,6 +158,14 @@ Kontextual <- function(cells,
     
     closePairs <- spatstat.geom::closepairs(imagePPP, max(r, na.rm = TRUE), what = "ijd", distinct = FALSE) |> 
       data.frame() 
+
+    edge <- .borderEdge(imagePPP, r)
+    edge <- as.data.frame(edge)
+    edge$i <- factor(data$cellID, levels = data$cellID)
+    edge$edge <- 1/edge$edge
+  
+    closePairs <- left_join(closePairs, edge[,c("i", "edge")], by = "i")
+
     
     return(closePairs)
   }, BPPARAM = BPPARAM)

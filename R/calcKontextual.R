@@ -60,16 +60,7 @@ calcKontextual <- function(data,
   closePairs$cellTypeI <- cellTypes[(closePairs$i)]
   closePairs$cellTypeJ <- cellTypes[(closePairs$j)]
   closePairs$i <- factor(closePairs$i, levels = data$cellID)
-  
-  # Do some border correction  
-  edge <- .borderEdge(X, r)
-  edge <- as.data.frame(edge)
-  edge$i <- factor(data$cellID, levels = data$cellID)
-  edge$edge <- 1/edge$edge
-  
-  closePairs <- left_join(closePairs, edge[,c("i", "edge")], by = "i")
-  
-  
+
   # Count the number of each cell type near each cell.  
   # data.table would make this faster too.
   counts <- closePairs |>
