@@ -349,9 +349,6 @@ KontextualCore <- function(images,
   child1 = from
   child2 = to
   
-  # Ensure closepairs is at the correct radius
-  closePairs <- closePairs[d < r]
-  
   # Convert closepairs to counts of cells next to other cells
   counts <- closePairs[, .(n = sum(edge)), by = .(i, cellTypeI, cellTypeJ)]
   counts <- dcast(counts, i + cellTypeI ~ cellTypeJ, value.var = "n", fill = 0)
