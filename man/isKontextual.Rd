@@ -13,7 +13,7 @@ isKontextual(kontextualResult)
 Test whether an object is a kontextualResult
 }
 \examples{
-data = data.frame()
-if(!isKontextual(data)) print("Not a kontextualResult")
+data <- data.frame()
+if (!isKontextual(data)) print("Not a kontextualResult")
 
 }

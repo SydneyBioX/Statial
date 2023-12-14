@@ -53,6 +53,7 @@
 #' @importFrom tibble remove_rownames
 #' @importFrom methods is
 #' @importFrom stats runif
+#' @importFrom data.table as.data.table 
 
 Kontextual <- function(cells,
                        r,
@@ -130,6 +131,8 @@ Kontextual <- function(cells,
   # Specify cores for parrellel computing
   x <- runif(1) # nolint
   BPPARAM <- Statial:::.generateBPParam(cores = cores)
+  
+  r = sort(r)
 
   cells <- lapply(cells, function(image) {
     image$cellID <- factor(seq_len(nrow(image)))
@@ -166,10 +169,22 @@ Kontextual <- function(cells,
     return(spatstat.geom::area(image))
   }, BPPARAM = BPPARAM )
 
-  # MAYBE CLOSE PAIRS NEED TO BE A MAPPLY TO ALLOW FOR MULTIPLE R
+
   
-  # Calculate close pairs for all images
-  closePairs <- bplapply(imagesPPP, function(imagePPP) {
+  imagesInfo <- data.frame(
+    imageID = names(images),
+    images = I(images),
+    imagesPPP = I(imagesPPP),
+    area = I(Areas)
+  )
+
+  imagesInfoR <- expand_grid(
+    imagesInfo,
+    r = r) |> 
+    mutate(id = paste(imageID, r, sep = "."))
+  
+  # Calculate close pairs for all images and radii
+  closePairList <- bplapply(imagesPPP, function(imagePPP) {
 
     # Calculate close pairs
     closePairs <- spatstat.geom::closepairs(
@@ -184,7 +199,39 @@ Kontextual <- function(cells,
     closePairs$cellTypeJ <- cellTypes[(closePairs$j)]
     closePairs$i <- factor(closePairs$i, levels = imagePPP$marks$cellID)
     
-    # Perform edge correction (if needed)
+    closePairs <- as.data.table(closePairs)
+   
+    # Subsetting close pairs if there is more R values.
+    if(length(r) > 1){
+      closePairList = lapply(r[-length(r)], function(r){
+        return(closePairs[d < r])
+      })
+      
+      closePairList = append(closePairList, list(closePairs))
+      names(closePairList) = r
+    } else{
+      closePairList = list(closePairs)
+      names(closePairList) = r
+    }
+    
+    return(closePairList)
+    
+  }, BPPARAM = BPPARAM)
+  
+  
+  # Adding closePairs to the image data.frame
+  closePairList = unlist(closePairList, recursive = FALSE)
+  closePairsDfs = data.frame(id = names(closePairList), 
+                             closePairs = I(closePairList))
+  imagesInfoR = left_join(imagesInfoR,
+                          closePairsDfs,
+                          by = join_by(id))
+  
+
+  
+  # Perform edge correction (if needed)
+  imagesInfoR$closePairs <- bpmapply(function(imagePPP, closePairs, r){
+    
     if(edgeCorrect){
       edge <- .borderEdge(imagePPP, r)
       edge <- as.data.frame(edge)
@@ -196,30 +243,24 @@ Kontextual <- function(cells,
         edge = 1
       )
     }
-  
+
     closePairs <- left_join(closePairs, edge[, c("i", "edge")], by = "i")
+  }, 
+  imagePPP = imagesInfoR$imagesPPP,
+  closePairs = imagesInfoR$closePairs,
+  r = imagesInfoR$r,
+  SIMPLIFY = FALSE,
+  BPPARAM = BPPARAM)
 
-    return(closePairs)
-    
-  }, BPPARAM = BPPARAM)
-
-
-  imagesInfo <- data.frame(
-    imageID = names(images),
-    images = I(images),
-    closePairs = I(closePairs),
-    area = I(Areas)
-  )
 
   # Create all combinations of specified parameters
   allCombinations <- expand_grid(
     parentDf,
-    r = r,
     inhomL = inhom
   )
 
   # Create data frame for mapply
-  kontextualDf <- merge(imagesInfo, allCombinations, all = TRUE) |>
+  kontextualDf <- merge(imagesInfoR, allCombinations, all = TRUE) |>
     mutate("test" = paste(from, "__", to, sep = ""))
 
   if ("parent_name" %in% names(kontextualDf)) {
@@ -243,7 +284,7 @@ Kontextual <- function(cells,
     SIMPLIFY = FALSE,
     BPPARAM = BPPARAM
   )
-
+  
 
   # Combine data.frame rows
   lVals <- lVals |>
@@ -283,6 +324,7 @@ Kontextual <- function(cells,
 
 #' @noRd
 #'
+#' @importFrom data.table dcast
 KontextualCore <- function(images,
                            r,
                            from,
@@ -308,16 +350,12 @@ KontextualCore <- function(images,
   child2 = to
   
   # Ensure closepairs is at the correct radius
-  closePairs <- closePairs |>
-    filter(d < r)
+  closePairs <- closePairs[d < r]
   
-  # Count the number of each cell type near each cell.
-  # data.table would make this faster too.
-  counts <- closePairs |>
-    group_by(i, cellTypeI, cellTypeJ) |>
-    summarise(n = sum(edge), .groups = "drop") |>
-    pivot_wider(id_cols = c("i", "cellTypeI"), names_from = cellTypeJ, values_from = n, values_fill = 0) |>
-    as.data.frame()
+  # Convert closepairs to counts of cells next to other cells
+  counts <- closePairs[, .(n = sum(edge)), by = .(i, cellTypeI, cellTypeJ)]
+  counts <- dcast(counts, i + cellTypeI ~ cellTypeJ, value.var = "n", fill = 0)
+
   
   ########
   # Calculate statistics
