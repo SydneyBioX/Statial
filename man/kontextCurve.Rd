@@ -57,15 +57,15 @@ A data frame of original L values and Kontextual values evaluated
 over a range of radii.
 }
 \description{
-This function obtains `Kondtional` values over a range of radii, standard 
-deviations for each value can be obtained using permutation for significance 
+This function obtains `Kondtional` values over a range of radii, standard
+deviations for each value can be obtained using permutation for significance
 testing. To obtain estimates for standard deviations specify `se = TRUE`.
 }
 \examples{
 
 data("kerenSCE")
 
-kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
 
 rsDf <- kontextCurve(
   cells = kerenSCE,

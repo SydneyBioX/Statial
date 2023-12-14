@@ -1,8 +1,8 @@
 #' Evaluation of Kontextual over a range of radii.
-#' 
-#' @description 
-#' This function obtains `Kondtional` values over a range of radii, standard 
-#' deviations for each value can be obtained using permutation for significance 
+#'
+#' @description
+#' This function obtains `Kondtional` values over a range of radii, standard
+#' deviations for each value can be obtained using permutation for significance
 #' testing. To obtain estimates for standard deviations specify `se = TRUE`.
 #'
 #'
@@ -29,9 +29,9 @@
 #' @examples
 #'
 #' data("kerenSCE")
-#' 
-#' kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
-#' 
+#'
+#' kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
+#'
 #' rsDf <- kontextCurve(
 #'   cells = kerenSCE,
 #'   from = "CD4_Cell",
@@ -59,7 +59,6 @@ kontextCurve <- function(cells,
                          imageID = "imageID",
                          cellType = "cellType",
                          ...) {
-  
   kontextualVals <- Kontextual(
     cells = cells,
     from = from,
@@ -75,11 +74,11 @@ kontextCurve <- function(cells,
     cellType = cellType,
     ...
   )
-  
+
   rsDf <- kontextualVals |>
     dplyr::select("r", "original", "kontextual")
-  
-  
+
+
   if (se == TRUE) {
     seDf <- relabelKontextual(
       cells = cells,
@@ -95,7 +94,7 @@ kontextCurve <- function(cells,
       cores = cores,
       ...
     )
-    
+
     seDf <- seDf |>
       dplyr::filter(type != "original") |>
       dplyr::select("r", "original", "kontextual") |>
@@ -104,10 +103,10 @@ kontextCurve <- function(cells,
         "originalSd" = sd(original),
         "kontextualSd" = sd(kontextual)
       )
-    
+
     rsDf <- merge(rsDf, seDf, by = "r")
   }
-  
+
   return(rsDf)
 }
 
@@ -115,11 +114,11 @@ kontextCurve <- function(cells,
 
 #' Plotting the original and kontextual L values over a range of radii.
 #'
-#' @description 
+#' @description
 #' This function takes outputs from rsCurve and plots
 #' them in ggplot. If standard deviation is estimated in rsCurve,
 #' then confidence intervals will be constructed based on the standard deviation.
-#' If the confidence interval overlaps with 0, then the relationship is insignificant 
+#' If the confidence interval overlaps with 0, then the relationship is insignificant
 #' for that radius.
 #'
 #' @param rsDf A data frame from \code{\link[Statial]{kontextCurve}}.
@@ -129,8 +128,8 @@ kontextCurve <- function(cells,
 #'
 #' @examples
 #' data("kerenSCE")
-#' 
-#' kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+#'
+#' kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
 #'
 #' rsDf <- kontextCurve(
 #'   cells = kerenImage6,

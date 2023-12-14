@@ -127,13 +127,13 @@ Here we examine an image highlighted in the Keren et al. 2018 manuscript where t
 kerenSCE$cellTypeNew <- kerenSCE$cellType
 
 # Select for all cells that express higher than baseline level of p53
-p53Pos = assay(kerenSCE)["p53",] > -0.300460
+p53Pos <- assay(kerenSCE)["p53", ] > -0.300460
 
 # Find p53+ tumour cells
 kerenSCE$cellTypeNew[kerenSCE$cellType %in% tumour] <- "Tumour"
 kerenSCE$cellTypeNew[p53Pos & kerenSCE$cellType %in% tumour] <- "p53_Tumour"
 
-#Group all immune cells under the name "Immune"
+# Group all immune cells under the name "Immune"
 
 kerenSCE$cellTypeNew[kerenSCE$cellType %in% immune] <- "Immune"
 
@@ -147,8 +147,8 @@ kerenSCE |>
   arrange(cellTypeNew) |>
   ggplot(aes(x = x, y = y, color = cellTypeNew)) +
   geom_point(size = 1) +
-  scale_colour_manual(values = c("#505050", "#64BC46","#D6D6D6")) + guides(colour = guide_legend(title = "Cell types", override.aes = list(size=3)))
-
+  scale_colour_manual(values = c("#505050", "#64BC46", "#D6D6D6")) +
+  guides(colour = guide_legend(title = "Cell types", override.aes = list(size = 3)))
 ```
 
 `Kontextual` accepts a `SingleCellExperiment` object, a single image, or list of images from a `SingleCellExperiment` object, which gets passed into the `cells` argument. The two cell types which will be evaluated are specified in the `to` and `from` arguments. A parent population must also be specified in the `parent` argument, note the parent cell population must include the `to` cell type.  The argument `r` will specify the radius which the cell relationship will be evaluated on. `Kontextual` supports parallel processing, the number of cores can be specified using the `cores` argument. `Kontextual` can take a single value or multiple values for each argument and will test all combinations of the arguments specified. 
@@ -166,13 +166,11 @@ p53_Kontextual <- Kontextual(
 )
 
 p53_Kontextual
-
 ```
 
 The `kontextCurve` function plots the L-function value and Kontextual values over a range of radii. If the points lie above the red line (expected pattern) then localisation is indicated for that radius, if the points lie below the red line then dispersion is indicated. As seen in the following plot Kontextual is able to correctly identify localisation between `Immune` and `p53` in the example image for a certain range of radii. When the radius gets too large the overall relationship between `Immune` and `p53` looks dispersed. The original L-function is not able to identify localisation at any value of radii.
 
 ```{r}
-
 curves <- kontextCurve(
   cells = kerenSCE,
   from = "Immune",
@@ -202,7 +200,6 @@ parentDf <- parentCombinations(
   tissue,
   immune
 )
-
 ```
 
 ## Discrete cell state changes across all images
@@ -217,15 +214,12 @@ kerenKontextual <- Kontextual(
   r = 100,
   cores = nCores
 )
-
-
-
 ```
 
 ```{r}
 data("kerenKontextual")
 bigDiff <- (kerenKontextual$original - kerenKontextual$kontextual)
-head(kerenKontextual[order(bigDiff),], 10)
+head(kerenKontextual[order(bigDiff), ], 10)
 ```
 
 ## Associate discrete state changes with survival outcomes
@@ -233,44 +227,40 @@ head(kerenKontextual[order(bigDiff),], 10)
 To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we can use the `colTest` function from `SpicyR`. To understand if survival outcomes differ significantly between 2 patient groups, specify `type = "survival"` in `colTest`. Here we examine which features are most associated with patient survival using the Kontextual values as an example. To do so, survival data is extracted from `kerenSCE` and converted into the survival object `kerenSurv`.
 
 ```{r}
-
 # Extracting survival data
-survData = kerenSCE |>
-    colData() |> 
-    data.frame() |> 
-    select(imageID, Survival_days_capped, Censored) |> 
-    mutate(event = 1 - Censored) |> 
-    unique()
+survData <- kerenSCE |>
+  colData() |>
+  data.frame() |>
+  select(imageID, Survival_days_capped, Censored) |>
+  mutate(event = 1 - Censored) |>
+  unique()
 
 # Creating survival vector
-kerenSurv = Surv(survData$Survival_days_capped, survData$event)
-names(kerenSurv) = survData$imageID
-
+kerenSurv <- Surv(survData$Survival_days_capped, survData$event)
+names(kerenSurv) <- survData$imageID
 ```
 
 In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepMatrix`. Note, to extract the original L-function values, specify `column = "original"` in `prepMatrix`.
 
 ```{r}
 # Converting Kontextual result into data matrix
-kontextMat = prepMatrix(kerenKontextual)
+kontextMat <- prepMatrix(kerenKontextual)
 
-# Ensuring rownames of kontextMat match up with rownames of the survival vector 
-kontextMat = kontextMat[names(kerenSurv), ]
+# Ensuring rownames of kontextMat match up with rownames of the survival vector
+kontextMat <- kontextMat[names(kerenSurv), ]
 
 # Replace NAs with 0
-kontextMat[is.na(kontextMat )] <- 0
-
+kontextMat[is.na(kontextMat)] <- 0
 ```
 
 Finally, both the Kontextual matrix and survival object are passed into `colTest`, with `type = "survival"` to obtain the survival results.
 
 ```{r}
 # Running survival analysis
-survivalResults = spicyR::colTest(kontextMat, kerenSurv, type = "survival")
+survivalResults <- spicyR::colTest(kontextMat, kerenSurv, type = "survival")
 
 
 head(survivalResults)
-
 ```
 
 As we can see from the results `CD8_Cell__Neutrophils__myeloid` is the one of the most significant pairwise relationship which contributes to patient survival. That is the relationship between CD8 T cells and Neutrophils, relative to the parent population of all myeloid cells. We can see that there is a negative coefficient associated with this relationship, which tells us an increase in localisation of CD8 T cells and Neutrophils leads to poorer survival outcomes for patients.
@@ -281,13 +271,13 @@ As shown below, when Neutrophils and Dc/Mono are relatively more localised to on
 
 ```{r, fig.width=5, fig.height=4}
 # Selecting most significant relationship
-survRelationship = kontextMat[["CD8_Cell__Neutrophils__myeloid"]]
-survRelationship = ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
-    
+survRelationship <- kontextMat[["CD8_Cell__Neutrophils__myeloid"]]
+survRelationship <- ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
+
 # Plotting Kaplan-Meier curve
 survfit2(kerenSurv ~ survRelationship) |>
-    ggsurvfit() +
-    ggtitle("CD8_Cell__Neutrophils__myeloid")
+  ggsurvfit() +
+  ggtitle("CD8_Cell__Neutrophils__myeloid")
 ```
 
 
@@ -302,15 +292,15 @@ This approach measures how protein markers in a cell change with spatial proximi
 
 The first step in analysing these changes is to calculate the spatial proximity (`getDistances`) and abundance (`getAbundances`) of each cell to every cell type. These values will then be stored in the `reducedDims` slot of the `SingleCellExperiment` object under the names `distances` and `abundances` respectively.
 ```{r}
-
 kerenSCE <- getDistances(kerenSCE,
-                    maxDist = 200,
-                    nCores = 1)
+  maxDist = 200,
+  nCores = 1
+)
 
 kerenSCE <- getAbundances(kerenSCE,
-                     r = 200,
-                     nCores = 1)
-
+  r = 200,
+  nCores = 1
+)
 ```
 
 First, let's examine the same effect observed earlier with Kontextual - the localisation between p53-positive keratin/tumour cells and macrophages in the context of total keratin/tumour cells for image 6 of the Keren et al. dataset.
@@ -325,7 +315,8 @@ stateChanges <- calcStateChanges(
   from = "Keratin_Tumour",
   to = "Macrophages",
   marker = "p53",
-  nCores = 1)
+  nCores = 1
+)
 
 stateChanges
 ```
@@ -348,10 +339,10 @@ p <- plotStateChanges(
   shape = 19,
   interactive = FALSE,
   plotModelFit = FALSE,
-  method = "lm")
+  method = "lm"
+)
 
 p
-
 ```
 
 ## Continuous cell state changes across all images
@@ -363,9 +354,10 @@ stateChanges <- calcStateChanges(
   cells = kerenSCE,
   type = "distances",
   nCores = 1,
-  minCells = 100)
+  minCells = 100
+)
 
-stateChanges |> 
+stateChanges |>
   filter(imageID == 6) |>
   head(n = 10)
 ```
@@ -378,7 +370,6 @@ We can examine some of these interactions further with the `plotStateChanges` fu
 Biologically, HLA Class I is a ligand which exists on all nucleated cells, tasked with presenting internal cell antigens for recognition by the immune system, marking aberrant cells for destruction by either CD8+ T cells or NK cells.
 
 ```{r}
-
 p <- plotStateChanges(
   cells = kerenSCE,
   type = "distances",
@@ -390,10 +381,10 @@ p <- plotStateChanges(
   shape = 19,
   interactive = FALSE,
   plotModelFit = FALSE,
-  method = "lm")
+  method = "lm"
+)
 
 p
-
 ```
 
 Next, let's take a look at the top 10 most significant results across all images. 
@@ -406,7 +397,6 @@ Immediately, we can appreciate that a couple of these interactions are not biolo
 Could this potentially be an artefact of `calcStateChanges`? We can examine the image through the `plotStateChanges` function, where we indeed observe a strong increase in CD20 expression in T cells nearby B cell populations.
 
 ```{r}
-
 p <- plotStateChanges(
   cells = kerenSCE,
   type = "distances",
@@ -418,10 +408,10 @@ p <- plotStateChanges(
   shape = 19,
   interactive = FALSE,
   plotModelFit = FALSE,
-  method = "lm")
+  method = "lm"
+)
 
 p
-
 ```
 
 So why are T cells expressing CD20?
@@ -444,10 +434,10 @@ stateChangesCorrected <- calcStateChanges(
   type = "distances",
   nCores = 1,
   minCells = 100,
-  contamination = TRUE)
+  contamination = TRUE
+)
 
 stateChangesCorrected |> head(n = 20)
-
 ```
 However, this does not mean factoring in contamination into our linear model was ineffective. 
 
@@ -458,20 +448,29 @@ Plotting the relationship between false positives and true positives, we'd expec
 ```{r}
 cellTypeMarkers <- c("CD3", "CD4", "CD8", "CD56", "CD11c", "CD68", "CD45", "CD20")
 
-values = c("blue", "red")
+values <- c("blue", "red")
 names(values) <- c("None", "Corrected")
 
-df <- rbind(data.frame(TP =cumsum(stateChanges$marker %in% cellTypeMarkers), FP = cumsum(!stateChanges$marker %in% cellTypeMarkers), type = "None"),
-            data.frame(TP =cumsum(stateChangesCorrected$marker %in% cellTypeMarkers), FP = cumsum(!stateChangesCorrected$marker %in% cellTypeMarkers), type = "Corrected"))
+df <- rbind(
+  data.frame(TP = cumsum(stateChanges$marker %in% cellTypeMarkers), FP = cumsum(!stateChanges$marker %in% cellTypeMarkers), type = "None"),
+  data.frame(TP = cumsum(stateChangesCorrected$marker %in% cellTypeMarkers), FP = cumsum(!stateChangesCorrected$marker %in% cellTypeMarkers), type = "Corrected")
+)
 
-ggplot(df, aes(x = TP, y = FP, colour = type)) + geom_line()+ labs(y = "Cell state marker", x = "Cell type marker") + scale_colour_manual(values = values)
+ggplot(df, aes(x = TP, y = FP, colour = type)) +
+  geom_line() +
+  labs(y = "Cell state marker", x = "Cell type marker") +
+  scale_colour_manual(values = values)
 ```
 
 Here, we zoom in on the ROC curve where the top 100 lowest p values occur, where we indeed see more true positives than false positives with contamination correction.
 
 ```{r}
-ggplot(df, aes(x = TP, y = FP, colour = type)) + geom_line()+ xlim(0,100) + ylim(0,1000)+ labs(y = "Cell state marker", x = "Cell type marker") + scale_colour_manual(values = values)
-            
+ggplot(df, aes(x = TP, y = FP, colour = type)) +
+  geom_line() +
+  xlim(0, 100) +
+  ylim(0, 1000) +
+  labs(y = "Cell state marker", x = "Cell type marker") +
+  scale_colour_manual(values = values)
 ```
 
 ## Associate continuous state changes with survival outcomes
@@ -487,27 +486,25 @@ stateMat <- prepMatrix(stateChanges)
 stateMat <- stateMat[names(kerenSurv), ]
 
 # Remove some very small values
-stateMat <- stateMat[,colMeans(abs(stateMat)>0.0001)>.8]
+stateMat <- stateMat[, colMeans(abs(stateMat) > 0.0001) > .8]
 
 survivalResults <- colTest(stateMat, kerenSurv, type = "survival")
 
 head(survivalResults)
-
 ```
 
 For our state changes results, `Keratin_Tumour__CD4_Cell__Keratin6` is the most significant pairwise relationship which contributes to patient survival. That is, the relationship between HLA class I expression in keratin/tumour cells and their spatial proximity to mesenchymal cells. As there is a negative coeffcient associated with this relationship, which tells us that higher HLA class I expression in keratin/tumour cells nearby mesenchymal cell populations lead to poorer survival outcomes for patients.
 
 ```{r, fig.width=5, fig.height=4}
 # Selecting the most significant relationship
-survRelationship = stateMat[["Keratin_Tumour__CD4_Cell__Keratin6"]]
-survRelationship = ifelse(survRelationship > median(survRelationship), "Higher expression in close cells", "Lower expression in close cells")
-    
+survRelationship <- stateMat[["Keratin_Tumour__CD4_Cell__Keratin6"]]
+survRelationship <- ifelse(survRelationship > median(survRelationship), "Higher expression in close cells", "Lower expression in close cells")
+
 # Plotting Kaplan-Meier curve
 survfit2(kerenSurv ~ survRelationship) |>
-    ggsurvfit() +
-    add_pvalue() +
-    ggtitle("Keratin_Tumour__CD4_Cell__Keratin6")
-
+  ggsurvfit() +
+  add_pvalue() +
+  ggtitle("Keratin_Tumour__CD4_Cell__Keratin6")
 ```
 
 # Region analysis using lisaClust
@@ -519,7 +516,6 @@ set.seed(51773)
 
 # Preparing features for lisaClust
 kerenSCE <- lisaClust::lisaClust(kerenSCE, k = 5)
-
 ```
 
 The regions identified by licaClust can be visualised using the `hatchingPlot` function.
@@ -529,8 +525,7 @@ lisaClust::hatchingPlot(kerenSCE,
   useImages = "5",
   line.spacing = 41, # spacing of lines
   nbp = 100 # smoothness of lines
-) 
-
+)
 ```
 
 # Marker Means
@@ -539,16 +534,15 @@ lisaClust::hatchingPlot(kerenSCE,
 
 
 ```{r lisaClust}
-
 cellTypeRegionMeans <- getMarkerMeans(kerenSCE,
-                              imageID = "imageID",
-                              cellType = "cellType",
-                              region = "region")
+  imageID = "imageID",
+  cellType = "cellType",
+  region = "region"
+)
 
-survivalResults = colTest(cellTypeRegionMeans[names(kerenSurv),], kerenSurv, type = "survival")
+survivalResults <- colTest(cellTypeRegionMeans[names(kerenSurv), ], kerenSurv, type = "survival")
 
 head(survivalResults)
-
 ```
 
 # Patient classification
@@ -556,40 +550,41 @@ head(survivalResults)
 Finally we demonstrate how we can use `ClassifyR` to perform patient classification with the features generated from `Statial`. In addition to the kontextual, state changes, and marker means values, we also calculate cell type proportions and region proportions using the `getProp` function in `spicyR`. Here we perform 3 fold cross validation with 10 repeats, using a CoxPH model for survival classification, feature selection is also performed by selecting the top 10 features per fold using a CoxPH model.
 
 ```{r}
-
 # Calculate cell type and region proportions
-cellTypeProp <- getProp(kerenSCE, 
-                       feature = "cellType",
-                       imageID = "imageID")
-regionProp <- getProp(kerenSCE, 
-                       feature = "region",
-                       imageID = "imageID")
+cellTypeProp <- getProp(kerenSCE,
+  feature = "cellType",
+  imageID = "imageID"
+)
+regionProp <- getProp(kerenSCE,
+  feature = "region",
+  imageID = "imageID"
+)
 
-# Combine all the features into a list for classification 
-featureList <- list(states = stateMat, 
-                     kontextual = kontextMat,
-                     regionMarkerMeans = cellTypeRegionMeans,
-                     cellTypeProp = cellTypeProp,
-                     regionProp = regionProp
-                    )
+# Combine all the features into a list for classification
+featureList <- list(
+  states = stateMat,
+  kontextual = kontextMat,
+  regionMarkerMeans = cellTypeRegionMeans,
+  cellTypeProp = cellTypeProp,
+  regionProp = regionProp
+)
 
 # Ensure the rownames of the features match the order of the survival vector
-featureList <- lapply(featureList, function(x)x[names(kerenSurv),])
+featureList <- lapply(featureList, function(x) x[names(kerenSurv), ])
 
 
 set.seed(51773)
 
-kerenCV = crossValidate(
+kerenCV <- crossValidate(
   measurements = featureList,
   outcome = kerenSurv,
   classifier = "CoxPH",
-  selectionMethod  = "CoxPH",
+  selectionMethod = "CoxPH",
   nFolds = 5,
   nFeatures = 10,
   nRepeats = 20,
   nCores = 1
-  )
-
+)
 ```
 
 
@@ -601,8 +596,8 @@ Here, we use the `performancePlot` function to assess the C-index from each repe
 # Calculate AUC for each cross-validation repeat and plot.
 performancePlot(kerenCV,
   characteristicsList = list(x = "Assay Name")
-  ) + 
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
 

@@ -73,16 +73,16 @@ corresponding parent
 }
 \description{
 Function which randomises specified cells in an image and calculates
-the `Kontextual` value. This can be used to estimate the null distribution, 
+the `Kontextual` value. This can be used to estimate the null distribution,
 of the parent cell population for significance testing.
 
-This function relabels all specified cells within a single image, to 
+This function relabels all specified cells within a single image, to
 estimate the null distribution of cell population specified.
 }
 \examples{
 data("kerenSCE")
 
-kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
 
 relabelResult <- relabelKontextual(
   cells = kerenImage6,
@@ -96,11 +96,11 @@ relabelResult <- relabelKontextual(
 
 data("kerenSCE")
 
-kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
 
 kerenImage6 <- kerenImage6 |>
-         SingleCellExperiment::colData() |>
-         data.frame()
+  SingleCellExperiment::colData() |>
+  data.frame()
 
 # Permute CD8 T cells and T cell labels in the image
 relabeledImage <- relabel(kerenImage6, labels = c("p53", "Keratin+Tumour"))

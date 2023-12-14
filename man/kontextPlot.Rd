@@ -17,13 +17,13 @@ A ggplotly object showing the original and kontextual L function
 This function takes outputs from rsCurve and plots
 them in ggplot. If standard deviation is estimated in rsCurve,
 then confidence intervals will be constructed based on the standard deviation.
-If the confidence interval overlaps with 0, then the relationship is insignificant 
+If the confidence interval overlaps with 0, then the relationship is insignificant
 for that radius.
 }
 \examples{
 data("kerenSCE")
 
-kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
 
 rsDf <- kontextCurve(
   cells = kerenImage6,

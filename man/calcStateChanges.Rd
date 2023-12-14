@@ -26,7 +26,7 @@ calcStateChanges(
 with covariates (e.g. distance or abundance of the nearest cell type) to
 model cell state changes}
 
-\item{marker}{A vector of markers that proxy a cell's state. If NULL, all markers 
+\item{marker}{A vector of markers that proxy a cell's state. If NULL, all markers
 will be used.}
 
 \item{from}{A vector of cell types to use as the primary cells. If NULL,
@@ -66,7 +66,7 @@ provides the option to build robust and mixed linear model variants
 library(dplyr)
 data("kerenSCE")
 
-kerenSCE <- kerenSCE[, kerenSCE$imageID \%in\% c(5,6)]
+kerenSCE <- kerenSCE[, kerenSCE$imageID \%in\% c(5, 6)]
 
 kerenSCE <- getDistances(kerenSCE,
   maxDist = 200,

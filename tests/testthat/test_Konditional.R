@@ -1,5 +1,3 @@
-
-
 test_that("Expecting an error when parentDf or to, from, parent is NULL", {
   data("kerenSCE")
 
@@ -18,9 +16,9 @@ test_that("Expecting an error when parentDf or to, from, parent is NULL", {
 
 # test_that("Kontextual values from kerenSCE are the same as the saved ones", {
 #   data("kerenSCE")
-# 
+#
 #   expected_data <- readRDS("CD4_Kontextual.rds")
-# 
+#
 #   CD4_Kontextual <-
 #     Kontextual(
 #       cells = kerenSCE,
@@ -36,7 +34,7 @@ test_that("Expecting an error when parentDf or to, from, parent is NULL", {
 #       includeZeroCells = TRUE,
 #       includeOriginal = TRUE
 #     )
-# 
+#
 #   testthat::expect_equal(
 #     CD4_Kontextual,
 #     expected_data
