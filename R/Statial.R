@@ -522,7 +522,7 @@ calcStateChanges <- function(cells,
   cells <- cells[, minCellIdx]
   
   cells <- cells[, colData(cells)[, cellType] %in% from]
->>>>>>> 5c415e3 (minCells works as intended)
+
   distances <- SingleCellExperiment::reducedDim(cells, type)
   distances <- distances[, to, drop = FALSE]
   intensities <- as.data.frame(t(SummarizedExperiment::assay(cells, assay)))
