@@ -511,7 +511,18 @@ calcStateChanges <- function(cells,
     if (contamination == TRUE) contamination <- "contaminations"
   }
 
+  
+  minCellIdx <- cells |> 
+    colData |> 
+    as.data.frame |> 
+    group_by(imageID, cellType) |> 
+    mutate(indx = n() > minCells) |> 
+    pull(indx)
+  
+  cells <- cells[, minCellIdx]
+  
   cells <- cells[, colData(cells)[, cellType] %in% from]
+>>>>>>> 5c415e3 (minCells works as intended)
   distances <- SingleCellExperiment::reducedDim(cells, type)
   distances <- distances[, to, drop = FALSE]
   intensities <- as.data.frame(t(SummarizedExperiment::assay(cells, assay)))
