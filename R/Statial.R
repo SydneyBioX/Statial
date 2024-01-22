@@ -774,7 +774,7 @@ plotStateChanges <- function(cells,
     )
   }
   
-  var <- "CD8.T_c"
+  var <- "purity_c"
   status <- "status"
   
   g1 <- ggplot2::ggplot() +
@@ -892,21 +892,21 @@ plotStateChanges <- function(cells,
     ggplot2::xlab("purity") +
     ggplot2::ylim(-1, NA)
 
-  g7 <- data %>%
-    dplyr::filter(cellType == from) |>
-      mutate(status = case_when(
-      CD8A > 0.5 ~ "Positive",
-      TRUE ~ "Negative"
-    )) |>
-    ggplot2::ggplot(
-      ggplot2::aes_string(
-        x = status,
-        y = var
-      )
-    ) +
-    ggplot2::geom_boxplot() +
+  # g7 <- data %>%
+  #   dplyr::filter(cellType == from) |>
+  #     mutate(status = case_when(
+  #     CD8A > 0.5 ~ "Positive",
+  #     TRUE ~ "Negative"
+  #   )) |>
+  #   ggplot2::ggplot(
+  #     ggplot2::aes_string(
+  #       x = status,
+  #       y = var
+  #     )
+  #   ) +
+    # ggplot2::geom_boxplot() +
     # ggplot2::geom_smooth(method = lm, formula = y ~ x) +
-    ggplot2::theme_classic()
+    # ggplot2::theme_classic()
     # ggplot2::ggtitle("State Change Scatter Plot") +
     # ggplot2::ylab(paste(marker, "expression")) +
     # ggplot2::xlab("purity") +
@@ -938,7 +938,7 @@ plotStateChanges <- function(cells,
     g2 <- plotly::ggplotly(g2)
     g3 <- plotly::ggplotly(g3)
   }
-  list(image = g1, scatter = g2, contam_image = g4, marker = g5, compare = g6, boxplot = g7)
+  list(image = g1, scatter = g2, contam_image = g4, marker = g5, compare = g6)
   # list(g1, g2, g3, g4)
 }
 
