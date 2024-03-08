@@ -803,7 +803,7 @@ plotStateChanges <- function(cells,
       "Cell Density:", to, ",",
       "Model Fit:", plotModelFit
     )) +
-    ggplot2::facet_wrap(~imageID, scales = "free") +
+    # ggplot2::facet_wrap(~imageID, scales = "free") +
     # ggplot2::scale_color_viridis_c(option = "plasma") +
     scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
   
@@ -834,9 +834,10 @@ plotStateChanges <- function(cells,
       "Cell Density:", to, ",",
       "Model Fit:", plotModelFit
     )) +
-    ggplot2::facet_wrap(~imageID, scales = "free") +
+    # ggplot2::facet_wrap(~imageID, scales = "free") +
     # scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
     ggplot2::scale_color_viridis_c(option = "rocket")
+    # ggplot2::coord_fixed()
   
   
   g2 <- data %>%
