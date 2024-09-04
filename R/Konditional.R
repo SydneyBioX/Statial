@@ -471,7 +471,7 @@ prepMatrix <- function(result,
       # Implement support for multiple values in other columns.
       dplyr::select(imageID, test, kontextual) |>
       tidyr::pivot_wider(names_from = test, values_from = kontextual, values_fill = replaceVal) |>
-      tibble::column_to_rownames("imageID")
+      tibble::column_to_rownames("imageID") 
   }
 
   if ("primaryCellType" %in% colnames(result)) {

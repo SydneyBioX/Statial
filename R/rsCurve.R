@@ -1,7 +1,7 @@
 #' Evaluation of Kontextual over a range of radii.
 #'
 #' @description
-#' This function obtains `Kondtional` values over a range of radii, standard
+#' This function obtains `Kontextual` values over a range of radii, standard
 #' deviations for each value can be obtained using permutation for significance
 #' testing. To obtain estimates for standard deviations specify `se = TRUE`.
 #'
@@ -52,7 +52,7 @@ kontextCurve <- function(cells,
                          image = NULL,
                          rs = seq(10, 100, 10),
                          inhom = FALSE,
-                         edge = FALSE,
+                         edge = TRUE,
                          se = FALSE,
                          nSim = 20,
                          cores = 1,
