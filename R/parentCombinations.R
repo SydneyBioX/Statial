@@ -39,7 +39,7 @@
 #' @import dplyr
 #' @import tidyr
 #'
-parentCombinations <- function(all, parentList = NULL, ...) {
+parentCombinations <- function(all, ..., parentList = NULL) {
   
   if(is.null(parentList)) {
     # Gets variable names of all the parent vector

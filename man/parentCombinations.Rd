@@ -4,16 +4,16 @@
 \alias{parentCombinations}
 \title{Create all combinations of cell type relationships from a list of parents}
 \usage{
-parentCombinations(all, parentList = NULL, ...)
+parentCombinations(all, ..., parentList = NULL)
 }
 \arguments{
 \item{all}{A list of all the `to` cell types Kontextual is evaluated over.}
 
+\item{...}{Vectors of each parent population.}
+
 \item{parentList}{a named list where the names correspond to parent names and
 the values contain a vector of children for that parent. Note: If parentList
 is specified the `...` argument will be ignored, see examples.}
-
-\item{...}{Vectors of each parent population.}
 }
 \value{
 A data frame containing all pairwise cell relationships and their
