@@ -1,0 +1,14 @@
+
+bibentry(bibtype = "Article",
+         title = "{Kontextual: Reframing analysis of spatial omics data reveals consistent cell relationships across images}",
+         author = c(person("Farhan", "Ameen"),
+                    person("Nicholas", "Robertson"),
+                    person("David", "Lin"),
+                    person("Shila", "Ghazanfar"),
+                    person("Ellis", "Patrick")
+                    ),
+         year = "2024",
+         journal = "bioRxiv",
+         doi = "10.1101/2024.09.03.611109",
+         url = "https://www.biorxiv.org/content/early/2024/09/06/2024.09.03.611109",
+         header = "To cite the Kontextual preprint:")
