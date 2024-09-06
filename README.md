@@ -44,9 +44,18 @@ all feedback related to the package.
 * For general questions and feedback, please contact us directly via [ellis.patrick@sydney.edu.au](mailto:ellis.patrick@sydney.edu.au).
 
 
-## Author
+## Authors
 
-* **Farhan Ameen**
+* **Farhan Ameen** [Linkedin](https://www.linkedin.com/in/farhan-ameen-5913841b0/)
 * **Sourish Iyengar**
 * **Shila Ghazanfar** - [@shazanfar](https://twitter.com/shazanfar)
 * **Ellis Patrick**  - [@TheEllisPatrick](https://twitter.com/TheEllisPatrick)
+
+
+## Kontextual pre-print
+Kontextual is availble on pre-print on bioRxiv:
+
+<div class="oxford-citation-text">
+Farhan Ameen, Nicholas Robertson, David M. Lin, Shila Ghazanfar, Ellis Patrick
+bioRxiv 2024.09.03.611109; doi: https://doi.org/10.1101/2024.09.03.611109
+</div>
