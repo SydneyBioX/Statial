@@ -53,7 +53,6 @@ all feedback related to the package.
 
 
 ## Kontextual pre-print
-Kontextual is availble on pre-print on bioRxiv:
 
 <div class="oxford-citation-text">
 Farhan Ameen, Nicholas Robertson, David M. Lin, Shila Ghazanfar, Ellis Patrick
