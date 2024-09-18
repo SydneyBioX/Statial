@@ -88,7 +88,13 @@ parentCombinations <- function(all, ..., parentList = NULL) {
 #' This function takes in a `phylo` object or a `treekoR` result from the 
 #' \code{\link[treekoR]{getClusterTree}} function, and converts its into a 
 #' named list of each and children to input into 
-#' \code{\link[Statial]{parentCombinations}}.
+#' \code{\link[Statial]{parentCombinations}}. 
+#' 
+#' \bold{Note}: Parent populations with one child will be pruned. Make sure to 
+#' include this cell type in the `all` vector when using 
+#' \code{\link[Statial]{parentCombinations}} to ensure this cell type is included
+#' in pairwise calculations.
+#
 #'
 #' @param phlyo_tree a phylo object or a treekoR result.
 #'
@@ -120,7 +126,8 @@ getParentPhylo = function(phylo_tree) {
     mutate(child = node_labels[child]) |>
     mutate(child = unname(child)) |> 
     group_by(parent) |> 
-    summarise(children = list(child))
+    summarise(children = list(child)) |> 
+    filter(lengths(children) > 1)
   
   child_list = edge_matrix$children
   

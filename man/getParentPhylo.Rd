@@ -16,5 +16,10 @@ A named list of parents and their respective children.
 This function takes in a `phylo` object or a `treekoR` result from the 
 \code{\link[treekoR]{getClusterTree}} function, and converts its into a 
 named list of each and children to input into 
-\code{\link[Statial]{parentCombinations}}.
+\code{\link[Statial]{parentCombinations}}. 
+
+\bold{Note}: Parent populations with one child will be pruned. Make sure to 
+include this cell type in the `all` vector when using 
+\code{\link[Statial]{parentCombinations}} to ensure this cell type is included
+in pairwise calculations.
 }
