@@ -12,6 +12,7 @@ relabelKontextual(
   from,
   to,
   parent,
+  image = NULL,
   returnImages = FALSE,
   inhom = TRUE,
   edge = FALSE,
@@ -37,6 +38,8 @@ relabel(image, labels = NULL)
 
 \item{parent}{The parent population of the from cell type (must include from cell type).}
 
+\item{image}{A single image from a Single Cell Experiment object.}
+
 \item{returnImages}{A logical value to indicate whether the function should
 return the randomised images along with the Kontextual values.}
 
@@ -57,8 +60,6 @@ spatial dimansions in the data. Defaults to `c("x", "y")`.}
 
 \item{...}{Any arguments passed into \code{\link[Statial]{Kontextual}}}
 
-\item{image}{A single image from a Single Cell Experiment object.}
-
 \item{labels}{A vector of CellTypes labels to be permuted If NULL all cells
 labels will be radomised.}
 }
@@ -72,16 +73,16 @@ corresponding parent
 }
 \description{
 Function which randomises specified cells in an image and calculates
-the `Kontextual` value. This can be used to estimate the null distribution, 
+the `Kontextual` value. This can be used to estimate the null distribution,
 of the parent cell population for significance testing.
 
-This function relabels all specified cells within a single image, to 
+This function relabels all specified cells within a single image, to
 estimate the null distribution of cell population specified.
 }
 \examples{
 data("kerenSCE")
 
-kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
 
 relabelResult <- relabelKontextual(
   cells = kerenImage6,
@@ -95,11 +96,11 @@ relabelResult <- relabelKontextual(
 
 data("kerenSCE")
 
-kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
 
 kerenImage6 <- kerenImage6 |>
-         SingleCellExperiment::colData() |>
-         data.frame()
+  SingleCellExperiment::colData() |>
+  data.frame()
 
 # Permute CD8 T cells and T cell labels in the image
 relabeledImage <- relabel(kerenImage6, labels = c("p53", "Keratin+Tumour"))

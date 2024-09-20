@@ -12,12 +12,10 @@ Kontextual(
   to = NULL,
   parent = NULL,
   image = NULL,
-  inhom = TRUE,
-  edgeCorrect = FALSE,
+  inhom = FALSE,
+  edgeCorrect = TRUE,
   window = "convex",
   window.length = NA,
-  weightQuantile = 0.8,
-  includeZeroCells = TRUE,
   includeOriginal = TRUE,
   spatialCoords = c("x", "y"),
   cellType = "cellType",
@@ -40,7 +38,7 @@ spatial coordinates.}
 
 \item{parent}{The parent population of the from cell type (must include from cell type).}
 
-\item{image}{A vector of images to filter results to.}
+\item{image}{A vector of images to subset the results to. If NULL we default to all images.}
 
 \item{inhom}{A logical value indicating whether to account for inhomogeneity.}
 
@@ -51,12 +49,6 @@ passed into \code{\link[Statial]{makeWindow}}}
 
 \item{window.length}{A tuning parameter for controlling the level of concavity when estimating concave windows.
 Passed into \code{\link[Statial]{makeWindow}}}
-
-\item{weightQuantile}{A decimal value indicating what quantile of parent
-density used to weight the `from` cells.}
-
-\item{includeZeroCells}{A logical value indicating whether to include cells
-with zero counts in the pairwise association calculation.}
 
 \item{includeOriginal}{A logical value to return the original L function
 values along with the kontextual values.}
@@ -73,8 +65,8 @@ values along with the kontextual values.}
 A kontextualResult object
 }
 \description{
-Kontextual identifies the relationship between two cell types which are 
-conditional on the spatial behaviour of a 3rd cell population, for a 
+Kontextual identifies the relationship between two cell types which are
+conditional on the spatial behaviour of a 3rd cell population, for a
 particular radius (r).
 }
 \examples{

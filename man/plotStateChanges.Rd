@@ -76,7 +76,8 @@ p <- plotStateChanges(
   shape = 19,
   interactive = FALSE,
   plotModelFit = FALSE,
-  method = "lm")
+  method = "lm"
+)
 
 p
 

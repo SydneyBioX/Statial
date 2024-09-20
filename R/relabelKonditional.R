@@ -1,9 +1,8 @@
-
 #' Cell permutation for Kontextual
-#' 
-#' @description 
+#'
+#' @description
 #' Function which randomises specified cells in an image and calculates
-#' the `Kontextual` value. This can be used to estimate the null distribution, 
+#' the `Kontextual` value. This can be used to estimate the null distribution,
 #' of the parent cell population for significance testing.
 #'
 #' @param cells A single image data frame from a SingleCellExperiment object
@@ -12,6 +11,7 @@
 #' @param from The first cell type to be evaluated in the pairwise relationship.
 #' @param to The second cell type to be evaluated in the pairwise relationship.
 #' @param parent The parent population of the from cell type (must include from cell type).
+#' @param image A vector of images to subset the results to. If NULL we default to all images.
 #' @param returnImages A logical value to indicate whether the function should
 #' return the randomised images along with the Kontextual values.
 #' @param inhom A logical value indicating whether to account for inhomogeneity.
@@ -30,8 +30,8 @@
 #'
 #' @examples
 #' data("kerenSCE")
-#' 
-#' kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+#'
+#' kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
 #'
 #' relabelResult <- relabelKontextual(
 #'   cells = kerenImage6,
@@ -48,44 +48,44 @@
 #' @importFrom dplyr mutate
 #' @importFrom BiocParallel  bplapply
 relabelKontextual <- function(cells,
-                               nSim = 1,
-                               r,
-                               from,
-                               to,
-                               parent,
-                               returnImages = FALSE,
-                               inhom = TRUE,
-                               edge = FALSE,
-                               cores = 1,
-                               spatialCoords = c("x", "y"),
-                               cellType = "cellType",
-                               imageID = "imageID",
-                               ...) {
-    
-    
-    if (is(cells, "SingleCellExperiment")) {
-        cells <- cells |>
-            SingleCellExperiment::colData() |>
-            data.frame()
-    }
-    
-    if (is(cells, "SpatialExperiment")) {
-        cells <- cbind(colData(cells), spatialCoords(cells)) |>
-            data.frame()
-    }
-    
-    if (is(cells, "data.frame")) {
-        cells <- validateDf(
-            cells,
-            imageID = imageID,
-            cellType = cellType,
-            spatialCoords = spatialCoords
-        )
-    }
-    
-    if (!is(cells, "data.frame")) {
-        stop("Cells must be one of the following: SingleCellExperiment, SpatialExperiment, or a list of data.frames with imageID, cellType, and x and y columns")
-    }
+                              nSim = 1,
+                              r,
+                              from,
+                              to,
+                              parent,
+                              image = NULL,
+                              returnImages = FALSE,
+                              inhom = TRUE,
+                              edge = FALSE,
+                              cores = 1,
+                              spatialCoords = c("x", "y"),
+                              cellType = "cellType",
+                              imageID = "imageID",
+                              ...) {
+  if (is(cells, "SingleCellExperiment")) {
+    cells <- cells |>
+      SingleCellExperiment::colData() |>
+      data.frame()
+  }
+
+  if (is(cells, "SpatialExperiment")) {
+    cells <- cbind(colData(cells), spatialCoords(cells)) |>
+      data.frame()
+  }
+
+  if (is(cells, "data.frame")) {
+    cells <- validateDf(
+      cells,
+      imageID = imageID,
+      cellType = cellType,
+      spatialCoords = spatialCoords,
+      image = image
+    )
+  }
+
+  if (!is(cells, "data.frame")) {
+    stop("Cells must be one of the following: SingleCellExperiment, SpatialExperiment, or a list of data.frames with imageID, cellType, and x and y columns")
+  }
 
   imageArray <- replicate(nSim, cells, simplify = FALSE)
 
@@ -131,9 +131,9 @@ relabelKontextual <- function(cells,
 
 
 #' Permute all specified cells labels in a single image
-#' 
-#' @description 
-#' This function relabels all specified cells within a single image, to 
+#'
+#' @description
+#' This function relabels all specified cells within a single image, to
 #' estimate the null distribution of cell population specified.
 #'
 #' @param image A single image from a Single Cell Experiment object.
@@ -145,12 +145,12 @@ relabelKontextual <- function(cells,
 #'
 #' @examples
 #' data("kerenSCE")
-#' 
-#' kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
-#' 
+#'
+#' kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
+#'
 #' kerenImage6 <- kerenImage6 |>
-#'          SingleCellExperiment::colData() |>
-#'          data.frame()
+#'   SingleCellExperiment::colData() |>
+#'   data.frame()
 #'
 #' # Permute CD8 T cells and T cell labels in the image
 #' relabeledImage <- relabel(kerenImage6, labels = c("p53", "Keratin+Tumour"))

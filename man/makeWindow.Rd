@@ -17,7 +17,7 @@ makeWindow(data, window = "square", window.length = NULL)
 Creates an `owin` class, representing the observation window for the image.
 }
 \description{
-This function creates a window for a `spatstat::ppp` object, the type of 
+This function creates a window for a `spatstat::ppp` object, the type of
 window can be specified using the `window` argument.
 }
 \examples{

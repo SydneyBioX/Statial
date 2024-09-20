@@ -32,6 +32,6 @@ CD4_Kontextual <- Kontextual(
 )
 
 
-kontextMat = prepMatrix(CD4_Kontextual)
+kontextMat <- prepMatrix(CD4_Kontextual)
 
 }

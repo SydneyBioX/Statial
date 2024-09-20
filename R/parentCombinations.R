@@ -1,7 +1,7 @@
 #' Create all combinations of cell type relationships from a list of parents
 #'
-#' @description 
-#' This function takes in named vectors of all the parent populations in the 
+#' @description
+#' This function takes in named vectors of all the parent populations in the
 #' dataset, and creates a data frame containing all pairwise cell relationships,
 #' this data frame can be inputed into the `parentDf` argument in `Kontextual`.
 #'
@@ -42,7 +42,7 @@ parentCombinations <- function(all, ...) {
     seq_along(parentList),
     function(x) {
       return(crossing(
-        from = parentList[[x]],
+        to = parentList[[x]],
         parent_name = names(parentList)[x]
       ))
     }
@@ -50,7 +50,7 @@ parentCombinations <- function(all, ...) {
 
   parentDf <- bind_rows(parentDfs) |>
     merge(parentTable, by = "parent_name") |>
-    expand_grid(to = unique(all)) |>
+    expand_grid(from = unique(all)) |>
     data.frame() |>
     select("from", "to", "parent", "parent_name") |>
     filter(from != to)

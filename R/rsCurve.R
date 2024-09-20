@@ -1,8 +1,8 @@
 #' Evaluation of Kontextual over a range of radii.
-#' 
-#' @description 
-#' This function obtains `Kondtional` values over a range of radii, standard 
-#' deviations for each value can be obtained using permutation for significance 
+#'
+#' @description
+#' This function obtains `Kondtional` values over a range of radii, standard
+#' deviations for each value can be obtained using permutation for significance
 #' testing. To obtain estimates for standard deviations specify `se = TRUE`.
 #'
 #'
@@ -29,9 +29,9 @@
 #' @examples
 #'
 #' data("kerenSCE")
-#' 
-#' kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
-#' 
+#'
+#' kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
+#'
 #' rsDf <- kontextCurve(
 #'   cells = kerenSCE,
 #'   from = "CD4_Cell",
@@ -46,32 +46,25 @@
 #' @importFrom stats sd
 #' @importFrom dplyr filter select group_by summarise
 kontextCurve <- function(cells,
-                    from,
-                    to,
-                    parent,
-                    image = NULL,
-                    rs = seq(10, 100, 10),
-                    inhom = TRUE,
-                    edge = FALSE,
-                    se = FALSE,
-                    nSim = 20,
-                    cores = 1,
-                    imageID = "imageID",
-                    cellType = "cellType",
-                    ...) {
-  
-  cells$imageID <- colData(cells)[,imageID]
-  cells$cellType <- colData(cells)[, cellType]
-  cellType <- "cellType"
-  imageID <- "imageID"
-  if(!is.null(image))cells <- cells[,cells$imageID %in% image]
-  
-  
+                         from,
+                         to,
+                         parent,
+                         image = NULL,
+                         rs = seq(10, 100, 10),
+                         inhom = FALSE,
+                         edge = FALSE,
+                         se = FALSE,
+                         nSim = 20,
+                         cores = 1,
+                         imageID = "imageID",
+                         cellType = "cellType",
+                         ...) {
   kontextualVals <- Kontextual(
     cells = cells,
     from = from,
     to = to,
     parent = parent,
+    image = image,
     r = rs,
     inhom = inhom,
     edgeCorrect = edge,
@@ -85,12 +78,13 @@ kontextCurve <- function(cells,
   rsDf <- kontextualVals |>
     dplyr::select("r", "original", "kontextual")
 
-   
+
   if (se == TRUE) {
     seDf <- relabelKontextual(
       cells = cells,
       nSim = nSim,
-      rs = rs,
+      r = rs,
+      image = image,
       from = from,
       to = to,
       parent = parent,
@@ -120,11 +114,11 @@ kontextCurve <- function(cells,
 
 #' Plotting the original and kontextual L values over a range of radii.
 #'
-#' @description 
+#' @description
 #' This function takes outputs from rsCurve and plots
 #' them in ggplot. If standard deviation is estimated in rsCurve,
 #' then confidence intervals will be constructed based on the standard deviation.
-#' If the confidence interval overlaps with 0, then the relationship is insignificant 
+#' If the confidence interval overlaps with 0, then the relationship is insignificant
 #' for that radius.
 #'
 #' @param rsDf A data frame from \code{\link[Statial]{kontextCurve}}.
@@ -134,8 +128,8 @@ kontextCurve <- function(cells,
 #'
 #' @examples
 #' data("kerenSCE")
-#' 
-#' kerenImage6 = kerenSCE[, kerenSCE$imageID =="6"]
+#'
+#' kerenImage6 <- kerenSCE[, kerenSCE$imageID == "6"]
 #'
 #' rsDf <- kontextCurve(
 #'   cells = kerenImage6,
@@ -191,7 +185,7 @@ kontextPlot <- function(rsDf) {
       guides(alpha = "none") +
       labs(
         x = "Radius (r)",
-        y = "L(r) - r",
+        y = "Relationship value",
         fill = "Function",
         col = "Function"
       )
@@ -204,7 +198,7 @@ kontextPlot <- function(rsDf) {
       geom_smooth(formula = y ~ x, method = "loess", se = FALSE) +
       labs(
         x = "Radius (r)",
-        y = "L(r) - r",
+        y = "Relationship value",
         fill = "Function",
         col = "Function"
       )

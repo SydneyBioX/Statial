@@ -17,7 +17,7 @@ relabelResult <- relabelKontextual(
   parent = c("CD4_Cell", "Macrophages"),
   cores = 2
 )
-
+1+1
 
 p <- plotStateChanges(
   cells = kerenSCE,
