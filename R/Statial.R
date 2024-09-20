@@ -484,7 +484,8 @@ calcStateChanges <- function(cells,
                             minCells = 20,
                             verbose = FALSE,
                             timeout = 10,
-                            nCores = 1) {
+                            nCores = 1,
+                            contam_transform = NULL) {
   
   if(is.null(marker)) {
     marker <- rownames(cells)
@@ -522,6 +523,22 @@ calcStateChanges <- function(cells,
   }else{
     contaminations <- SingleCellExperiment::reducedDim(cells, contamination)
     contaminations <- dplyr::select(contaminations, -cellID, -cellType, -rfMaxCellProb, -rfSecondLargestCellProb)
+    
+    if(!is.null(contam_transform)) {
+      if(contam_transform == "sqrt") {
+        contaminations <- sqrt(contaminations)
+      }
+      if(contam_transform == "log") {
+        contaminations <- log(0.001 + contaminations)
+      }
+      if(contam_transform == "exp") {
+        contaminations <- exp(contaminations)
+      }
+      if(contam_transform == "power") {
+        contaminations <- 2**(contaminations)
+      }
+    }
+    
   }
   
     splitCon <- split(contaminations, ~ colData(cells)[, imageID] + colData(cells)[, cellType], sep = "51773")
@@ -704,7 +721,9 @@ plotStateChanges <- function(cells,
                                        shape = 19,
                                        interactive = FALSE,
                                        plotModelFit = FALSE,
-                                       method = "lm") {
+                                       method = "lm",
+                                       purity_choice = "rfMainCellProb",
+                                       transform = NULL) {
   
 
   if(!imageID %in% colnames(colData(cells))) {
@@ -748,7 +767,23 @@ plotStateChanges <- function(cells,
   data$fittedValues <- NA
   
   contams <- reducedDim(cells, "contaminations")
-  names(contams)[names(contams) == "rfMainCellProb"] <- "purity"
+  # names(contams)[names(contams) == purity_choice] <- "purity"
+  
+  if(!is.null(transform)) {
+    if(transform == "sqrt") {
+      contams[,purity_choice] <- sqrt(contams[,purity_choice])
+    }
+    if(transform == "log") {
+      contams[,purity_choice] <- log(0.001 + contams[,purity_choice])
+    }
+    if(transform == "exp") {
+      contams[,purity_choice] <- exp(contams[,purity_choice])
+    }
+    if(transform == "power") {
+      contams[,purity_choice] <- 2**(contams[,purity_choice])
+    }
+  }
+  
   colnames(contams) <- paste(colnames(contams), "c", sep = "_")
   
   data <- cbind(data, contams)
@@ -774,7 +809,7 @@ plotStateChanges <- function(cells,
     )
   }
   
-  var <- "purity_c"
+  var <- paste0(purity_choice, "_c")
   status <- "status"
   
   g1 <- ggplot2::ggplot() +
@@ -835,8 +870,9 @@ plotStateChanges <- function(cells,
       "Model Fit:", plotModelFit
     )) +
     # ggplot2::facet_wrap(~imageID, scales = "free") +
-    # scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
     ggplot2::scale_color_viridis_c(option = "rocket")
+    # scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
+    # scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
     # ggplot2::coord_fixed()
   
   
@@ -851,6 +887,7 @@ plotStateChanges <- function(cells,
     ) +
     ggplot2::geom_point() +
     ggplot2::scale_color_viridis_c(option = "rocket") +
+    # scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3))) +
     ggplot2::geom_smooth(method = lm, formula = y ~ x) +
     ggplot2::theme_classic() +
     ggplot2::ggtitle("State Change Scatter Plot") +
@@ -915,9 +952,9 @@ plotStateChanges <- function(cells,
 
 
   
-  g6 <- grid.arrange(g1 + xlim(0, 1500) + ylim(4000, NA), 
-                     g4 + xlim(0, 1500) + ylim(4000, NA), 
-                     ncol = 2)
+  # g6 <- grid.arrange(g1 + xlim(0, 1500) + ylim(4000, NA), 
+  #                    g4 + xlim(0, 1500) + ylim(4000, NA), 
+  #                    ncol = 2)
   
   # g3 <- data |>
   #   dplyr::filter(cellType == from) |>
@@ -939,7 +976,7 @@ plotStateChanges <- function(cells,
     g2 <- plotly::ggplotly(g2)
     g3 <- plotly::ggplotly(g3)
   }
-  list(image = g1, scatter = g2, contam_image = g4, marker = g5, compare = g6)
+  list(image = g1, scatter = g2, contam_image = g4, marker = g5)
   # list(g1, g2, g3, g4)
 }
 
