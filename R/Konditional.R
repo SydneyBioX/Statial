@@ -472,6 +472,8 @@ prepMatrix <- function(result,
       dplyr::select(imageID, test, kontextual) |>
       tidyr::pivot_wider(names_from = test, values_from = kontextual, values_fill = replaceVal) |>
       tibble::column_to_rownames("imageID") 
+    
+    attr(mat, "kontextualResult") = TRUE
   }
 
   if ("primaryCellType" %in% colnames(result)) {
