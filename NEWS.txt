@@ -1,0 +1,14 @@
+CHANGES IN VERSION 1.8.0
+-------------------------
+
+NEW FEATURES
+
+    o Added getParentPhylo() function to extract parent and all children from a 
+      treekoR or Phylo object.
+    
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Vingette has been updated with new getParentPhylo() function and survival
+      plots.
+    
