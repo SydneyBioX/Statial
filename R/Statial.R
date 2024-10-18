@@ -488,7 +488,8 @@ calcStateChanges <- function(cells,
                              verbose = FALSE,
                              timeout = 10,
                              nCores = 1,
-                             contam_transform = NULL) {
+                             contam_transform = NULL,
+                             contam_vars = NULL) {
   if (is.null(marker)) {
     marker <- rownames(cells)
   }
@@ -559,15 +560,42 @@ calcStateChanges <- function(cells,
   use <- unlist(lapply(splitDist, nrow)) > minCells
   x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
-
-
-  allModels <- bpmapply(calculateChangesMarker,
-    distances = splitDist[use],
-    intensities = splitInt[use],
-    contaminations = splitCon[use],
-    BPPARAM = BPPARAM,
-    SIMPLIFY = FALSE
-  )
+  
+  if(is.null(contam_vars)) {
+    contam_vars = colnames(contaminations)
+  }
+  
+  if(!is.null(contam_vars) & !is.null(contamination)) {
+    
+    contam_vars <- list(contam_vars)
+    
+    test2 = rep(contam_vars, length(splitCon))
+    
+    allModels <- bpmapply(calculateChangesMarker,
+                          distances = splitDist[use],
+                          intensities = splitInt[use],
+                          contaminations = splitCon[use],
+                          test2 = test2[1:length(which(use))],
+                          BPPARAM = BPPARAM,
+                          SIMPLIFY = FALSE
+    )
+  } else {
+    allModels <- bpmapply(calculateChangesMarker,
+                          distances = splitDist[use],
+                          intensities = splitInt[use],
+                          contaminations = splitCon[use],
+                          BPPARAM = BPPARAM,
+                          SIMPLIFY = FALSE
+    )
+  }
+  
+  # allModels <- bpmapply(calculateChangesMarker,
+  #   distances = splitDist[use],
+  #   intensities = splitInt[use],
+  #   contaminations = splitCon[use, contam_vars],
+  #   BPPARAM = BPPARAM,
+  #   SIMPLIFY = FALSE
+  # )
 
   allModels <- dplyr::bind_rows(allModels, .id = "tmp")
   nam <- strsplit(allModels$tmp, 51773)
@@ -582,14 +610,15 @@ calcStateChanges <- function(cells,
 
 
 #' @importFrom limma lmFit
-calculateChangesMarker <- function(distances, intensities, contaminations, nCores) {
+calculateChangesMarker <- function(distances, intensities, contaminations, test2, nCores) {
+  # browser()
   test <- apply(distances, 2, function(x) {
     if (length(unique(x)) > 1) {
       if (contaminations[1, 1] == -99) {
         design <- data.frame(coef = 1, cellType = x)
       } else {
         contaminations <- contaminations[, !is.na(colSums(contaminations)), drop = FALSE]
-        design <- data.frame(coef = 1, cellType = x, contaminations[, -ncol(contaminations)])
+        design <- data.frame(coef = 1, cellType = x, contaminations[,test2])
       }
 
       if (any(is.na(design))) {
@@ -712,7 +741,6 @@ calculateChangesMarker <- function(distances, intensities, contaminations, nCore
 #' @importFrom S4Vectors metadata<-
 #' @importFrom SingleCellExperiment reducedDimNames
 plotStateChanges <- function(cells,
-<<<<<<< HEAD
                                        image,
                                        from,
                                        to,
@@ -789,7 +817,7 @@ plotStateChanges <- function(cells,
     }
   }
   
-  colnames(contams) <- paste(colnames(contams), "c", sep = "_")
+  colnames(contams) <- paste(colnames(contams), "predicted_prob", sep = "_")
   
   data <- cbind(data, contams)
   
@@ -814,10 +842,12 @@ plotStateChanges <- function(cells,
     )
   }
 
-  var <- paste0(purity_choice, "_c")
+  var <- paste0(purity_choice, "_predicted_prob")
   status <- "status"
-  
 
+  # print(lm(marker ~ to + ,
+  #          data = data[data$cellType == to, ],
+  #          ))
 
   g1 <- ggplot2::ggplot() +
     ggplot2::stat_density_2d(
@@ -877,8 +907,8 @@ plotStateChanges <- function(cells,
       "Model Fit:", plotModelFit
     )) +
     # ggplot2::facet_wrap(~imageID, scales = "free") +
-    ggplot2::scale_color_viridis_c(option = "rocket")
-    # scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
+    # ggplot2::scale_color_viridis_c(option = "rocket")
+    scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
     # scale_colour_gradientn(colours = rep(c("black","darkred", "red", "orange","yellow"),c(1,3,3,3,3)))
     # ggplot2::coord_fixed()
   
