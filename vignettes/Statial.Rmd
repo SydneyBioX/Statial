@@ -38,8 +38,7 @@ library(BiocStyle)
 
 # Installation
 
-```{r}
-{r eval = FALSE}
+```{r eval = FALSE}
 # Install the package from Bioconductor
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager")
@@ -225,7 +224,7 @@ parentDf <- parentCombinations(
 
 Rather than specifying `to`, `from`, and `parent` in `Kontextual`, the output from `parentCombinations` can be inputed into `Kontextual` using the `parentDf` argument, to examine all pairwise relationships in the dataset. This chunk will take a significant amount of time to run, for demonstration the results have been saved and are loaded in.
 
-```{r eval=FALSE}
+```{r eval = FALSE}
 # Running Kontextual on all relationships across all images.
 kerenKontextual <- Kontextual(
   cells = kerenSCE,
@@ -249,7 +248,8 @@ To examine whether the features obtained from `Statial` are associated with pati
 
 ```{r}
 # add survival column to kerenSCE
-kerenSCE$survival = kerenSCE$Survival_days_capped
+kerenSCE$event = 1 - kerenSCE$Censored
+kerenSCE$survival = Surv(kerenSCE$Survival_days_capped, kerenSCE$event)
 ```
 
 
@@ -275,12 +275,12 @@ survivalResults = spicy(cells = kerenSCE,
                         alternateResult = kontextMat,
                         condition = "survival")
 
-topPairs(survivalResults)
+head(survivalResults$survivalResults, 10)
 ```
 
-As we can see from the results `Dc/Mono__CD3_Cell__tcells` is the one of the most significant pairwise relationship which contributes to patient survival. That is the relationship between DC/monocytes and CD3 T cells, relative to the parent population of all T cells. We can see that there is a positive coefficient associated with this relationship, which tells us an increase in localisation of DC/monocytes and CD3 T cells relative to all T cells leads to poorer survival outcomes for patients.
+As we can see from the results `CD8_Cell__Neutrophils__myeloid` is the one of the most significant pairwise relationship which contributes to patient survival. That is the relationship between CD8 T cells and Neutrophils, relative to the parent population of myeloid cells. We can see that there is a positive coefficient associated with this relationship, which tells us an increase in localisation of CD8 T cells and Neutrophils relative to all myeloid cells leads to poorer survival outcomes for patients.
 
-The association between `Dc/Mono__CD3_Cell__tcells` and survival can also be visualised on a Kaplan-Meier curve. First, we extract survival data from the `SingleCellExperiment` object and create a survival vector. 
+The association between `CD8_Cell__Neutrophils__myeloid` and survival can also be visualised on a Kaplan-Meier curve. First, we extract survival data from the `SingleCellExperiment` object and create a survival vector. 
 
 
 ```{r}
@@ -299,13 +299,13 @@ names(kerenSurv) <- survData$imageID
 kerenSurv
 ```
 
-Next, we extract the Kontextual values of this relationship across all images. We then determine if DC/monocytes and CD3 T cells are relatively attracted or avoiding in each image by comparing the Kontextual value in each image to the median Kontextual value.
+Next, we extract the Kontextual values of this relationship across all images. We then determine if CD8 T cells and Neutrophils cells are relatively attracted or avoiding in each image by comparing the Kontextual value in each image to the median Kontextual value.
 
-Finally, we plot a Kaplan-Meier curve using the `ggsurvfit` package. As shown below, when `Dc/Mono` and `CD3_Cell` are more dispersed to one another relative to the myeloid cell population, patients tend to have worse survival outcomes.
+Finally, we plot a Kaplan-Meier curve using the `ggsurvfit` package. As shown below, when `CD8_Cell` and `Neutrophils` are more dispersed to one another relative to the myeloid cell population, patients tend to have worse survival outcomes.
 
 ```{r, fig.width=5, fig.height=4}
 # Selecting most significant relationship
-survRelationship <- kontextMat[["Dc/Mono__CD3_Cell__tcells"]]
+survRelationship <- kontextMat[["CD8_Cell__Neutrophils__myeloid"]]
 survRelationship <- ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
 
 # Plotting Kaplan-Meier curve
@@ -507,23 +507,19 @@ ggplot(df, aes(x = TP, y = FP, colour = type)) +
 
 Similiar to `Kontextual`, we can run a similar survival analysis using our state changes results. Here, `prepMatrix` extracts the coefficients, or the `coef` column of `stateChanges` by default. To use the t values instead, specify `column = "tval"` in the `prepMatrix` function.
 
-We can then use the `spicy` function and specify `condition = "survival"` to run survival analysis.
-
 ```{r}
 # Preparing features for Statial
 stateMat <- prepMatrix(stateChanges)
 
 # Ensuring rownames of stateMat match up with rownames of the survival vector
-stateMat <- stateMat[kerenSCE$imageID |> unique(), ]
+stateMat <- stateMat[names(kerenSurv), ]
 
 # Remove some very small values
 stateMat <- stateMat[, colMeans(abs(stateMat) > 0.0001) > .8]
 
-survivalResults <- spicy(cells = kerenSCE,
-                        alternateResult = stateMat,
-                        condition = "survival")
+survivalResults <- colTest(stateMat, kerenSurv, type = "survival")
 
-topPairs(survivalResults)
+head(survivalResults)
 ```
 
 For our state changes results, `Keratin_Tumour__CD4_Cell__Keratin6` is the most significant pairwise relationship which contributes to patient survival. That is, the relationship between HLA class I expression in keratin/tumour cells and their spatial proximity to mesenchymal cells. As there is a negative coeffcient associated with this relationship, which tells us that higher HLA class I expression in keratin/tumour cells nearby mesenchymal cell populations lead to poorer survival outcomes for patients.
@@ -539,6 +535,7 @@ survfit2(kerenSurv ~ survRelationship) |>
   add_pvalue() +
   ggtitle("Keratin_Tumour__CD4_Cell__Keratin6")
 ```
+
 
 # Region analysis using lisaClust
 
