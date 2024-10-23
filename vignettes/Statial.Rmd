@@ -48,7 +48,7 @@ BiocManager::install("Statial")
 
 # Load packages
 
-```{r warning = FALSE, message = FALSE}
+```{r warning = FALSE, message = FALSE, eval = TRUE}
 # Loading required packages
 library(Statial)
 library(spicyR)
@@ -79,7 +79,7 @@ These images are stored in a `SingleCellExperiment` object called `kerenSCE`. Th
 *Note:* The original dataset was reduced down from 41 images to 10 images for the purposes of this vignette, due to size restrictions.
 
 ```{r}
-# Load head and neck data
+# Load breast cancer
 data("kerenSCE")
 
 kerenSCE
@@ -106,7 +106,6 @@ unique(kerenSCE$cellType)
 # Named list of parents and their child cell types
 biologicalHierarchy = list(
   "tumour" = c("Keratin_Tumour", "Tumour"),
-  "bcells" = c("B"),
   "tcells" = c("CD3_Cell", "CD4_Cell", "CD8_Cell", "Tregs"),
   "myeloid" = c("Dc/Mono", "DC", "Mono/Neu", "Macrophages", "Neutrophils"),
   "tissue" = c("Endothelial", "Mesenchymal")
@@ -116,7 +115,7 @@ biologicalHierarchy = list(
 biologicalHierarchy$immune = c(biologicalHierarchy$bcells,
                                biologicalHierarchy$tcells,
                                biologicalHierarchy$myeloid,
-                               "NK", "other immune")
+                               "NK", "other immune", "B")
 
 
 # Creating a vector for all cellTypes
@@ -266,21 +265,32 @@ kontextMat <- kontextMat[kerenSCE$imageID |> unique(), ]
 kontextMat[is.na(kontextMat)] <- 0
 ```
 
-Finally, both the `SingleCellExperiment` object and the Kontextual matrix are passed into the `spicy` function, with `condition = "survival"`. The `topPairs` function can then be used to obtain the associated coefficients and p-value for the most significant pairs.
+Finally, both the `SingleCellExperiment` object and the Kontextual matrix are passed into the `spicy` function, with `condition = "survival"`. The resulting coefficients and p values can be obtained by accessing the `survivalResults` name.
 
+
+*Note:* You can specify additional covariates and include a subject id for mixed effects survival modelling, see \code{\link[spicyR]{spicy} for more information.
 
 ```{r}
 # Running survival analysis
 survivalResults = spicy(cells = kerenSCE,
                         alternateResult = kontextMat,
-                        condition = "survival")
+                        condition = "survival",
+                        weights = TRUE)
 
 head(survivalResults$survivalResults, 10)
+
 ```
 
-As we can see from the results `CD8_Cell__Neutrophils__myeloid` is the one of the most significant pairwise relationship which contributes to patient survival. That is the relationship between CD8 T cells and Neutrophils, relative to the parent population of myeloid cells. We can see that there is a positive coefficient associated with this relationship, which tells us an increase in localisation of CD8 T cells and Neutrophils relative to all myeloid cells leads to poorer survival outcomes for patients.
+The survival results can also be visualised using the `signifPlot` function.
 
-The association between `CD8_Cell__Neutrophils__myeloid` and survival can also be visualised on a Kaplan-Meier curve. First, we extract survival data from the `SingleCellExperiment` object and create a survival vector. 
+```{r}
+signifPlot(survivalResults)
+```
+
+
+As we can see from the results `DC__NK__immune` is the one of the most significant pairwise relationship which contributes to patient survival. That is the relationship between dendritic cells and natural killer cells, relative to the parent population of immune cells. We can see that there is a negative coefficient associated with this relationship, which tells us an increase in localisation of these cell types relative to immune cells leads to better survival outcomes for patients.
+
+The association between `DC__NK__immune` and survival can also be visualised on a Kaplan-Meier curve. First, we extract survival data from the `SingleCellExperiment` object and create a survival vector. 
 
 
 ```{r}
@@ -288,30 +298,29 @@ The association between `CD8_Cell__Neutrophils__myeloid` and survival can also b
 survData <- kerenSCE |>
   colData() |>
   data.frame() |>
-  select(imageID, Survival_days_capped, Censored) |>
-  mutate(event = 1 - Censored) |>
+  select(imageID, survival) |>
   unique()
 
 # Creating survival vector
-kerenSurv <- Surv(survData$Survival_days_capped, survData$event)
+kerenSurv <- survData$survival
 names(kerenSurv) <- survData$imageID
 
 kerenSurv
 ```
 
-Next, we extract the Kontextual values of this relationship across all images. We then determine if CD8 T cells and Neutrophils cells are relatively attracted or avoiding in each image by comparing the Kontextual value in each image to the median Kontextual value.
+Next, we extract the Kontextual values of this relationship across all images. We then determine if dendritic and natural killer cells are relatively attracted or avoiding in each image by comparing the Kontextual value in each image to the median Kontextual value.
 
-Finally, we plot a Kaplan-Meier curve using the `ggsurvfit` package. As shown below, when `CD8_Cell` and `Neutrophils` are more dispersed to one another relative to the myeloid cell population, patients tend to have worse survival outcomes.
+Finally, we plot a Kaplan-Meier curve using the `ggsurvfit` package. As shown below, when dendritic and natural killer cells are more localised to one another relative to the immune cell population, patients tend to have better survival outcomes.
 
 ```{r, fig.width=5, fig.height=4}
 # Selecting most significant relationship
-survRelationship <- kontextMat[["CD8_Cell__Neutrophils__myeloid"]]
+survRelationship <- kontextMat[["DC__NK__immune"]]
 survRelationship <- ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
 
 # Plotting Kaplan-Meier curve
 survfit2(kerenSurv ~ survRelationship) |>
   ggsurvfit() +
-  ggtitle("CD8_Cell__Neutrophils__myeloid")
+  ggtitle("DC__NK__immune")
 ```
 
 # SpatioMark: Identifying continuous changes in cell state
