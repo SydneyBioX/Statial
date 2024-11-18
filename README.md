@@ -48,6 +48,7 @@ all feedback related to the package.
 
 * **Farhan Ameen** - [Linkedin](https://www.linkedin.com/in/farhan-ameen-5913841b0/)
 * **Sourish Iyengar**
+* **Alex Qin** - [Linkedin](https://www.linkedin.com/in/alex-qin-5144a7155/)
 * **Shila Ghazanfar** - [@shazanfar](https://twitter.com/shazanfar)
 * **Ellis Patrick**  - [@TheEllisPatrick](https://twitter.com/TheEllisPatrick)
 

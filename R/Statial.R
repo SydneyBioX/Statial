@@ -161,7 +161,16 @@ getDistances <- function(cells,
 
   if (!is(cells, "SingleCellExperiment")) stop("Currently this only accepts SpatialExperiment or SingleCellExperiment")
 
-  cd <- as.data.frame(SingleCellExperiment::colData(cells))
+  if (is(cells, "SingleCellExperiment")) {
+    cd <- cells |>
+      SummarizedExperiment::colData() |>
+      data.frame()
+  }
+  
+  if (is(cells, "SpatialExperiment")) {
+    cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
+      data.frame()
+  }
 
   if (!any(c(cellType, imageID, spatialCoords) %in% colnames(cd))) stop("Either imageID, cellType or spatialCoords is not in your colData")
 
@@ -247,7 +256,16 @@ getAbundances <- function(cells,
 
   if (!is(cells, "SingleCellExperiment")) stop("Currently this only accepts SpatialExperiment or SingleCellExperiment")
 
-  cd <- as.data.frame(SingleCellExperiment::colData(cells))
+  if (is(cells, "SingleCellExperiment")) {
+    cd <- cells |>
+      SummarizedExperiment::colData() |>
+      data.frame()
+  }
+  
+  if (is(cells, "SpatialExperiment")) {
+    cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
+      data.frame()
+  }
 
   if (!any(c(cellType, imageID, spatialCoords) %in% colnames(cd))) stop("Either imageID, cellType or spatialCoords is not in your colData")
 
@@ -723,8 +741,18 @@ plotStateChanges <- function(cells,
     stop("The reduced dimension needs to exist in the data")
   }
 
+  if (is(cells, "SingleCellExperiment")) {
+    cd <- cells |>
+      SummarizedExperiment::colData() |>
+      data.frame()
+  }
+  
+  if (is(cells, "SpatialExperiment")) {
+    cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
+      data.frame()
+  }
 
-  data <- data.frame(t(assay(cells, assay)), reducedDim(cells, type), colData(cells))
+  data <- data.frame(t(assay(cells, assay)), reducedDim(cells, type), cd)
 
   data$imageID <- data[, imageID]
   data$cellType <- data[, cellType]
