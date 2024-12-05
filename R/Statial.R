@@ -533,7 +533,7 @@ calcStateChanges <- function(cells,
   minCellIdx <- cells |> 
     colData() |> 
     as.data.frame() |> 
-    group_by(imageID, cellType) |> 
+    group_by(!!imageID, cellType) |> 
     mutate(indx = n() > minCells) |> 
     pull(indx)
   
