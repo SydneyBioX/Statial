@@ -223,7 +223,7 @@ parentDf <- parentCombinations(
 
 Rather than specifying `to`, `from`, and `parent` in `Kontextual`, the output from `parentCombinations` can be inputed into `Kontextual` using the `parentDf` argument, to examine all pairwise relationships in the dataset. This chunk will take a significant amount of time to run, for demonstration the results have been saved and are loaded in.
 
-```{r eval = FALSE}
+```{r}
 # Running Kontextual on all relationships across all images.
 kerenKontextual <- Kontextual(
   cells = kerenSCE,
@@ -236,8 +236,6 @@ kerenKontextual <- Kontextual(
 For every pairwise relationship (named accordingly: `from__to__parent`) `Kontextual` outputs the L-function values (original) and the Kontextual value. The relationships where the L-function and Kontextual disagree (e.g. one metric is positive and the other is negative) represent relationships where adding context information results in different conclusions on the spatial relationship between the two cell types.
 
 ```{r}
-data("kerenKontextual")
-
 head(kerenKontextual, 10)
 ```
 

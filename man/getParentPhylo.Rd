@@ -7,7 +7,7 @@
 getParentPhylo(phylo_tree)
 }
 \arguments{
-\item{phlyo_tree}{a phylo object or a treekoR result.}
+\item{phylo_tree}{a phylo object or a treekoR result.}
 }
 \value{
 A named list of parents and their respective children.

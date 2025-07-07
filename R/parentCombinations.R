@@ -96,7 +96,7 @@ parentCombinations <- function(all, ..., parentList = NULL) {
 #' in pairwise calculations.
 #
 #'
-#' @param phlyo_tree a phylo object or a treekoR result.
+#' @param phylo_tree a phylo object or a treekoR result.
 #'
 #' @return A named list of parents and their respective children.
 #'
