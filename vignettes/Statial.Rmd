@@ -25,7 +25,7 @@ output:
   BiocStyle::html_document
 ---
 
-```{r, include = FALSE}
+```{r chunk setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -38,7 +38,7 @@ library(BiocStyle)
 
 # Installation
 
-```{r eval = FALSE}
+```{r installation, eval = FALSE}
 # Install the package from Bioconductor
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager")
@@ -48,7 +48,7 @@ BiocManager::install("Statial")
 
 # Load packages
 
-```{r warning = FALSE, message = FALSE, eval = TRUE}
+```{r libraries and setup, warning = FALSE, message = FALSE, eval = TRUE}
 # Loading required packages
 library(Statial)
 library(spicyR)
@@ -78,7 +78,7 @@ These images are stored in a `SingleCellExperiment` object called `kerenSCE`. Th
 
 *Note:* The original dataset was reduced down from 41 images to 10 images for the purposes of this vignette, due to size restrictions.
 
-```{r}
+```{r load dataset}
 # Load breast cancer
 data("kerenSCE")
 
@@ -99,7 +99,7 @@ There are two ways to define the cell type hierarchy. First, they can be defined
 
 *Note:* The `all` vector must be created to include cell types which do not have a parent e.g. the *undefined* cell type in this data set.
 
-```{r biologicalHierarchy}
+```{r biological hierarchy}
 # Examine all cell types in image
 unique(kerenSCE$cellType)
 
@@ -126,7 +126,7 @@ Alternatively, you can use the `treeKor` bioconductor package [treekoR](http://w
 
 *Note:* These parent populations may not be accurate as we are using a small subset of the data. 
 
-```{r clusteringHierarchy, warning = FALSE}
+```{r clustering hierarchy, warning = FALSE}
 # Calculate hierarchy using treekoR
 kerenTree <- treekoR::getClusterTree(t(assay(kerenSCE, "intensities")),
                             kerenSCE$cellType,
@@ -174,7 +174,7 @@ kerenSCE |>
 
 We can calculate these relationships across all images for a single radius (r = 100). Small radii will examine local spatial relationships, whereas larger radii will examine global spatial relationships.
 
-```{r p53Relationship}
+```{r p53 relationship}
 p53_Kontextual <- Kontextual(
   cells = kerenSCE,
   r = 100,
@@ -223,7 +223,7 @@ parentDf <- parentCombinations(
 
 Rather than specifying `to`, `from`, and `parent` in `Kontextual`, the output from `parentCombinations` can be inputed into `Kontextual` using the `parentDf` argument, to examine all pairwise relationships in the dataset. This chunk will take a significant amount of time to run, for demonstration the results have been saved and are loaded in.
 
-```{r}
+```{r kontextual}
 # Running Kontextual on all relationships across all images.
 kerenKontextual <- Kontextual(
   cells = kerenSCE,
@@ -235,7 +235,7 @@ kerenKontextual <- Kontextual(
 
 For every pairwise relationship (named accordingly: `from__to__parent`) `Kontextual` outputs the L-function values (original) and the Kontextual value. The relationships where the L-function and Kontextual disagree (e.g. one metric is positive and the other is negative) represent relationships where adding context information results in different conclusions on the spatial relationship between the two cell types.
 
-```{r}
+```{r head kontextual results}
 head(kerenKontextual, 10)
 ```
 
@@ -243,7 +243,7 @@ head(kerenKontextual, 10)
 
 To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we can use the `spicy` function from the `spicyR` package. `spicy` requires the `SingleCellExperiment` object being used to contain a column called `survival`.
 
-```{r}
+```{r survival data}
 # add survival column to kerenSCE
 kerenSCE$event = 1 - kerenSCE$Censored
 kerenSCE$survival = Surv(kerenSCE$Survival_days_capped, kerenSCE$event)
@@ -252,7 +252,7 @@ kerenSCE$survival = Surv(kerenSCE$Survival_days_capped, kerenSCE$event)
 
 In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepMatrix`. Note, to extract the original L-function values, specify `column = "original"` in `prepMatrix`.
 
-```{r}
+```{r prep kontextual matrix}
 # Converting Kontextual result into data matrix
 kontextMat <- prepMatrix(kerenKontextual)
 
@@ -268,7 +268,7 @@ Finally, both the `SingleCellExperiment` object and the Kontextual matrix are pa
 
 *Note:* You can specify additional covariates and include a subject id for mixed effects survival modelling, see \code{\link[spicyR]{spicy} for more information.
 
-```{r}
+```{r survival anaylysis}
 # Running survival analysis
 survivalResults = spicy(cells = kerenSCE,
                         alternateResult = kontextMat,
@@ -281,7 +281,7 @@ head(survivalResults$survivalResults, 10)
 
 The survival results can also be visualised using the `signifPlot` function.
 
-```{r}
+```{r survival signifPlot}
 signifPlot(survivalResults)
 ```
 
@@ -291,7 +291,7 @@ As we can see from the results `DC__NK__immune` is the one of the most significa
 The association between `DC__NK__immune` and survival can also be visualised on a Kaplan-Meier curve. First, we extract survival data from the `SingleCellExperiment` object and create a survival vector. 
 
 
-```{r}
+```{r extract data KM curve}
 # Extracting survival data
 survData <- kerenSCE |>
   colData() |>
@@ -310,7 +310,7 @@ Next, we extract the Kontextual values of this relationship across all images. W
 
 Finally, we plot a Kaplan-Meier curve using the `ggsurvfit` package. As shown below, when dendritic and natural killer cells are more localised to one another relative to the immune cell population, patients tend to have better survival outcomes.
 
-```{r, fig.width=5, fig.height=4}
+```{r KM curve, fig.width=5, fig.height=4}
 # Selecting most significant relationship
 survRelationship <- kontextMat[["DC__NK__immune"]]
 survRelationship <- ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
@@ -329,7 +329,7 @@ Changes in cell states can be analytically framed as the change in abundance of 
 
 The first step in analysing these changes is to calculate the spatial proximity (`getDistances`) and abundance (`getAbundances`) of each cell to every cell type. These values will then be stored in the `reducedDims` slot of the `SingleCellExperiment` object under the names `distances` and `abundances` respectively.
 
-```{r}
+```{r calc metrics}
 kerenSCE <- getDistances(kerenSCE,
   maxDist = 200,
   nCores = 1
@@ -345,7 +345,7 @@ First, let's examine the same effect observed earlier with Kontextual - the loca
 
 Statial provides two main functions to assess this relationship - `calcStateChanges` and `plotStateChanges`. We can use `calcStateChanges` to examine the relationship between 2 cell types for 1 marker in a specific image. In this case, we're examining the relationship between keratin/tumour cells (`from = Keratin_Tumour`) and macrophages (`to = "Macrophages"`) for the marker p53 (`marker = "p53"`) in `image = "6"`. We can appreciate that the `fdr` statistic for this relationship is significant, with a negative tvalue, indicating that the expression of p53 in keratin/tumour cells decreases as distance from macrophages increases.
 
-```{r}
+```{r calcStateChanges}
 stateChanges <- calcStateChanges(
   cells = kerenSCE,
   type = "distances",
@@ -365,7 +365,7 @@ Through this analysis, we can observe that keratin/tumour cells closer to a grou
 
 These results allow us to essentially arrive at the same result as Kontextual, which calculated a localisation between p53+ keratin/tumour cells and macrophages in the wider context of keratin/tumour cells.
 
-```{r}
+```{r plotStateChanges p53}
 p <- plotStateChanges(
   cells = kerenSCE,
   type = "distances",
@@ -387,7 +387,7 @@ p
 
 Beyond looking at single cell-to-cell interactions for a single image, we can also look at all interactions across all images. The `calcStateChanges` function provided by Statial can be expanded for this exact purpose - by not specifying cell types, a marker, or an image, `calcStateChanges` will examine the most significant correlations between distance and marker expression across the entire dataset. Here, we've filtered out the most significant interactions to only include those found within image 6 of the Keren et al. dataset.
 
-```{r}
+```{r calcStateChanges all}
 stateChanges <- calcStateChanges(
   cells = kerenSCE,
   type = "distances",
@@ -406,7 +406,7 @@ We can examine some of these interactions further with the `plotStateChanges` fu
 
 Biologically, HLA Class I is a ligand which exists on all nucleated cells, tasked with presenting internal cell antigens for recognition by the immune system, marking aberrant cells for destruction by either CD8+ T cells or NK cells.
 
-```{r}
+```{r plotStateChanges HLA}
 p <- plotStateChanges(
   cells = kerenSCE,
   type = "distances",
@@ -426,7 +426,7 @@ p
 
 Next, let's take a look at the top 10 most significant results across all images.
 
-```{r}
+```{r statChanges}
 stateChanges |> head(n = 10)
 ```
 
@@ -434,7 +434,7 @@ Immediately, we can appreciate that a couple of these interactions are not biolo
 
 Could this potentially be an artefact of `calcStateChanges`? We can examine the image through the `plotStateChanges` function, where we indeed observe a strong increase in CD20 expression in T cells nearby B cell populations.
 
-```{r}
+```{r plotStateChanges CD20}
 p <- plotStateChanges(
   cells = kerenSCE,
   type = "distances",
@@ -462,7 +462,7 @@ To circumvent this problem, Statial provides a function that predicts the probab
 
 We can then introduce these probabilities as covariates into our linear model by setting `contamination = TRUE` as a parameter in our `calcStateChanges` function. However, this is not a perfect solution for the issue of contamination. As we can see, despite factoring in contamination into our linear model, the correlation between B cell density and CD20 expression in CD4 T cells remains one of the most significant interactions in our model.
 
-```{r}
+```{r calcContamination}
 kerenSCE <- calcContamination(kerenSCE)
 
 stateChangesCorrected <- calcStateChanges(
@@ -482,7 +482,7 @@ Whilst our correction attempts do not rectify every relationship which arises du
 
 Plotting the relationship between false positives and true positives, we'd expect the contamination correction to be greatest in the relationships with the top 100 lowest p values, where we indeed see more true positives than false positives with contamination correction.
 
-```{r}
+```{r corrected}
 cellTypeMarkers <- c("CD3", "CD4", "CD8", "CD56", "CD11c", "CD68", "CD45", "CD20")
 
 values <- c("blue", "red")
@@ -501,7 +501,7 @@ ggplot(df, aes(x = TP, y = FP, colour = type)) +
 
 Here, we zoom in on the ROC curve where the top 100 lowest p values occur, where we indeed see more true positives than false positives with contamination correction.
 
-```{r}
+```{r corrected zoom}
 ggplot(df, aes(x = TP, y = FP, colour = type)) +
   geom_line() +
   xlim(0, 100) +
@@ -514,7 +514,7 @@ ggplot(df, aes(x = TP, y = FP, colour = type)) +
 
 Similiar to `Kontextual`, we can run a similar survival analysis using our state changes results. Here, `prepMatrix` extracts the coefficients, or the `coef` column of `stateChanges` by default. To use the t values instead, specify `column = "tval"` in the `prepMatrix` function.
 
-```{r}
+```{r survival state changes}
 # Preparing features for Statial
 stateMat <- prepMatrix(stateChanges)
 
@@ -531,7 +531,7 @@ head(survivalResults)
 
 For our state changes results, `Keratin_Tumour__CD4_Cell__Keratin6` is the most significant pairwise relationship which contributes to patient survival. That is, the relationship between HLA class I expression in keratin/tumour cells and their spatial proximity to mesenchymal cells. As there is a negative coeffcient associated with this relationship, which tells us that higher HLA class I expression in keratin/tumour cells nearby mesenchymal cell populations lead to poorer survival outcomes for patients.
 
-```{r, fig.width=5, fig.height=4}
+```{r KM curve state changes, fig.width=5, fig.height=4}
 # Selecting the most significant relationship
 survRelationship <- stateMat[["Keratin_Tumour__CD4_Cell__Keratin6"]]
 survRelationship <- ifelse(survRelationship > median(survRelationship), "Higher expression in close cells", "Lower expression in close cells")
@@ -548,7 +548,7 @@ survfit2(kerenSurv ~ survRelationship) |>
 
 Next we can cluster areas with similar spatial interactions to identify regions using lisaClust. Here we set `k = 5` to identify 5 regions.
 
-```{r}
+```{r lisaClust}
 set.seed(51773)
 
 # Preparing features for lisaClust
@@ -557,7 +557,7 @@ kerenSCE <- lisaClust::lisaClust(kerenSCE, k = 5)
 
 The regions identified by licaClust can be visualised using the `hatchingPlot` function.
 
-```{r, fig.height=5, fig.width=6.5}
+```{r hatchingPlot, fig.height=5, fig.width=6.5}
 # Use hatching to visualise regions and cell types.
 lisaClust::hatchingPlot(kerenSCE,
   useImages = "5",
@@ -570,7 +570,7 @@ lisaClust::hatchingPlot(kerenSCE,
 
 `Statial` provides functionality to identify the average marker expression of a given cell type in a given region, using the `getMarkerMeans` function. Similar to the analysis above, these features can also be used for survival analysis.
 
-```{r lisaClust}
+```{r colTest regions}
 cellTypeRegionMeans <- getMarkerMeans(kerenSCE,
   imageID = "imageID",
   cellType = "cellType",
@@ -586,7 +586,7 @@ head(survivalResults)
 
 Finally we demonstrate how we can use `ClassifyR` to perform patient classification with the features generated from `Statial`. In addition to the kontextual, state changes, and marker means values, we also calculate cell type proportions and region proportions using the `getProp` function in `spicyR`. Here we perform 3 fold cross validation with 10 repeats, using a CoxPH model for survival classification, feature selection is also performed by selecting the top 10 features per fold using a CoxPH model.
 
-```{r}
+```{r ClassifyR}
 # Calculate cell type and region proportions
 cellTypeProp <- getProp(kerenSCE,
   feature = "cellType",
@@ -626,7 +626,7 @@ kerenCV <- crossValidate(
 
 Here, we use the `performancePlot` function to assess the C-index from each repeat of the 3-fold cross-validation. We can see the resulting C-indexes are very variable due to the dataset only containing 10 images.
 
-```{r}
+```{r performancePlot}
 # Calculate AUC for each cross-validation repeat and plot.
 performancePlot(kerenCV,
   characteristicsList = list(x = "Assay Name")
@@ -640,6 +640,6 @@ Keren, L., Bosse, M., Marquez, D., Angoshtari, R., Jain, S., Varma, S., Yang, S.
 
 # sessionInfo
 
-```{r}
+```{r sessionInfo}
 sessionInfo()
 ```
