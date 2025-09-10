@@ -170,8 +170,9 @@ getDistances <- function(cells,
   if (is(cells, "SpatialExperiment")) {
     cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
       data.frame()
+    if(!all(spatialCoords%in%colnames(cd))) spatialCoords <- colnames(SpatialExperiment::spatialCoords(cells))
   }
-
+  
   if (!any(c(cellType, imageID, spatialCoords) %in% colnames(cd))) stop("Either imageID, cellType or spatialCoords is not in your colData")
 
   cd <- cd[, c(cellType, imageID, spatialCoords)]
@@ -265,6 +266,7 @@ getAbundances <- function(cells,
   if (is(cells, "SpatialExperiment")) {
     cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
       data.frame()
+    if(!all(spatialCoords%in%colnames(cd))) spatialCoords <- colnames(SpatialExperiment::spatialCoords(cells))
   }
 
   if (!any(c(cellType, imageID, spatialCoords) %in% colnames(cd))) stop("Either imageID, cellType or spatialCoords is not in your colData")
@@ -462,6 +464,8 @@ calcContamination <- function(cells,
 #' @param imageID The column in colData that stores the image ids.
 #' @param contamination If TRUE, use the contamination scores that have previously
 #'  been calculate. Otherwise a name of which reduced dimension contains the scores.
+#' @param test  The type of test to perform. By default this will assume the data 
+#' is Gaussian. A value of "nb" will use a negative binomial to model the expression.
 #' @param minCells The minimum number of cells required to fit a model.
 #' @param verbose A logical indicating if messages should be printed
 #' @param timeout
@@ -502,6 +506,7 @@ calcStateChanges <- function(cells,
                              cellType = "cellType",
                              imageID = "imageID",
                              contamination = NULL,
+                             test = "g",
                              minCells = 20,
                              verbose = FALSE,
                              timeout = 10,
@@ -522,7 +527,10 @@ calcStateChanges <- function(cells,
   }
 
   if (is.null(from)) {
-    from <- to
+    from <- unique(colData(cells)[, cellType])
+    if (class(from) == "factor") {
+      from <- droplevels(from)
+    }
   }
 
   if (!is.null(contamination)) {
@@ -533,17 +541,17 @@ calcStateChanges <- function(cells,
   minCellIdx <- cells |> 
     colData() |> 
     as.data.frame() |> 
-    group_by(!!imageID, cellType) |> 
+    group_by(!!imageID, !!cellType) |> 
     mutate(indx = n() > minCells) |> 
     pull(indx)
   
   cells <- cells[, minCellIdx]
   
   cells <- cells[, colData(cells)[, cellType] %in% from]
-
+  
   distances <- SingleCellExperiment::reducedDim(cells, type)
   distances <- distances[, to, drop = FALSE]
-  intensities <- as.data.frame(t(SummarizedExperiment::assay(cells, assay)))
+  intensities <- as.data.frame(t(as.matrix(SummarizedExperiment::assay(cells, assay))))
   intensities <- intensities[, marker, drop = FALSE]
 
   splitDist <- split(distances, ~ colData(cells)[, imageID] + colData(cells)[, cellType], sep = "51773")
@@ -552,8 +560,14 @@ calcStateChanges <- function(cells,
     contaminations <- data.frame(madeUp = rep(-99, ncol(cells)))
   } else {
     contaminations <- SingleCellExperiment::reducedDim(cells, contamination)
-    contaminations <- dplyr::select(contaminations, -cellID, -cellType, -rfMaxCellProb, -rfSecondLargestCellProb, -rfMainCellProb)
-  }
+    contaminations <- dplyr::select(
+      contaminations,
+      -dplyr::any_of(c("cellID",
+                       "cellType",
+                       "rfMaxCellProb",
+                       "rfSecondLargestCellProb",
+                       "rfMainCellProb")))
+    }
 
   splitCon <- split(contaminations, ~ colData(cells)[, imageID] + colData(cells)[, cellType], sep = "51773")
 
@@ -566,6 +580,7 @@ calcStateChanges <- function(cells,
     distances = splitDist[use],
     intensities = splitInt[use],
     contaminations = splitCon[use],
+    MoreArgs = list(test = test),
     BPPARAM = BPPARAM,
     SIMPLIFY = FALSE
   )
@@ -583,38 +598,85 @@ calcStateChanges <- function(cells,
 
 
 #' @importFrom limma lmFit
-calculateChangesMarker <- function(distances, intensities, contaminations, nCores) {
-  test <- apply(distances, 2, function(x) {
+#' @importFrom edgeR glmQLFTest glmQLFTest DGEList topTags
+calculateChangesMarker <- function (distances, intensities, contaminations, nCores, test) 
+{
+  testAll <- apply(distances, 2, function(x) {
     if (length(unique(x)) > 1) {
       if (contaminations[1, 1] == -99) {
         design <- data.frame(coef = 1, cellType = x)
-      } else {
-        contaminations <- contaminations[, !is.na(colSums(contaminations)), drop = FALSE]
-        design <- data.frame(coef = 1, cellType = x, contaminations[, -ncol(contaminations)])
       }
-
+      else {
+        contaminations <- contaminations[, !is.na(colSums(contaminations)), 
+                                         drop = FALSE]
+        # Decide whether to drop last column
+        is_composition <- is.matrix(contaminations) &&
+          all(abs(rowSums(contaminations) - 1) < 1e-8)
+        
+        if (is_composition) {
+          contam_use <- contaminations[, -ncol(contaminations), drop = FALSE]
+        } else {
+          contam_use <- contaminations
+        }
+        
+        # Build design
+        design <- data.frame(coef = 1,
+                             cellType = x,
+                             contam_use)
+        
+        ## Drop zero-variance columns (constant 0/1 can also cause trouble)
+        nzv <- vapply(as.data.frame(design), function(z) var(z) > 0, logical(1))
+        nzv[1] <- TRUE
+        design <- design[, nzv, drop = FALSE]
+        
+        ## Enforce full rank (drop aliased columns deterministically)
+        qrX   <- qr(design)
+        keep  <- qrX$pivot[seq_len(qrX$rank)]
+        keep  <- c(intersect(1:2, keep), setdiff(keep, 1:2))
+        design <- design[, keep, drop = FALSE]
+      }
       if (any(is.na(design))) {
         design$cellType[is.na(design$cellType)] <- 0
       }
-
       exprs <- t(intensities)
-      fit <- .quiet(limma::lmFit(exprs, design, trend = rep(1, nrow(exprs)), verbose = FALSE))
-
-      df <- data.frame(
-        marker = colnames(intensities),
-        coef = fit$coef[, "cellType"],
-        tval = (fit$coef / fit$stdev.unscaled / fit$sigma)[, "cellType"]
-      )
-      df$pval <- 2 * pt(-abs(df$t), df = fit$df.residual)
-      rownames(df) <- NULL
-
+      
+      if(any(test != "nb")){
+        
+        fit <- Statial:::.quiet(limma::lmFit(exprs, design, trend = rep(1, 
+                                                                        nrow(exprs)), verbose = FALSE))
+        df <- data.frame(marker = colnames(intensities), 
+                         coef = fit$coef[, "cellType"], tval = (fit$coef/fit$stdev.unscaled/fit$sigma)[, 
+                                                                                                       "cellType"])
+        df$pval <- 2 * pt(-abs(df$t), df = fit$df.residual)
+        rownames(df) <- NULL
+      }
+      
+      
+      if(any(test == "nb")){
+        y <- DGEList(counts=exprs)
+        keep <- rowSums(y$counts) > 4
+        y <- y[keep,, keep.lib.sizes=FALSE]
+        keep <- colSums(y$counts) > 4
+        y <- y[,keep, keep.lib.sizes=FALSE]
+        design <- design[keep,]
+        y$samples$lib.size     <- rep(1, ncol(y))
+        
+        df <- NULL
+        if(sum(keep)>0){
+          fit <- Statial:::.quiet(glmQLFit(y, as.matrix(design)))
+          qlf <- glmQLFTest(fit, coef = 2)
+          df1 <- topTags(qlf, n = Inf)
+          df1 <- as.data.frame(df1)
+          df <- data.frame(marker = rownames(df1), coef = df1$logFC, tval = abs(qnorm(df1$PValue, lower.tail = TRUE))*sign(df1$logFC), pval = df1$PValue)
+        }
+      }
+      
       df
+      
     }
   }, simplify = FALSE)
-
-  test <- dplyr::bind_rows(test, .id = "otherCellType")
+  testAll <- dplyr::bind_rows(testAll, .id = "otherCellType")
 }
-
 
 .quiet <- function(x, print_cat = TRUE, message = TRUE, warning = TRUE) {
   stopifnot(is.logical(print_cat) && length(print_cat) == 1)
@@ -750,9 +812,10 @@ plotStateChanges <- function(cells,
   if (is(cells, "SpatialExperiment")) {
     cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
       data.frame()
+    if(!all(spatialCoords%in%colnames(cd))) spatialCoords <- colnames(SpatialExperiment::spatialCoords(cells))
   }
 
-  data <- data.frame(t(assay(cells, assay)), reducedDim(cells, type), cd)
+  data <- data.frame(t(as.matrix(assay(cells, assay))), reducedDim(cells, type), cd)
 
   data$imageID <- data[, imageID]
   data$cellType <- data[, cellType]

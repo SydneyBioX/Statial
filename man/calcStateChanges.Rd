@@ -15,6 +15,7 @@ calcStateChanges(
   cellType = "cellType",
   imageID = "imageID",
   contamination = NULL,
+  test = "g",
   minCells = 20,
   verbose = FALSE,
   timeout = 10,
@@ -47,6 +48,9 @@ all cell types  will be used.}
 
 \item{contamination}{If TRUE, use the contamination scores that have previously
 been calculate. Otherwise a name of which reduced dimension contains the scores.}
+
+\item{test}{The type of test to perform. By default this will assume the data 
+is Gaussian. A value of "nb" will use a negative binomial to model the expression.}
 
 \item{minCells}{The minimum number of cells required to fit a model.}
 

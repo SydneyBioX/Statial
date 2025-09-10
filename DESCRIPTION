@@ -1,7 +1,7 @@
 Package: Statial
 Type: Package
 Title: A package to identify changes in cell state relative to spatial associations
-Version: 1.11.0
+Version: 1.11.1
 Date: 2022-09-19
 Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
     role = c("aut", "cre")),
@@ -41,7 +41,8 @@ Imports:
     limma,
     SpatialExperiment,
     cluster,
-    treekoR
+    treekoR,
+    edgeR
 Suggests: 
     BiocStyle,
     knitr,
@@ -59,7 +60,7 @@ Description: Statial is a suite of functions for identifying changes in cell
     to explore how the structure and function of different cell types may be 
     altered by the agents they are surrounded with.
 License: GPL-3
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 URL: https://sydneybiox.github.io/Statial https://github.com/SydneyBioX/Statial/issues
 BugReports: https://github.com/SydneyBioX/Statial/issues
