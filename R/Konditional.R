@@ -97,6 +97,12 @@ Kontextual <- function(cells,
       image = image
     )
   }
+  
+  if (is(cells, "SpatialExperiment")) {
+    cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
+      data.frame()
+    if(!all(spatialCoords%in%colnames(cd))) spatialCoords <- colnames(SpatialExperiment::spatialCoords(cells))
+  }
 
   if (is(cells, "SingleCellExperiment")) {
     cells <- cells |>
@@ -104,10 +110,6 @@ Kontextual <- function(cells,
       data.frame()
   }
 
-  if (is(cells, "SpatialExperiment")) {
-    cells <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
-      data.frame()
-  }
 
   if (is(cells, "data.frame")) {
     cells <- validateDf(

@@ -1,11 +1,7 @@
 Package: Statial
 Type: Package
 Title: A package to identify changes in cell state relative to spatial associations
-<<<<<<< HEAD
-Version: 1.11.1
-=======
-Version: 1.11.0
->>>>>>> upstream/devel
+Version: 1.11.2
 Date: 2022-09-19
 Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
     role = c("aut", "cre")),

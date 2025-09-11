@@ -161,17 +161,18 @@ getDistances <- function(cells,
 
   if (!is(cells, "SingleCellExperiment")) stop("Currently this only accepts SpatialExperiment or SingleCellExperiment")
 
+  if (is(cells, "SpatialExperiment")) {
+    cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
+      data.frame()
+    if(!all(spatialCoords%in%colnames(cd))) spatialCoords <- colnames(SpatialExperiment::spatialCoords(cells))
+  }
+  
   if (is(cells, "SingleCellExperiment")) {
     cd <- cells |>
       SummarizedExperiment::colData() |>
       data.frame()
   }
   
-  if (is(cells, "SpatialExperiment")) {
-    cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
-      data.frame()
-    if(!all(spatialCoords%in%colnames(cd))) spatialCoords <- colnames(SpatialExperiment::spatialCoords(cells))
-  }
   
   if (!any(c(cellType, imageID, spatialCoords) %in% colnames(cd))) stop("Either imageID, cellType or spatialCoords is not in your colData")
 
