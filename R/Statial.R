@@ -600,7 +600,7 @@ calcStateChanges <- function(cells,
 
 
 #' @importFrom limma lmFit
-#' @importFrom edgeR glmQLFTest glmQLFTest DGEList topTags
+#' @importFrom edgeR glmQLFTest glmQLFit DGEList topTags
 calculateChangesMarker <- function (distances, intensities, contaminations, nCores, test) 
 {
   testAll <- apply(distances, 2, function(x) {
