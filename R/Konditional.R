@@ -102,7 +102,8 @@ Kontextual <- function(cells,
     cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
       data.frame()
     if(!all(spatialCoords%in%colnames(cd))) spatialCoords <- colnames(SpatialExperiment::spatialCoords(cells))
-  }
+    cells <- cd
+    }
 
   if (is(cells, "SingleCellExperiment")) {
     cells <- cells |>
