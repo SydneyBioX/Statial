@@ -148,6 +148,7 @@ distanceCalculator <- function(data, maxDist = 200, distFun = "min") {
 #' @importFrom magrittr %>%
 #' @importFrom S4Vectors metadata
 #' @importFrom S4Vectors metadata<-
+#' @importFrom SpatialExperiment spatialCoordsNames spatialCoords
 getDistances <- function(cells,
                          maxDist = NULL,
                          imageID = "imageID",
@@ -158,15 +159,12 @@ getDistances <- function(cells,
                          nCores = 1) {
   x <- runif(1)
   BPPARAM <- .generateBPParam(cores = nCores)
+  
+  if (is.null(colnames(cells))) colnames(cells) <- seq_len(ncol(cells))
 
   if (!is(cells, "SingleCellExperiment")) stop("Currently this only accepts SpatialExperiment or SingleCellExperiment")
 
-  if (is(cells, "SpatialExperiment")) {
-    cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
-      data.frame()
-    if(!all(spatialCoords%in%colnames(cd))) spatialCoords <- colnames(SpatialExperiment::spatialCoords(cells))
-    cells <- cd
-  }
+
   
   if (is(cells, "SingleCellExperiment")) {
     cd <- cells |>
@@ -174,12 +172,17 @@ getDistances <- function(cells,
       data.frame()
   }
   
+  if (is(cells, "SpatialExperiment")) {
+    cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
+      data.frame()
+    if(!all(spatialCoords%in%colnames(cd))) spatialCoords <- SpatialExperiment::spatialCoordsNames(cells)
+  }
+  
   
   if (!any(c(cellType, imageID, spatialCoords) %in% colnames(cd))) stop("Either imageID, cellType or spatialCoords is not in your colData")
 
   cd <- cd[, c(cellType, imageID, spatialCoords)]
   colnames(cd) <- c("cellType", "imageID", "x", "y")
-  if (is.null(colnames(cells))) colnames(cells) <- seq_len(ncol(cells))
   cd$cellID <- colnames(cells)
 
 
