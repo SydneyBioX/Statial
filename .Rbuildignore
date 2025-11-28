@@ -5,3 +5,5 @@
 ^_pkgdown\.yml$
 ^doc$
 ^Meta$
+^pkgdown$
+^\.github$
