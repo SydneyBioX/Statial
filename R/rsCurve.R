@@ -92,6 +92,8 @@ kontextCurve <- function(cells,
       inhom = inhom,
       edge = edge,
       cores = cores,
+      imageID = imageID,
+      cellType = cellType,
       ...
     )
 
