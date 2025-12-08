@@ -62,14 +62,18 @@ relabelKontextual <- function(cells,
                               cellType = "cellType",
                               imageID = "imageID",
                               ...) {
+  
+  if (is(cells, "SpatialExperiment")) {
+    cd <- cbind(colData(cells), SpatialExperiment::spatialCoords(cells)) |>
+      data.frame()
+    if(!all(spatialCoords%in%colnames(cd))) spatialCoords <- colnames(SpatialExperiment::spatialCoords(cells))
+    cells <- cd
+  }
+  
+  
   if (is(cells, "SingleCellExperiment")) {
     cells <- cells |>
       SingleCellExperiment::colData() |>
-      data.frame()
-  }
-
-  if (is(cells, "SpatialExperiment")) {
-    cells <- cbind(colData(cells), spatialCoords(cells)) |>
       data.frame()
   }
 
