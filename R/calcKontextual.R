@@ -50,9 +50,14 @@
 #' Calculates kontextual value
 #' @noRd
 #' @importFrom data.table ":=" .SD
-.Kontext <- function(closePairs, counts, child1, child2, parent, r, returnWeight) {
+.Kontext <- function(closePairs, counts = NULL, child1, child2, parent, r, returnWeight) {
   # child1 is root cell
   # child2 is child cell
+  
+  if(is.null(counts)) {
+    counts <- closePairs[, .(n = sum(edge)), by = .(i, cellTypeI, cellTypeJ)]
+    counts <- dcast(counts, i + cellTypeI ~ cellTypeJ, value.var = "n", fill = 0)
+  }
   
   # Defining counts
   nParent <- sum(counts$cellTypeI %in% parent)
@@ -76,6 +81,12 @@
   
   # Turn this into centered L
   centeredL = sqrt(numerator / denominator / pi) - r
+  
+  if(returnWeight){
+    return(list("lambdaChild1" = lambdaChild1,
+                "lambdaChild2" = lambdaChild2,
+                "denominator" = denominator))
+  }
   
   return(centeredL)
 
