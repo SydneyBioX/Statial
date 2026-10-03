@@ -241,7 +241,7 @@ head(kerenKontextual, 10)
 
 ## Associating the relationships with survival outcomes.
 
-To examine whether the features obtained from `Statial` are associated with patient outcomes or groupings, we can use the `spicy` function from the `spicyR` package. `spicy` requires the `SingleCellExperiment` object being used to contain a column called `survival`.
+To test whether Kontextual relationships are associated with patient outcomes, or differ between groups of patients, use `kontextualTest`. It takes the same `parentDf` as `Kontextual` and a `condition`: here a `Surv` column of survival outcomes.
 
 ```{r survival data}
 # add survival column to kerenSCE
@@ -249,8 +249,34 @@ kerenSCE$event = 1 - kerenSCE$Censored
 kerenSCE$survival = Surv(kerenSCE$Survival_days_capped, kerenSCE$event)
 ```
 
+`kontextualTest` does not compare the Kontextual values themselves between patients. In each image it compares the Kontextual statistic with its exact expectation if the `to` cells were a random choice among the cells of their parent population, so that differences in tissue composition between patients do not by themselves look like changes in the relationship. The images' excesses over this expectation are then related to survival with patients as the units (see `?kontextualTest`). With several images per patient, give the patient column as `subject`.
 
-In addition to this, the Kontextual results must be converted from a `data.frame` to a wide `matrix`, this can be done using `prepMatrix`. Note, to extract the original L-function values, specify `column = "original"` in `prepMatrix`.
+```{r survival analysis}
+# Testing every relationship in parentDf against survival
+survivalResults <- kontextualTest(
+  cells = kerenSCE,
+  parentDf = parentDf,
+  condition = "survival",
+  r = 100
+)
+
+topPairs(survivalResults)
+```
+
+The results can also be visualised using the `signifPlot` function, with a panel for each parent population.
+
+```{r survival signifPlot, fig.width=10, fig.height=5}
+signifPlot(survivalResults)
+```
+
+```{r top relationship, include = FALSE}
+top <- topPairs(survivalResults, n = 1)
+topName <- rownames(top)
+```
+
+With 10 patients, `r sum(survivalResults$cellResults$p_adj < 0.05, na.rm = TRUE)` relationships are significant after correcting for the number of relationships tested (BH-adjusted p < 0.05). The most significant is `r topName`, the relationship between `r top$from` and `r top$to` relative to the parent population `r top$parent` (p = `r signif(top$p.value, 2)`). Its coefficient, the log hazard ratio for a standard deviation increase in the Kontextual excess, is `r signif(top$coefficient, 2)`: patients whose `r top$from` and `r top$to` cells are more localised relative to the `r top$parent` population tend to have `r if (isTRUE(top$coefficient < 0)) "better" else "worse"` survival.
+
+The association can be visualised on a Kaplan-Meier curve. The Kontextual values of every relationship in every image are in a wide matrix from `prepMatrix`; note, to extract the original L-function values, specify `column = "original"` in `prepMatrix`.
 
 ```{r prep kontextual matrix}
 # Converting Kontextual result into data matrix
@@ -263,33 +289,7 @@ kontextMat <- kontextMat[kerenSCE$imageID |> unique(), ]
 kontextMat[is.na(kontextMat)] <- 0
 ```
 
-Finally, both the `SingleCellExperiment` object and the Kontextual matrix are passed into the `spicy` function, with `condition = "survival"`. The resulting coefficients and p values can be obtained by accessing the `survivalResults` name.
-
-
-*Note:* You can specify additional covariates and include a subject id for mixed effects survival modelling, see \code{\link[spicyR]{spicy} for more information.
-
-```{r survival anaylysis}
-# Running survival analysis
-survivalResults = spicy(cells = kerenSCE,
-                        alternateResult = kontextMat,
-                        condition = "survival",
-                        weights = TRUE)
-
-head(survivalResults$survivalResults, 10)
-
-```
-
-The survival results can also be visualised using the `signifPlot` function.
-
-```{r survival signifPlot}
-signifPlot(survivalResults)
-```
-
-
-As we can see from the results `DC__NK__immune` is the one of the most significant pairwise relationship which contributes to patient survival. That is the relationship between dendritic cells and natural killer cells, relative to the parent population of immune cells. We can see that there is a negative coefficient associated with this relationship, which tells us an increase in localisation of these cell types relative to immune cells leads to better survival outcomes for patients.
-
-The association between `DC__NK__immune` and survival can also be visualised on a Kaplan-Meier curve. First, we extract survival data from the `SingleCellExperiment` object and create a survival vector. 
-
+Next, we extract survival data from the `SingleCellExperiment` object and create a survival vector.
 
 ```{r extract data KM curve}
 # Extracting survival data
@@ -306,19 +306,17 @@ names(kerenSurv) <- survData$imageID
 kerenSurv
 ```
 
-Next, we extract the Kontextual values of this relationship across all images. We then determine if dendritic and natural killer cells are relatively attracted or avoiding in each image by comparing the Kontextual value in each image to the median Kontextual value.
-
-Finally, we plot a Kaplan-Meier curve using the `ggsurvfit` package. As shown below, when dendritic and natural killer cells are more localised to one another relative to the immune cell population, patients tend to have better survival outcomes.
+We then classify each image as localised or dispersed by comparing its Kontextual value for this relationship with the median, and plot a Kaplan-Meier curve using the `ggsurvfit` package.
 
 ```{r KM curve, fig.width=5, fig.height=4}
-# Selecting most significant relationship
-survRelationship <- kontextMat[["DC__NK__immune"]]
+# The most significant relationship
+survRelationship <- kontextMat[[topName]]
 survRelationship <- ifelse(survRelationship > median(survRelationship), "Localised", "Dispersed")
 
 # Plotting Kaplan-Meier curve
 survfit2(kerenSurv ~ survRelationship) |>
   ggsurvfit() +
-  ggtitle("DC__NK__immune")
+  ggtitle(topName)
 ```
 
 # SpatioMark: Identifying continuous changes in cell state

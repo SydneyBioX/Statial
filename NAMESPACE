@@ -10,6 +10,7 @@ export(getParentPhylo)
 export(isKontextual)
 export(kontextCurve)
 export(kontextPlot)
+export(kontextualTest)
 export(makeWindow)
 export(parentCombinations)
 export(plotStateChanges)
@@ -20,85 +21,117 @@ import(concaveman)
 import(dplyr)
 import(spatstat.geom)
 import(tidyr)
-importFrom(BiocParallel,MulticoreParam)
-importFrom(BiocParallel,SerialParam)
-importFrom(BiocParallel,SnowParam)
-importFrom(BiocParallel,bplapply)
-importFrom(BiocParallel,bpmapply)
-importFrom(BiocParallel,bpparam)
-importFrom(S4Vectors,"metadata<-")
-importFrom(S4Vectors,metadata)
-importFrom(SingleCellExperiment,"reducedDim<-")
-importFrom(SingleCellExperiment,reducedDim)
-importFrom(SingleCellExperiment,reducedDimNames)
-importFrom(SummarizedExperiment,"colData<-")
-importFrom(SummarizedExperiment,assay)
-importFrom(SummarizedExperiment,assayNames)
-importFrom(SummarizedExperiment,colData)
-importFrom(data.table,":=")
-importFrom(data.table,.SD)
-importFrom(data.table,as.data.table)
-importFrom(data.table,dcast)
-importFrom(dplyr,across)
-importFrom(dplyr,all_of)
-importFrom(dplyr,arrange)
-importFrom(dplyr,bind_rows)
-importFrom(dplyr,contains)
-importFrom(dplyr,filter)
-importFrom(dplyr,full_join)
-importFrom(dplyr,group_by)
-importFrom(dplyr,inner_join)
-importFrom(dplyr,left_join)
-importFrom(dplyr,mutate)
-importFrom(dplyr,relocate)
-importFrom(dplyr,rename)
-importFrom(dplyr,rename_with)
-importFrom(dplyr,select)
-importFrom(dplyr,slice)
-importFrom(dplyr,starts_with)
-importFrom(dplyr,summarise)
-importFrom(dplyr,summarise_at)
-importFrom(dplyr,vars)
-importFrom(edgeR,DGEList)
-importFrom(edgeR,glmQLFTest)
-importFrom(edgeR,glmQLFit)
-importFrom(edgeR,topTags)
-importFrom(ggplot2,aes)
-importFrom(ggplot2,aes_string)
-importFrom(ggplot2,autoplot)
-importFrom(ggplot2,facet_wrap)
-importFrom(ggplot2,geom_hline)
-importFrom(ggplot2,geom_line)
-importFrom(ggplot2,geom_point)
-importFrom(ggplot2,geom_ribbon)
-importFrom(ggplot2,geom_smooth)
-importFrom(ggplot2,ggplot)
-importFrom(ggplot2,ggtitle)
-importFrom(ggplot2,guides)
-importFrom(ggplot2,labs)
-importFrom(ggplot2,scale_colour_gradientn)
-importFrom(ggplot2,scale_fill_distiller)
-importFrom(ggplot2,stat_density_2d)
-importFrom(ggplot2,theme_classic)
-importFrom(ggplot2,xlab)
-importFrom(ggplot2,ylab)
+importFrom(BiocParallel,
+  MulticoreParam,
+  SerialParam,
+  SnowParam,
+  bplapply,
+  bpmapply,
+  bpparam
+)
+importFrom(Rcpp,sourceCpp)
+importFrom(S4Vectors,
+  "metadata<-",
+  metadata
+)
+importFrom(SingleCellExperiment,
+  "reducedDim<-",
+  reducedDim,
+  reducedDimNames
+)
+importFrom(SpatialExperiment,
+  spatialCoords,
+  spatialCoordsNames
+)
+importFrom(SummarizedExperiment,
+  "colData<-",
+  assay,
+  assayNames,
+  colData
+)
+importFrom(data.table,
+  ":=",
+  .SD,
+  as.data.table,
+  dcast
+)
+importFrom(dplyr,
+  across,
+  all_of,
+  arrange,
+  bind_rows,
+  contains,
+  filter,
+  full_join,
+  group_by,
+  inner_join,
+  left_join,
+  mutate,
+  relocate,
+  rename,
+  rename_with,
+  select,
+  slice,
+  starts_with,
+  summarise,
+  summarise_at,
+  vars
+)
+importFrom(edgeR,
+  DGEList,
+  glmQLFTest,
+  glmQLFit,
+  topTags
+)
+importFrom(ggplot2,
+  aes,
+  aes_string,
+  autoplot,
+  facet_wrap,
+  geom_hline,
+  geom_line,
+  geom_point,
+  geom_ribbon,
+  geom_smooth,
+  ggplot,
+  ggtitle,
+  guides,
+  labs,
+  scale_colour_gradientn,
+  scale_fill_distiller,
+  stat_density_2d,
+  theme_classic,
+  xlab,
+  ylab
+)
 importFrom(limma,lmFit)
 importFrom(magrittr,"%>%")
 importFrom(methods,is)
 importFrom(plotly,ggplotly)
 importFrom(purrr,reduce)
 importFrom(ranger,ranger)
-importFrom(spatstat.geom,closepairs)
-importFrom(spatstat.geom,owin)
-importFrom(spatstat.geom,ppp)
-importFrom(stats,runif)
-importFrom(stats,sd)
-importFrom(stringr,str_detect)
-importFrom(stringr,str_replace)
-importFrom(tibble,column_to_rownames)
-importFrom(tibble,remove_rownames)
-importFrom(tibble,rownames_to_column)
-importFrom(tidyr,gather)
-importFrom(tidyr,pivot_longer)
-importFrom(tidyr,pivot_wider)
+importFrom(spatstat.geom,
+  closepairs,
+  owin,
+  ppp
+)
+importFrom(stats,
+  runif,
+  sd
+)
+importFrom(stringr,
+  str_detect,
+  str_replace
+)
+importFrom(tibble,
+  column_to_rownames,
+  remove_rownames,
+  rownames_to_column
+)
+importFrom(tidyr,
+  gather,
+  pivot_longer,
+  pivot_wider
+)
 importFrom(tidyselect,starts_with)
+useDynLib(Statial, .registration = TRUE)

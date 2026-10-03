@@ -1,3 +1,30 @@
+CHANGES IN VERSION 1.15.1
+-------------------------
+
+NEW FEATURES
+
+    o kontextualTest() tests every triple of a parentDf (from parentCombinations()) between
+      conditions or against survival, with patients as the units. In each image the Kontextual
+      statistic is compared with its exact expectation and variance if the `to` cells were a
+      random choice among the parent's cells, so a change in tissue composition does not by
+      itself look like a change in the relationship; images are combined by a frailty GEE with
+      a CR2 variance. The computation is done by spicyR (>= 1.99.3, now imported); the result
+      works with spicyR's topPairs(), signifPlot() and spicyBoxPlot().
+
+    o Faster SpatioMark. getDistances() and getAbundances() find each cell's neighbours with a grid
+      search in C++ instead of spatstat's closepairs() and tidyr's pivot_wider() (the same values;
+      the columns are in the order the cell types first appear in the data). calcStateChanges()
+      fits every marker and every distance (or abundance) column of a group at once by least squares
+      (the same coefficients, t statistics and p-values as lmFit; markers that do not vary within a
+      group, whose statistics are rounding noise in both, can differ). The negative binomial test
+      (test = "nb") and data with missing intensities use the previous code. kerenSCE is re-saved
+      with updateObject(), which removes about a second from every reducedDim() assignment.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The vignette tests Kontextual relationships against survival with kontextualTest()
+      instead of spicy(alternateResult = ), which compares the Kontextual values as they are.
+
 CHANGES IN VERSION 1.8.0
 -------------------------
 

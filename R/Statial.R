@@ -67,46 +67,19 @@ preProcessing <- function(SCE, intensities) {
 #' @importFrom spatstat.geom owin ppp closepairs
 #' @importFrom tidyr pivot_wider
 distanceCalculator <- function(data, maxDist = 200, distFun = "min") {
-  ow <- spatstat.geom::owin(
-    xrange = range(data$x),
-    yrange = range(data$y)
-  )
-  pppData <- spatstat.geom::ppp(
-    x = data$x,
-    y = data$y,
-    window = ow,
-    marks = data$cellType
-  )
-
-  closePairData <- spatstat.geom::closepairs(pppData, rmax = maxDist, what = "ijd")
-  distanceData <- data.frame(
-    cellID = data$cellID[closePairData$i],
-    cellType = data$cellType[closePairData$j],
-    d = closePairData$d
-  )
-
-  if (distFun == "min") {
-    values_fn <- function(x) {
-      min(c(x, maxDist), na.rm = TRUE)
-    }
-  }
-  if (distFun == "abundance") {
-    values_fn <- function(x) {
-      sum(c(x, 0) > 0, na.rm = TRUE)
-    }
-  }
-
-  values_fill <- values_fn(NULL)
-
-  distanceData <- tidyr::pivot_wider(distanceData,
-    names_from = cellType, values_from = d,
-    values_fn = values_fn, values_fill = values_fill
-  )
-  distanceData <- dplyr::left_join(data[, "cellID", drop = FALSE], distanceData, by = "cellID") |>
-    tibble::column_to_rownames("cellID")
-
-  # distanceData[is.na(distanceData)] <- maxDist
-  distanceData
+  # For every cell, the distance to the nearest cell of each type within maxDist (distFun = "min"; maxDist
+  # if there is none) or the number of cells of each type at 0 < d <= maxDist ("abundance"), from a grid
+  # search in C++ (src/neighbours.cpp). A cell with no neighbour within maxDist is NA, and a type with no
+  # cell within maxDist of any cell of the image is not a column, as when this was computed from spatstat's
+  # closepairs() and tidyr's pivot_wider().
+  mode <- switch(distFun, min = 0L, abundance = 1L, stop("distFun must be \"min\" or \"abundance\""))
+  types <- unique(as.character(data$cellType))
+  m <- .neighbourSummary(as.numeric(data$x), as.numeric(data$y), match(as.character(data$cellType), types) - 1L,
+                         length(types), maxDist, mode)
+  colnames(m) <- types
+  rownames(m) <- data$cellID
+  keep <- colSums(!is.na(m)) > 0
+  as.data.frame(m[, keep, drop = FALSE], check.names = FALSE)
 }
 
 
@@ -606,6 +579,8 @@ calcStateChanges <- function(cells,
 #' @importFrom edgeR glmQLFTest glmQLFit DGEList topTags
 calculateChangesMarker <- function (distances, intensities, contaminations, nCores, test) 
 {
+  # Gaussian test without missing intensities: every marker at once by least squares (as lmFit's "ls")
+  if (all(test != "nb") && !anyNA(intensities)) return(.changesLeastSquares(distances, intensities, contaminations))
   testAll <- apply(distances, 2, function(x) {
     if (length(unique(x)) > 1) {
       if (contaminations[1, 1] == -99) {
@@ -681,6 +656,85 @@ calculateChangesMarker <- function (distances, intensities, contaminations, nCor
     }
   }, simplify = FALSE)
   testAll <- dplyr::bind_rows(testAll, .id = "otherCellType")
+}
+
+## calculateChangesMarker's Gaussian test without limma's per-model overhead. Every column's design is
+## (1, x, contamination covariates), the covariates being the same for every column of the group (after the
+## zero-variance and aliased columns are dropped, as calculateChangesMarker does). By Frisch-Waugh-Lovell the
+## coefficient of x is that of the simple regression of the residuals of Y on the residuals of x, both after
+## projecting out (1, covariates) once, so every column and marker is fitted by a few matrix products; the
+## t statistic uses the full design's residual degrees of freedom. The results are lmFit's (method "ls").
+## Columns with missing values under contamination covariates, or collinear with the covariates, use the
+## per-column fit.
+.changesLeastSquares <- function(distances, intensities, contaminations) {
+  Y <- as.matrix(intensities); n <- nrow(Y)
+  X <- as.matrix(distances)
+  noContam <- contaminations[1, 1] == -99
+  if (noContam) {
+    Z <- matrix(1, n, 1)
+  } else {
+    contaminations <- contaminations[, !is.na(colSums(contaminations)), drop = FALSE]
+    is_composition <- is.matrix(contaminations) && all(abs(rowSums(contaminations) - 1) < 1e-8)
+    contam_use <- if (is_composition) contaminations[, -ncol(contaminations), drop = FALSE] else contaminations
+    C <- as.matrix(contam_use)
+    C <- C[, apply(C, 2, function(z) var(z) > 0), drop = FALSE]
+    qz <- qr(cbind(1, C))
+    Z <- cbind(1, C)[, sort(qz$pivot[seq_len(qz$rank)]), drop = FALSE]
+  }
+  qz <- qr(Z)
+  Ry <- qr.resid(qz, Y)
+  use <- apply(X, 2, function(x) length(unique(x)) > 1)
+  if (noContam) X[is.na(X)] <- 0
+  fast <- use & !apply(X, 2, anyNA)
+  out <- list()
+  if (any(fast)) {
+    Rx <- qr.resid(qz, X[, fast, drop = FALSE])
+    sxx <- colSums(Rx^2)
+    ok <- sxx > 1e-7 * colSums(sweep(X[, fast, drop = FALSE], 2, colMeans(X[, fast, drop = FALSE]))^2)
+    b <- crossprod(Rx, Ry) / sxx                                         # columns x markers
+    dfr <- n - qz$rank - 1
+    rss <- t(vapply(seq_len(nrow(b)), function(k) colSums((Ry - outer(Rx[, k], b[k, ]))^2), numeric(ncol(b))))
+    tval <- b / sqrt(pmax(rss, 0) / dfr / sxx)
+    nm <- colnames(X)[fast]
+    for (k in which(ok)) out[[nm[k]]] <- data.frame(marker = colnames(Y), coef = unname(b[k, ]), tval = unname(tval[k, ]),
+                                                     pval = unname(2 * stats::pt(-abs(tval[k, ]), df = dfr)))
+    fast[fast] <- ok
+  }
+  slow <- use & !fast
+  if (any(slow)) {
+    rest <- .changesPerColumn(distances[, slow, drop = FALSE], intensities, contaminations, noContam,
+                              if (!noContam) contam_use)
+    out[names(rest)] <- rest
+  }
+  out <- out[intersect(colnames(X), names(out))]                           # the columns' order
+  dplyr::bind_rows(out, .id = "otherCellType")
+}
+
+## One column at a time, as calculateChangesMarker (its design, then lmFit).
+.changesPerColumn <- function(distances, intensities, contaminations, noContam, contam_use) {
+  res <- lapply(distances, function(x) {
+    if (length(unique(x)) <= 1) return(NULL)
+    if (noContam) {
+      design <- data.frame(coef = 1, cellType = x)
+    } else {
+      design <- data.frame(coef = 1, cellType = x, contam_use)
+      nzv <- vapply(as.data.frame(design), function(z) var(z) > 0, logical(1))
+      nzv[1] <- TRUE
+      design <- design[, nzv, drop = FALSE]
+      qrX <- qr(design)
+      keep <- qrX$pivot[seq_len(qrX$rank)]
+      keep <- c(intersect(1:2, keep), setdiff(keep, 1:2))
+      design <- design[, keep, drop = FALSE]
+    }
+    if (any(is.na(design))) design$cellType[is.na(design$cellType)] <- 0
+    fit <- .quiet(limma::lmFit(t(intensities), design))
+    df <- data.frame(marker = colnames(intensities), coef = fit$coef[, "cellType"],
+                     tval = (fit$coef / fit$stdev.unscaled / fit$sigma)[, "cellType"])
+    df$pval <- 2 * stats::pt(-abs(df$tval), df = fit$df.residual)
+    rownames(df) <- NULL
+    df
+  })
+  res[!vapply(res, is.null, TRUE)]
 }
 
 .quiet <- function(x, print_cat = TRUE, message = TRUE, warning = TRUE) {
