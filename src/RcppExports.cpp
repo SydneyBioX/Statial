@@ -10,6 +10,20 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// concaveHullR
+Rcpp::NumericMatrix concaveHullR(Rcpp::NumericVector x, Rcpp::NumericVector y, double concavity, double lengthThreshold);
+RcppExport SEXP _Statial_concaveHullR(SEXP xSEXP, SEXP ySEXP, SEXP concavitySEXP, SEXP lengthThresholdSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
+    Rcpp::traits::input_parameter< double >::type lengthThreshold(lengthThresholdSEXP);
+    rcpp_result_gen = Rcpp::wrap(concaveHullR(x, y, concavity, lengthThreshold));
+    return rcpp_result_gen;
+END_RCPP
+}
 // neighbourSummary
 NumericMatrix neighbourSummary(NumericVector x, NumericVector y, IntegerVector type, int n_types, double r, int mode);
 RcppExport SEXP _Statial_neighbourSummary(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP n_typesSEXP, SEXP rSEXP, SEXP modeSEXP) {
@@ -28,6 +42,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_Statial_concaveHullR", (DL_FUNC) &_Statial_concaveHullR, 4},
     {"_Statial_neighbourSummary", (DL_FUNC) &_Statial_neighbourSummary, 6},
     {NULL, NULL, 0}
 };

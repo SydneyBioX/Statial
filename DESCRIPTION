@@ -1,7 +1,7 @@
 Package: Statial
 Type: Package
 Title: A package to identify changes in cell state relative to spatial associations
-Version: 1.15.2
+Version: 1.15.3
 Date: 2025-10-14
 Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
     role = c("aut", "cre")),
@@ -38,7 +38,6 @@ Imports:
     Rcpp
 LinkingTo: Rcpp
 Suggests: 
-    concaveman,
     plotly,
     treekoR,
     BiocStyle,
@@ -56,6 +55,7 @@ Description: Statial is a suite of functions for identifying changes in cell
     to explore how the structure and function of different cell types may be 
     altered by the agents they are surrounded with.
 License: GPL-3
+Copyright: The C++ port of concaveman in src/concaveman.cpp: see inst/COPYRIGHTS.
 Config/testthat/edition: 3
 URL: https://sydneybiox.github.io/Statial https://github.com/SydneyBioX/Statial/issues, https://sydneybiox.github.io/Statial/
 BugReports: https://github.com/SydneyBioX/Statial/issues
