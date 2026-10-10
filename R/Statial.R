@@ -1,6 +1,5 @@
 #' @noRd
 #'
-#' @importFrom magrittr %>%
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SummarizedExperiment colData<-
@@ -113,14 +112,10 @@ distanceCalculator <- function(data, maxDist = 200, distFun = "min") {
 #'   bind_rows rename_with contains starts_with vars across
 #' @importFrom spatstat.geom owin ppp closepairs
 #' @importFrom BiocParallel bplapply MulticoreParam
-#' @importFrom purrr reduce
 #' @importFrom stringr str_replace
 #' @importFrom SummarizedExperiment colData assayNames
 #' @importFrom tibble column_to_rownames
 #' @importFrom dplyr select contains mutate
-#' @importFrom magrittr %>%
-#' @importFrom S4Vectors metadata
-#' @importFrom S4Vectors metadata<-
 #' @importFrom SpatialExperiment spatialCoordsNames spatialCoords
 getDistances <- function(cells,
                          maxDist = NULL,
@@ -829,9 +824,6 @@ calculateChangesMarker <- function (distances, intensities, contaminations, nCor
 #' @importFrom ggplot2
 #'   ggplot scale_fill_distiller stat_density_2d geom_point theme_classic
 #'   aes_string ggtitle facet_wrap aes xlab ylab ggtitle autoplot scale_colour_gradientn
-#' @importFrom plotly ggplotly
-#' @importFrom S4Vectors metadata
-#' @importFrom S4Vectors metadata<-
 #' @importFrom SingleCellExperiment reducedDimNames
 plotStateChanges <- function(cells,
                              image,
@@ -986,6 +978,7 @@ plotStateChanges <- function(cells,
   # g4 <- ggplot2::autoplot(model) + ggplot2::theme_classic()
 
   if (interactive == TRUE) {
+    .need("plotly", "for interactive = TRUE")
     g1 <- plotly::ggplotly(g1)
     g2 <- plotly::ggplotly(g2)
     g3 <- plotly::ggplotly(g3)

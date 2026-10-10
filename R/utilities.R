@@ -1,3 +1,12 @@
+## Stops with an install hint if suggested package `pkg` is missing.
+.need <- function(pkg, why = NULL) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    stop("Package '", pkg, "' is needed", if (!is.null(why)) paste0(" ", why) else "",
+         ". Install it with BiocManager::install(\"", pkg, "\").", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 #' @noRd
 #'
 #' @importFrom BiocParallel SerialParam SnowParam MulticoreParam bpparam

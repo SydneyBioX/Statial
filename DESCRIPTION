@@ -1,7 +1,7 @@
 Package: Statial
 Type: Package
 Title: A package to identify changes in cell state relative to spatial associations
-Version: 1.15.1
+Version: 1.15.2
 Date: 2025-10-14
 Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
     role = c("aut", "cre")),
@@ -20,33 +20,27 @@ Depends: R (>= 4.1.0)
 Imports: 
     BiocParallel,
     spatstat.geom,
-    concaveman,
     data.table,
-    spatstat.explore,
     dplyr,
     tidyr,
     SingleCellExperiment,
     tibble,
     stringr,
-    tidyselect,
     ggplot2,
     methods,
     stats,
     SummarizedExperiment,
-    S4Vectors,
-    plotly,
-    purrr,
     ranger,
-    magrittr,
     limma,
     SpatialExperiment,
-    cluster,
-    treekoR,
     edgeR,
     spicyR (>= 1.99.3),
     Rcpp
 LinkingTo: Rcpp
 Suggests: 
+    concaveman,
+    plotly,
+    treekoR,
     BiocStyle,
     knitr,
     testthat (>= 3.0.0),

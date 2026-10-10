@@ -17,7 +17,6 @@ export(plotStateChanges)
 export(prepMatrix)
 export(relabel)
 export(relabelKontextual)
-import(concaveman)
 import(dplyr)
 import(spatstat.geom)
 import(tidyr)
@@ -30,10 +29,6 @@ importFrom(BiocParallel,
   bpparam
 )
 importFrom(Rcpp,sourceCpp)
-importFrom(S4Vectors,
-  "metadata<-",
-  metadata
-)
 importFrom(SingleCellExperiment,
   "reducedDim<-",
   reducedDim,
@@ -105,10 +100,7 @@ importFrom(ggplot2,
   ylab
 )
 importFrom(limma,lmFit)
-importFrom(magrittr,"%>%")
 importFrom(methods,is)
-importFrom(plotly,ggplotly)
-importFrom(purrr,reduce)
 importFrom(ranger,ranger)
 importFrom(spatstat.geom,
   closepairs,
@@ -133,5 +125,4 @@ importFrom(tidyr,
   pivot_longer,
   pivot_wider
 )
-importFrom(tidyselect,starts_with)
 useDynLib(Statial, .registration = TRUE)

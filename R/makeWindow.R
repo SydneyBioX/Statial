@@ -17,7 +17,6 @@
 #'
 #' @export
 #' @rdname makeWindow
-#' @import concaveman
 
 makeWindow <- function(data,
                        window = "square",
@@ -31,10 +30,11 @@ makeWindow <- function(data,
     ow <- spatstat.geom::convexhull(p)
   }
   if (window == "concave") {
+    .need("concaveman", "for concave windows")
     message(
       "Concave windows are temperamental. Try choosing values of window.length > and < 1 if you have problems."
     )
-    if (is.null(window.length) | is.na(window.length)) {
+    if (is.null(window.length) || is.na(window.length)) {
       window.length <- (max(data$x) - min(data$x)) / 20
     } else {
       window.length <- (max(data$x) - min(data$x)) / 20 * window.length

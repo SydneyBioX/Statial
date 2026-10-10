@@ -150,7 +150,6 @@ kontextCurve <- function(cells,
 #'  labs guides
 #' @importFrom stringr str_detect
 #' @importFrom dplyr select
-#' @importFrom tidyselect starts_with
 kontextPlot <- function(rsDf) {
   if (str_detect(names(rsDf), "Sd") |> any()) {
     kontextual <- rsDf |>

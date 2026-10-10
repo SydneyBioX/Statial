@@ -1,3 +1,13 @@
+CHANGES IN VERSION 1.15.2
+-------------------------
+
+    o Fewer dependencies: treekoR, plotly and concaveman move to Suggests (treekoR is used in the vignette,
+      plotly for interactive = TRUE, concaveman for concave windows), and spatstat.explore, cluster, purrr,
+      tidyselect, magrittr and S4Vectors, which were not used, are no longer imported.
+
+    o makeWindow(window = "concave") works with the default window.length = NULL; it stopped with
+      "argument is of length zero".
+
 CHANGES IN VERSION 1.15.1
 -------------------------
 
