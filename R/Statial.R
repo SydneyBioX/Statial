@@ -111,7 +111,6 @@ distanceCalculator <- function(data, maxDist = 200, distFun = "min") {
 #' @importFrom dplyr
 #'   bind_rows rename_with contains starts_with vars across
 #' @importFrom spatstat.geom owin ppp closepairs
-#' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom stringr str_replace
 #' @importFrom SummarizedExperiment colData assayNames
 #' @importFrom tibble column_to_rownames
@@ -125,9 +124,6 @@ getDistances <- function(cells,
                          redDimName = "distances",
                          distFun = "min",
                          nCores = 1) {
-  x <- runif(1)
-  BPPARAM <- .generateBPParam(cores = nCores)
-  
   if (is.null(colnames(cells))) colnames(cells) <- seq_len(ncol(cells))
 
   if (!is(cells, "SingleCellExperiment")) stop("Currently this only accepts SpatialExperiment or SingleCellExperiment")
@@ -161,10 +157,10 @@ getDistances <- function(cells,
 
   distances <- cdFilt |>
     split(~imageID) |>
-    BiocParallel::bplapply(distanceCalculator,
+    .par_lapply(distanceCalculator,
       maxDist = maxDist,
       distFun = distFun,
-      BPPARAM = BPPARAM
+      cores = nCores
     )
 
 
@@ -216,7 +212,6 @@ getDistances <- function(cells,
 #' @importFrom dplyr bind_rows
 #' @importFrom SingleCellExperiment reducedDim
 #' @importFrom SummarizedExperiment colData assayNames
-#' @importFrom BiocParallel bplapply
 getAbundances <- function(cells,
                           r = 200,
                           distFun = "abundance",
@@ -225,9 +220,6 @@ getAbundances <- function(cells,
                           imageID = "imageID",
                           spatialCoords = c("x", "y"),
                           nCores = 1) {
-  x <- runif(1)
-  BPPARAM <- .generateBPParam(cores = nCores)
-
   if (!is(cells, "SingleCellExperiment")) stop("Currently this only accepts SpatialExperiment or SingleCellExperiment")
 
   if (is(cells, "SingleCellExperiment")) {
@@ -258,10 +250,10 @@ getAbundances <- function(cells,
 
   distances <- cdFilt |>
     split(~imageID) |>
-    BiocParallel::bplapply(distanceCalculator,
+    .par_lapply(distanceCalculator,
       maxDist = maxDist,
       distFun = distFun,
-      BPPARAM = BPPARAM
+      cores = nCores
     )
 
 
@@ -464,7 +456,6 @@ calcContamination <- function(cells,
 #'
 #' @export
 #' @rdname calcStateChanges
-#' @importFrom BiocParallel bplapply MulticoreParam
 #' @importFrom dplyr
 #'   arrange group_by  summarise_at mutate bind_rows left_join filter left_join
 #' @importFrom tidyr gather
@@ -545,17 +536,13 @@ calcStateChanges <- function(cells,
   splitCon <- split(contaminations, ~ colData(cells)[, imageID] + colData(cells)[, cellType], sep = "51773")
 
   use <- unlist(lapply(splitDist, nrow)) > minCells
-  x <- runif(1)
-  BPPARAM <- .generateBPParam(cores = nCores)
 
-
-  allModels <- bpmapply(calculateChangesMarker,
+  allModels <- .par_mapply(calculateChangesMarker,
     distances = splitDist[use],
     intensities = splitInt[use],
     contaminations = splitCon[use],
     MoreArgs = list(test = test),
-    BPPARAM = BPPARAM,
-    SIMPLIFY = FALSE
+    cores = nCores
   )
 
   allModels <- dplyr::bind_rows(allModels, .id = "tmp")

@@ -46,7 +46,6 @@
 #' @export
 #' @rdname relabelKontextual
 #' @importFrom dplyr mutate
-#' @importFrom BiocParallel  bplapply
 relabelKontextual <- function(cells,
                               nSim = 1,
                               r,
@@ -94,11 +93,14 @@ relabelKontextual <- function(cells,
   imageArray <- replicate(nSim, cells, simplify = FALSE)
 
 
-  # relabel cells in parent population for all images in imageArray
-  relabeled <- bplapply(imageArray,
+  # relabel cells in parent population for all images in imageArray. The seed
+  # of the random number streams comes from the session, so set.seed() makes
+  # the relabelling reproducible for any number of cores.
+  BPPARAM <- .bpparam(cores, RNGseed = sample.int(.Machine$integer.max, 1))
+  relabeled <- .par_lapply(imageArray,
     relabel,
     labels = parent,
-    BPPARAM = MulticoreParam(workers = cores)
+    cores = BPPARAM
   )
 
   relabeled <- c(list(cells), relabeled)
@@ -117,7 +119,7 @@ relabelKontextual <- function(cells,
     parentDf = parentDf,
     inhom = inhom,
     edgeCorrect = edge,
-    cores = cores,
+    cores = BPPARAM,
     ...
   )
 

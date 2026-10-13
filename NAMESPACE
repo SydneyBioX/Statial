@@ -20,14 +20,6 @@ export(relabelKontextual)
 import(dplyr)
 import(spatstat.geom)
 import(tidyr)
-importFrom(BiocParallel,
-  MulticoreParam,
-  SerialParam,
-  SnowParam,
-  bplapply,
-  bpmapply,
-  bpparam
-)
 importFrom(Rcpp,sourceCpp)
 importFrom(SingleCellExperiment,
   "reducedDim<-",
@@ -107,10 +99,7 @@ importFrom(spatstat.geom,
   owin,
   ppp
 )
-importFrom(stats,
-  runif,
-  sd
-)
+importFrom(stats,sd)
 importFrom(stringr,
   str_detect,
   str_replace

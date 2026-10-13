@@ -48,11 +48,9 @@
 #'
 #' @export Kontextual
 #' @rdname Kontextual
-#' @importFrom BiocParallel bpmapply
 #' @importFrom SummarizedExperiment colData
 #' @importFrom tibble remove_rownames
 #' @importFrom methods is
-#' @importFrom stats runif
 #' @importFrom data.table as.data.table 
 
 Kontextual <- function(cells,
@@ -131,10 +129,6 @@ Kontextual <- function(cells,
   
   
   
-  # Specify cores for parrellel computing
-  x <- runif(1) # nolint
-  BPPARAM <- Statial:::.generateBPParam(cores = cores)
-  
   r = sort(r)
 
   cells <- lapply(cells, function(image) {
@@ -144,8 +138,12 @@ Kontextual <- function(cells,
 
   images <- cells
   
-  # Convert images to PPP objects
-  imagesPPP <- bplapply(images, function(image){
+  # One param for both parallel steps, as making one takes a moment
+  BPPARAM <- .bpparam(cores)
+  
+  # For each image: the PPP object, and the close pairs for each radius with
+  # their edge correction weights
+  imagesPairs <- .par_lapply(images, function(image){
     # make window
     ow <- Statial::makeWindow(image, window, window.length)
     
@@ -162,32 +160,6 @@ Kontextual <- function(cells,
       window = ow,
       marks = marks
     )
-    
-    return(imagePPP)
-  }, BPPARAM = BPPARAM ) 
-  
-
-  # Calculate Areas
-  Areas = bplapply(imagesPPP, function(image) {
-    return(spatstat.geom::area(image))
-  }, BPPARAM = BPPARAM )
-
-
-  
-  imagesInfo <- data.frame(
-    imageID = names(images),
-    images = I(images),
-    imagesPPP = I(imagesPPP),
-    area = I(Areas)
-  )
-
-  imagesInfoR <- expand_grid(
-    imagesInfo,
-    r = r) |> 
-    mutate(id = paste(imageID, r, sep = "."))
-  
-  # Calculate close pairs for all images and radii
-  closePairList <- bplapply(imagesPPP, function(imagePPP) {
 
     # Calculate close pairs
     closePairs <- spatstat.geom::closepairs(
@@ -217,10 +189,52 @@ Kontextual <- function(cells,
       names(closePairList) = r
     }
     
-    return(closePairList)
+    # Perform edge correction (if needed)
+    closePairList <- mapply(function(closePairs, r){
+      
+      if(edgeCorrect){
+        edge <- .borderEdge(imagePPP, r)
+        edge <- as.data.frame(edge)
+        edge$i <- factor(imagePPP$marks$cellID, levels = imagePPP$marks$cellID)
+        edge$edge <- 1 / edge$edge
+      } else {
+        edge = data.frame(
+          i = factor(imagePPP$marks$cellID, levels = imagePPP$marks$cellID),
+          edge = 1
+        )
+      }
+
+      closePairs <- left_join(closePairs, edge[, c("i", "edge")], by = "i")
+    }, 
+    closePairs = closePairList,
+    r = r,
+    SIMPLIFY = FALSE)
     
-  }, BPPARAM = BPPARAM)
+    return(list(imagePPP = imagePPP, closePairs = closePairList))
+    
+  }, cores = BPPARAM)
   
+  imagesPPP <- lapply(imagesPairs, function(x) x$imagePPP)
+  closePairList <- lapply(imagesPairs, function(x) x$closePairs)
+
+  # Calculate Areas
+  Areas = lapply(imagesPPP, function(image) {
+    return(spatstat.geom::area(image))
+  })
+
+
+  
+  imagesInfo <- data.frame(
+    imageID = names(images),
+    images = I(images),
+    imagesPPP = I(imagesPPP),
+    area = I(Areas)
+  )
+
+  imagesInfoR <- expand_grid(
+    imagesInfo,
+    r = r) |> 
+    mutate(id = paste(imageID, r, sep = "."))
   
   # Adding closePairs to the image data.frame
   closePairList = unlist(closePairList, recursive = FALSE)
@@ -229,31 +243,6 @@ Kontextual <- function(cells,
   imagesInfoR = left_join(imagesInfoR,
                           closePairsDfs,
                           by = join_by(id))
-  
-
-  
-  # Perform edge correction (if needed)
-  imagesInfoR$closePairs <- bpmapply(function(imagePPP, closePairs, r){
-    
-    if(edgeCorrect){
-      edge <- .borderEdge(imagePPP, r)
-      edge <- as.data.frame(edge)
-      edge$i <- factor(imagePPP$marks$cellID, levels = imagePPP$marks$cellID)
-      edge$edge <- 1 / edge$edge
-    } else {
-      edge = data.frame(
-        i = factor(imagePPP$marks$cellID, levels = imagePPP$marks$cellID),
-        edge = 1
-      )
-    }
-
-    closePairs <- left_join(closePairs, edge[, c("i", "edge")], by = "i")
-  }, 
-  imagePPP = imagesInfoR$imagesPPP,
-  closePairs = imagesInfoR$closePairs,
-  r = imagesInfoR$r,
-  SIMPLIFY = FALSE,
-  BPPARAM = BPPARAM)
 
 
   # Create all combinations of specified parameters
@@ -274,7 +263,7 @@ Kontextual <- function(cells,
   }
 
   # Calculate Kontextual values
-  lVals <- bpmapply(
+  lVals <- .par_mapply(
     KontextualCore,
     images = kontextualDf$images,
     r = kontextualDf$r,
@@ -284,8 +273,7 @@ Kontextual <- function(cells,
     parent = kontextualDf$parent,
     inhom = kontextualDf$inhomL,
     area = kontextualDf$area,
-    SIMPLIFY = FALSE,
-    BPPARAM = BPPARAM
+    cores = BPPARAM
   )
   
 

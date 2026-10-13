@@ -1,7 +1,7 @@
 Package: Statial
 Type: Package
 Title: A package to identify changes in cell state relative to spatial associations
-Version: 1.15.3
+Version: 1.15.4
 Date: 2025-10-14
 Authors@R: c(person("Farhan", "Ameen", email = "fame2827@uni.sydney.edu.au",
     role = c("aut", "cre")),
@@ -19,6 +19,7 @@ biocViews: SingleCell, Spatial, Classification
 Depends: R (>= 4.1.0)
 Imports: 
     BiocParallel,
+    RhpcBLASctl,
     spatstat.geom,
     data.table,
     dplyr,
