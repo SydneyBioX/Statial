@@ -54,9 +54,13 @@
     return(BiocParallel::bplapply(X, task, BPPARAM = BPPARAM))
   }
 
+  # Only when BLAS has several threads: restoring them after forking restarts every thread, and the new
+  # threads spin for a moment, so a single-threaded BLAS is left alone.
   blasThreads <- RhpcBLASctl::blas_get_num_procs()
-  RhpcBLASctl::blas_set_num_threads(1L)
-  on.exit(RhpcBLASctl::blas_set_num_threads(blasThreads), add = TRUE)
+  if (blasThreads > 1L) {
+    RhpcBLASctl::blas_set_num_threads(1L)
+    on.exit(RhpcBLASctl::blas_set_num_threads(blasThreads), add = TRUE)
+  }
   if (BiocParallel::bpisup(BPPARAM) || !is(BPPARAM, "MulticoreParam")) {
     # Workers that are already running, or are new R sessions, are sent the task with each chunk.
     threadVars <- Sys.getenv(c("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS"), unset = NA)
