@@ -4,8 +4,8 @@ CHANGES IN VERSION 1.15.4
     o Parallel loops (Kontextual(), relabelKontextual(), getDistances(), getAbundances(),
       calcStateChanges()) fork their workers once per call; the workers share the data and receive only
       task numbers, and tasks are handed out in about eight chunks per worker. Socket workers are used on
-      Windows. BLAS runs one thread in each worker during the call (RhpcBLASctl, now imported); OpenBLAS
-      otherwise starts one thread per core in every worker. Kontextual() builds each image's point pattern,
+      Windows. BLAS and OpenMP run one thread in each worker during the call (RhpcBLASctl, now imported);
+      OpenBLAS otherwise starts one thread per core in every worker. Kontextual() builds each image's point pattern,
       close pairs and edge correction in one pass over the images. Results are unchanged.
 
     o relabelKontextual() takes the seed of its random number streams from the session, so set.seed()
