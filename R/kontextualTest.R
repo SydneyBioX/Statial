@@ -84,7 +84,7 @@ kontextualTest <- function(cells,
                            window = c("convex", "square"),
                            edgeCorrect = TRUE,
                            adjustAbundance = TRUE,
-                           labelClustering = TRUE,
+                           labelClustering = FALSE,
                            ref = NULL) {
   window <- match.arg(window)
   if (is.list(cells) && !is.data.frame(cells) && !methods::is(cells, "SummarizedExperiment")) {

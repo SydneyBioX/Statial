@@ -19,7 +19,7 @@ kontextualTest(
   window = c("convex", "square"),
   edgeCorrect = TRUE,
   adjustAbundance = TRUE,
-  labelClustering = TRUE,
+  labelClustering = FALSE,
   ref = NULL
 )
 }

@@ -1,3 +1,10 @@
+CHANGES IN VERSION 1.15.5
+-------------------------
+
+    o kontextualTest() now sets labelClustering = FALSE by default, matching kontextualEngine() in
+      spicyR 1.99.31. Without the extra label clustering term the p-values are calibrated under
+      relabelling of the images; with it they were too small. Set labelClustering = TRUE to keep the term.
+
 CHANGES IN VERSION 1.15.4
 -------------------------
 
