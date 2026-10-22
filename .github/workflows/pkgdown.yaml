@@ -2,8 +2,9 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: [main, master]
+    branches: [devel, master]
   pull_request:
+    branches: [devel, master]
   release:
     types: [published]
   workflow_dispatch:
@@ -20,6 +21,9 @@ jobs:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # the devel branch builds against Bioconductor devel, as spicyR's does (the devel spicyR needs spatialdataR,
+      # which only Bioconductor devel has)
+      R_BIOC_VERSION: "3.24"
     permissions:
       contents: write
     steps:
@@ -33,7 +37,8 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::.
+          # spicyR from its devel branch: Statial can need a newer spicyR than Bioconductor has built yet
+          extra-packages: any::pkgdown, github::SydneyBioX/spicyR@devel, local::.
           needs: website
 
       - name: Build site
