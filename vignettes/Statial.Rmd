@@ -59,11 +59,9 @@ library(SingleCellExperiment)
 library(ggplot2)
 library(ggsurvfit)
 library(survival)
-library(tibble)
 library(treekoR)
 
 theme_set(theme_classic())
-nCores <- 1
 ```
 
 # Overview
@@ -112,8 +110,7 @@ biologicalHierarchy = list(
 )
 
 # Adding more broader immune parent populationse
-biologicalHierarchy$immune = c(biologicalHierarchy$bcells,
-                               biologicalHierarchy$tcells,
+biologicalHierarchy$immune = c(biologicalHierarchy$tcells,
                                biologicalHierarchy$myeloid,
                                "NK", "other immune", "B")
 
@@ -128,7 +125,7 @@ Alternatively, you can use the `treeKor` bioconductor package [treekoR](http://w
 
 ```{r clustering hierarchy, warning = FALSE}
 # Calculate hierarchy using treekoR
-kerenTree <- treekoR::getClusterTree(t(assay(kerenSCE, "intensities")),
+kerenTree <- getClusterTree(t(assay(kerenSCE, "intensities")),
                             kerenSCE$cellType,
                             hierarchy_method="hopach",
                             hopach_K = 1)
@@ -161,8 +158,7 @@ kerenSCE$cellTypeNew[kerenSCE$cellType %in% biologicalHierarchy$immune] <- "Immu
 kerenSCE |>
   colData() |>
   as.data.frame() |>
-  filter(imageID == "6") |>
-  filter(cellTypeNew %in% c("Immune", "Tumour", "p53_Tumour")) |>
+  filter(imageID == "6", cellTypeNew %in% c("Immune", "Tumour", "p53_Tumour")) |>
   arrange(cellTypeNew) |>
   ggplot(aes(x = x, y = y, color = cellTypeNew)) +
   geom_point(size = 1) +
@@ -199,8 +195,7 @@ curves <- kontextCurve(
   parent = c("p53_Tumour", "Tumour"),
   rs = seq(50, 510, 50),
   image = "6",
-  cellType = "cellTypeNew",
-  cores = nCores
+  cellType = "cellTypeNew"
 )
 
 kontextPlot(curves)
@@ -228,8 +223,7 @@ Rather than specifying `to`, `from`, and `parent` in `Kontextual`, the output fr
 kerenKontextual <- Kontextual(
   cells = kerenSCE,
   parentDf = parentDf,
-  r = 100,
-  cores = nCores
+  r = 100
 )
 ```
 
@@ -247,6 +241,10 @@ To test whether Kontextual relationships are associated with patient outcomes, o
 # add survival column to kerenSCE
 kerenSCE$event = 1 - kerenSCE$Censored
 kerenSCE$survival = Surv(kerenSCE$Survival_days_capped, kerenSCE$event)
+
+# one survival value per image, named by image
+first <- !duplicated(kerenSCE$imageID)
+kerenSurv <- setNames(kerenSCE$survival[first], kerenSCE$imageID[first])
 ```
 
 `kontextualTest` does not compare the Kontextual values themselves between patients. In each image it compares the Kontextual statistic with its exact expectation if the `to` cells were a random choice among the cells of their parent population, so that differences in tissue composition between patients do not by themselves look like changes in the relationship. The images' excesses over this expectation are then related to survival with patients as the units (see `?kontextualTest`). With several images per patient, give the patient column as `subject`.
@@ -282,28 +280,11 @@ The association can be visualised on a Kaplan-Meier curve. The Kontextual values
 # Converting Kontextual result into data matrix
 kontextMat <- prepMatrix(kerenKontextual)
 
-# Ensuring rownames of kontextMat match up with the image IDs of the SCE object
-kontextMat <- kontextMat[kerenSCE$imageID |> unique(), ]
+# In the order of the survival vector, for the Kaplan-Meier curve below
+kontextMat <- kontextMat[names(kerenSurv), ]
 
 # Replace NAs with 0
 kontextMat[is.na(kontextMat)] <- 0
-```
-
-Next, we extract survival data from the `SingleCellExperiment` object and create a survival vector.
-
-```{r extract data KM curve}
-# Extracting survival data
-survData <- kerenSCE |>
-  colData() |>
-  data.frame() |>
-  select(imageID, survival) |>
-  unique()
-
-# Creating survival vector
-kerenSurv <- survData$survival
-names(kerenSurv) <- survData$imageID
-
-kerenSurv
 ```
 
 We then classify each image as localised or dispersed by comparing its Kontextual value for this relationship with the median, and plot a Kaplan-Meier curve using the `ggsurvfit` package.
@@ -329,13 +310,11 @@ The first step in analysing these changes is to calculate the spatial proximity 
 
 ```{r calc metrics}
 kerenSCE <- getDistances(kerenSCE,
-  maxDist = 200,
-  nCores = 1
+  maxDist = 200
 )
 
 kerenSCE <- getAbundances(kerenSCE,
-  r = 200,
-  nCores = 1
+  r = 200
 )
 ```
 
@@ -346,12 +325,10 @@ Statial provides two main functions to assess this relationship - `calcStateChan
 ```{r calcStateChanges}
 stateChanges <- calcStateChanges(
   cells = kerenSCE,
-  type = "distances",
   image = "6",
   from = "Keratin_Tumour",
   to = "Macrophages",
-  marker = "p53",
-  nCores = 1
+  marker = "p53"
 )
 
 stateChanges
@@ -366,16 +343,10 @@ These results allow us to essentially arrive at the same result as Kontextual, w
 ```{r plotStateChanges p53}
 p <- plotStateChanges(
   cells = kerenSCE,
-  type = "distances",
   image = "6",
   from = "Keratin_Tumour",
   to = "Macrophages",
-  marker = "p53",
-  size = 1,
-  shape = 19,
-  interactive = FALSE,
-  plotModelFit = FALSE,
-  method = "lm"
+  marker = "p53"
 )
 
 p
@@ -388,8 +359,6 @@ Beyond looking at single cell-to-cell interactions for a single image, we can al
 ```{r calcStateChanges all}
 stateChanges <- calcStateChanges(
   cells = kerenSCE,
-  type = "distances",
-  nCores = 1,
   minCells = 100
 )
 
@@ -407,16 +376,10 @@ Biologically, HLA Class I is a ligand which exists on all nucleated cells, taske
 ```{r plotStateChanges HLA}
 p <- plotStateChanges(
   cells = kerenSCE,
-  type = "distances",
   image = "6",
   from = "Keratin_Tumour",
   to = "Macrophages",
-  marker = "HLA_Class_1",
-  size = 1,
-  shape = 19,
-  interactive = FALSE,
-  plotModelFit = FALSE,
-  method = "lm"
+  marker = "HLA_Class_1"
 )
 
 p
@@ -435,16 +398,10 @@ Could this potentially be an artefact of `calcStateChanges`? We can examine the 
 ```{r plotStateChanges CD20}
 p <- plotStateChanges(
   cells = kerenSCE,
-  type = "distances",
   image = "35",
   from = "CD4_Cell",
   to = "B",
-  marker = "CD20",
-  size = 1,
-  shape = 19,
-  interactive = FALSE,
-  plotModelFit = FALSE,
-  method = "lm"
+  marker = "CD20"
 )
 
 p
@@ -465,8 +422,6 @@ kerenSCE <- calcContamination(kerenSCE)
 
 stateChangesCorrected <- calcStateChanges(
   cells = kerenSCE,
-  type = "distances",
-  nCores = 1,
   minCells = 100,
   contamination = TRUE
 )
@@ -483,29 +438,24 @@ Plotting the relationship between false positives and true positives, we'd expec
 ```{r corrected}
 cellTypeMarkers <- c("CD3", "CD4", "CD8", "CD56", "CD11c", "CD68", "CD45", "CD20")
 
-values <- c("blue", "red")
-names(values) <- c("None", "Corrected")
+# running counts of cell type and cell state markers down each list of state changes
+counts <- function(changes, type) {
+  isTypeMarker <- changes$marker %in% cellTypeMarkers
+  data.frame(TP = cumsum(isTypeMarker), FP = cumsum(!isTypeMarker), type = type)
+}
+df <- rbind(counts(stateChanges, "None"), counts(stateChangesCorrected, "Corrected"))
 
-df <- rbind(
-  data.frame(TP = cumsum(stateChanges$marker %in% cellTypeMarkers), FP = cumsum(!stateChanges$marker %in% cellTypeMarkers), type = "None"),
-  data.frame(TP = cumsum(stateChangesCorrected$marker %in% cellTypeMarkers), FP = cumsum(!stateChangesCorrected$marker %in% cellTypeMarkers), type = "Corrected")
-)
-
-ggplot(df, aes(x = TP, y = FP, colour = type)) +
+p <- ggplot(df, aes(x = TP, y = FP, colour = type)) +
   geom_line() +
   labs(y = "Cell state marker", x = "Cell type marker") +
-  scale_colour_manual(values = values)
+  scale_colour_manual(values = c(None = "blue", Corrected = "red"))
+p
 ```
 
 Here, we zoom in on the ROC curve where the top 100 lowest p values occur, where we indeed see more true positives than false positives with contamination correction.
 
 ```{r corrected zoom}
-ggplot(df, aes(x = TP, y = FP, colour = type)) +
-  geom_line() +
-  xlim(0, 100) +
-  ylim(0, 1000) +
-  labs(y = "Cell state marker", x = "Cell type marker") +
-  scale_colour_manual(values = values)
+p + coord_cartesian(xlim = c(0, 100), ylim = c(0, 1000))
 ```
 
 ## Associate continuous state changes with survival outcomes
@@ -550,14 +500,14 @@ Next we can cluster areas with similar spatial interactions to identify regions 
 set.seed(51773)
 
 # Preparing features for lisaClust
-kerenSCE <- lisaClust::lisaClust(kerenSCE, k = 5)
+kerenSCE <- lisaClust(kerenSCE, k = 5)
 ```
 
 The regions identified by licaClust can be visualised using the `hatchingPlot` function.
 
 ```{r hatchingPlot, fig.height=5, fig.width=6.5}
 # Use hatching to visualise regions and cell types.
-lisaClust::hatchingPlot(kerenSCE,
+hatchingPlot(kerenSCE,
   useImages = "5",
   line.spacing = 41, # spacing of lines
   nbp = 100 # smoothness of lines
@@ -575,7 +525,7 @@ cellTypeRegionMeans <- getMarkerMeans(kerenSCE,
   region = "region"
 )
 
-survivalResults <- colTest(cellTypeRegionMeans[names(kerenSurv), ], kerenSurv, type = "survival")
+survivalResults <- colTest(cellTypeRegionMeans, kerenSurv, type = "survival")   # rows matched to kerenSurv by name
 
 head(survivalResults)
 ```
@@ -586,14 +536,8 @@ Finally we demonstrate how we can use `ClassifyR` to perform patient classificat
 
 ```{r ClassifyR}
 # Calculate cell type and region proportions
-cellTypeProp <- getProp(kerenSCE,
-  feature = "cellType",
-  imageID = "imageID"
-)
-regionProp <- getProp(kerenSCE,
-  feature = "region",
-  imageID = "imageID"
-)
+cellTypeProp <- getProp(kerenSCE)
+regionProp <- getProp(kerenSCE, feature = "region")
 
 # Combine all the features into a list for classification
 featureList <- list(
@@ -617,8 +561,7 @@ kerenCV <- crossValidate(
   selectionMethod = "CoxPH",
   nFolds = 5,
   nFeatures = 10,
-  nRepeats = 20,
-  nCores = 1
+  nRepeats = 20
 )
 ```
 

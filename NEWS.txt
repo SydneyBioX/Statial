@@ -1,3 +1,12 @@
+CHANGES IN VERSION 1.15.6
+-------------------------
+
+    o The vignette is simpler: arguments equal to their defaults are no longer passed (nCores, the plotting
+      options of plotStateChanges(), type = "distances"), the survival vector is made in one step, colTest()
+      matches rows to it by name (spicyR 1.99.38), the contamination plot is zoomed with coord_cartesian() instead
+      of being redrawn, and the unused library(tibble) is gone. The immune hierarchy no longer refers to a missing
+      `bcells` element (it was NULL, so the results are unchanged).
+
 CHANGES IN VERSION 1.15.5
 -------------------------
 
