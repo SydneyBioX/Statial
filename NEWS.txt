@@ -1,3 +1,9 @@
+CHANGES IN VERSION 1.15.7
+-------------------------
+
+    o The test that workers get one BLAS thread is skipped when BLAS runs a single thread anyway (R's reference
+      BLAS, as on the Bioconductor builders), where it could not set two threads and failed.
+
 CHANGES IN VERSION 1.15.6
 -------------------------
 
