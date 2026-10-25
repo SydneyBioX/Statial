@@ -1067,7 +1067,7 @@ sessionInfo()
 #> other attached packages:
 #>  [1] treekoR_1.21.0              ggsurvfit_1.2.1            
 #>  [3] ggplot2_4.0.3               SingleCellExperiment_1.35.2
-#>  [5] dplyr_1.2.1                 lisaClust_1.21.7           
+#>  [5] dplyr_1.2.1                 lisaClust_1.21.11          
 #>  [7] ClassifyR_3.17.1            survival_3.8-6             
 #>  [9] BiocParallel_1.47.0         MultiAssayExperiment_1.39.1
 #> [11] SummarizedExperiment_1.43.0 Biobase_2.73.2             
@@ -1075,7 +1075,7 @@ sessionInfo()
 #> [15] IRanges_2.47.5              MatrixGenerics_1.25.0      
 #> [17] matrixStats_1.5.0           S4Vectors_0.51.10          
 #> [19] BiocGenerics_0.59.12        generics_0.1.4             
-#> [21] spicyR_1.99.39              Statial_1.15.6             
+#> [21] spicyR_1.99.41              Statial_1.15.7             
 #> [23] BiocStyle_2.41.0           
 #> 
 #> loaded via a namespace (and not attached):
@@ -1086,7 +1086,7 @@ sessionInfo()
 #>   [9] edgeR_4.99.10               doParallel_1.0.17          
 #>  [11] lattice_0.22-9              MASS_7.3-65                
 #>  [13] backports_1.5.1             magrittr_2.0.5             
-#>  [15] limma_3.99.2                sass_0.4.10                
+#>  [15] limma_3.99.3                sass_0.4.10                
 #>  [17] rmarkdown_2.32              jquerylib_0.1.4            
 #>  [19] yaml_2.3.12                 otel_0.2.0                 
 #>  [21] doRNG_1.8.6.3               dcanr_1.29.0               
@@ -1104,7 +1104,7 @@ sessionInfo()
 #>  [45] DelayedArray_0.39.8         ggforce_0.5.0              
 #>  [47] tidyselect_1.2.1            shape_1.4.6.1              
 #>  [49] aplot_0.3.2                 farver_2.1.2               
-#>  [51] lme4_2.0-6                  spatstat.explore_3.8-3     
+#>  [51] lme4_2.1-0                  spatstat.explore_3.8-3     
 #>  [53] jsonlite_2.0.0              hopach_2.73.0              
 #>  [55] GetoptLong_1.1.1            Formula_1.2-6              
 #>  [57] iterators_1.0.14            systemfonts_1.3.2          
