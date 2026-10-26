@@ -1,3 +1,9 @@
+CHANGES IN VERSION 1.15.8
+-------------------------
+
+    o The vignette reads the survival test from spicyR's topPairs() columns (p_value, hazard_ratio_sd), which
+      spicyR 1.99.42 reports for Kontextual and cell-level results; Statial needs spicyR >= 1.99.42.
+
 CHANGES IN VERSION 1.15.7
 -------------------------
 

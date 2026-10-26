@@ -272,7 +272,7 @@ top <- topPairs(survivalResults, n = 1)
 topName <- rownames(top)
 ```
 
-With 10 patients, `r sum(survivalResults$cellResults$p_adj < 0.05, na.rm = TRUE)` relationships are significant after correcting for the number of relationships tested (BH-adjusted p < 0.05). The most significant is `r topName`, the relationship between `r top$from` and `r top$to` relative to the parent population `r top$parent` (p = `r signif(top$p.value, 2)`). Its coefficient, the log hazard ratio for a standard deviation increase in the Kontextual excess, is `r signif(top$coefficient, 2)`: patients whose `r top$from` and `r top$to` cells are more localised relative to the `r top$parent` population tend to have `r if (isTRUE(top$coefficient < 0)) "better" else "worse"` survival.
+With 10 patients, `r nrow(topPairs(survivalResults, cutoff = 0.05))` relationships are significant after correcting for the number of relationships tested (BH-adjusted p < 0.05). The most significant is `r topName`, the relationship between `r top$from` and `r top$to` relative to the parent population `r top$parent` (p = `r signif(top$p_value, 2)`). Its hazard ratio for a standard deviation increase in the Kontextual excess is `r signif(top$hazard_ratio_sd, 2)`: patients whose `r top$from` and `r top$to` cells are more localised relative to the `r top$parent` population tend to have `r if (isTRUE(top$hazard_ratio_sd < 1)) "better" else "worse"` survival.
 
 The association can be visualised on a Kaplan-Meier curve. The Kontextual values of every relationship in every image are in a wide matrix from `prepMatrix`; note, to extract the original L-function values, specify `column = "original"` in `prepMatrix`.
 
