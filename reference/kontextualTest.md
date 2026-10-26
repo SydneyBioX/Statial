@@ -136,10 +136,10 @@ parentDf <- parentCombinations(
 res <- kontextualTest(kerenSCE, parentDf, condition = "survival", r = 100,
                       from = "Keratin_Tumour")
 spicyR::topPairs(res)
-#>                                  intercept coefficient   p.value adj.pvalue
-#> Keratin_Tumour__CD8_Cell__tcells        NA  -0.3104847 0.6532635  0.6895178
-#> Keratin_Tumour__CD4_Cell__tcells        NA   0.2300151 0.6895178  0.6895178
-#>                                            from       to parent
-#> Keratin_Tumour__CD8_Cell__tcells Keratin_Tumour CD8_Cell tcells
-#> Keratin_Tumour__CD4_Cell__tcells Keratin_Tumour CD4_Cell tcells
+#>                                            from       to parent hazard_ratio_sd
+#> Keratin_Tumour__CD8_Cell__tcells Keratin_Tumour CD8_Cell tcells       0.7330915
+#> Keratin_Tumour__CD4_Cell__tcells Keratin_Tumour CD4_Cell tcells       1.2586190
+#>                                    p_value     p_adj
+#> Keratin_Tumour__CD8_Cell__tcells 0.6532635 0.6895178
+#> Keratin_Tumour__CD4_Cell__tcells 0.6895178 0.6895178
 ```

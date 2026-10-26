@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">Statial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.15.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.15.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,7 @@ Patrick</h4>
             <address class="author_afil">
       Westmead Institute for Medical Research, University of Sydney,
 AustraliaSchool of Mathematics and Statistics, University of Sydney,
-Australia<br><h4 data-toc-skip class="date">25 October 2026</h4>
+Australia<br><h4 data-toc-skip class="date">26 October 2026</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/SydneyBioX/Statial/blob/devel/vignettes/Statial.Rmd" class="external-link"><code>vignettes/Statial.Rmd</code></a></small>
       <div class="d-none name"><code>Statial.Rmd</code></div>
@@ -431,17 +431,6 @@ patient column as <code>subject</code>.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://sydneybiox.github.io/spicyR/reference/topPairs.html" class="external-link">topPairs</a></span><span class="op">(</span><span class="va">survivalResults</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                                   intercept coefficient    p.value adj.pvalue</span></span>
-<span><span class="co">#&gt; Macrophages__Neutrophils__immune         NA  -1.8533448 0.00460055  0.8498842</span></span>
-<span><span class="co">#&gt; Macrophages__Neutrophils__myeloid        NA  -1.5310536 0.02856114  0.8498842</span></span>
-<span><span class="co">#&gt; other immune__CD3_Cell__tcells           NA  -0.6822973 0.03408181  0.8498842</span></span>
-<span><span class="co">#&gt; other immune__Tumour__tumour             NA  -1.4551809 0.04308263  0.8498842</span></span>
-<span><span class="co">#&gt; Endothelial__other immune__immune        NA   0.6276215 0.04633332  0.8498842</span></span>
-<span><span class="co">#&gt; CD3_Cell__Endothelial__tissue            NA   0.4882285 0.07411592  0.8498842</span></span>
-<span><span class="co">#&gt; Endothelial__Mono/Neu__myeloid           NA          NA 0.07437390  0.8498842</span></span>
-<span><span class="co">#&gt; CD8_Cell__Neutrophils__myeloid           NA   0.7352861 0.08174464  0.8498842</span></span>
-<span><span class="co">#&gt; Tumour__CD3_Cell__immune                 NA  -0.5220534 0.09322871  0.8498842</span></span>
-<span><span class="co">#&gt; CD3_Cell__Tumour__tumour                 NA  -0.8669941 0.09756879  0.8498842</span></span>
 <span><span class="co">#&gt;                                           from           to  parent</span></span>
 <span><span class="co">#&gt; Macrophages__Neutrophils__immune   Macrophages  Neutrophils  immune</span></span>
 <span><span class="co">#&gt; Macrophages__Neutrophils__myeloid  Macrophages  Neutrophils myeloid</span></span>
@@ -452,7 +441,18 @@ patient column as <code>subject</code>.</p>
 <span><span class="co">#&gt; Endothelial__Mono/Neu__myeloid     Endothelial     Mono/Neu myeloid</span></span>
 <span><span class="co">#&gt; CD8_Cell__Neutrophils__myeloid        CD8_Cell  Neutrophils myeloid</span></span>
 <span><span class="co">#&gt; Tumour__CD3_Cell__immune                Tumour     CD3_Cell  immune</span></span>
-<span><span class="co">#&gt; CD3_Cell__Tumour__tumour              CD3_Cell       Tumour  tumour</span></span></code></pre></div>
+<span><span class="co">#&gt; CD3_Cell__Tumour__tumour              CD3_Cell       Tumour  tumour</span></span>
+<span><span class="co">#&gt;                                   hazard_ratio_sd    p_value     p_adj</span></span>
+<span><span class="co">#&gt; Macrophages__Neutrophils__immune        0.1567121 0.00460055 0.8498842</span></span>
+<span><span class="co">#&gt; Macrophages__Neutrophils__myeloid       0.2163076 0.02856114 0.8498842</span></span>
+<span><span class="co">#&gt; other immune__CD3_Cell__tcells          0.5054545 0.03408181 0.8498842</span></span>
+<span><span class="co">#&gt; other immune__Tumour__tumour            0.2333581 0.04308263 0.8498842</span></span>
+<span><span class="co">#&gt; Endothelial__other immune__immune       1.8731500 0.04633332 0.8498842</span></span>
+<span><span class="co">#&gt; CD3_Cell__Endothelial__tissue           1.6294272 0.07411592 0.8498842</span></span>
+<span><span class="co">#&gt; Endothelial__Mono/Neu__myeloid                 NA 0.07437390 0.8498842</span></span>
+<span><span class="co">#&gt; CD8_Cell__Neutrophils__myeloid          2.0860787 0.08174464 0.8498842</span></span>
+<span><span class="co">#&gt; Tumour__CD3_Cell__immune                0.5933010 0.09322871 0.8498842</span></span>
+<span><span class="co">#&gt; CD3_Cell__Tumour__tumour                0.4202128 0.09756879 0.8498842</span></span></code></pre></div>
 <p>The results can also be visualised using the <code>signifPlot</code>
 function, with a panel for each parent population.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
@@ -462,10 +462,10 @@ function, with a panel for each parent population.</p>
 for the number of relationships tested (BH-adjusted p &lt; 0.05). The
 most significant is Macrophages__Neutrophils__immune, the relationship
 between Macrophages and Neutrophils relative to the parent population
-immune (p = 0.0046). Its coefficient, the log hazard ratio for a
-standard deviation increase in the Kontextual excess, is -1.9: patients
-whose Macrophages and Neutrophils cells are more localised relative to
-the immune population tend to have better survival.</p>
+immune (p = 0.0046). Its hazard ratio for a standard deviation increase
+in the Kontextual excess is 0.16: patients whose Macrophages and
+Neutrophils cells are more localised relative to the immune population
+tend to have better survival.</p>
 <p>The association can be visualised on a Kaplan-Meier curve. The
 Kontextual values of every relationship in every image are in a wide
 matrix from <code>prepMatrix</code>; note, to extract the original
@@ -1041,7 +1041,7 @@ Cell, 174(6), 1373-1387.e1319. (<a href="https://doi.org/10.1016/j.cell.2018.08.
 <span><span class="co">#&gt; [15] IRanges_2.47.5              MatrixGenerics_1.25.0      </span></span>
 <span><span class="co">#&gt; [17] matrixStats_1.5.0           S4Vectors_0.51.10          </span></span>
 <span><span class="co">#&gt; [19] BiocGenerics_0.59.12        generics_0.1.4             </span></span>
-<span><span class="co">#&gt; [21] spicyR_1.99.41              Statial_1.15.7             </span></span>
+<span><span class="co">#&gt; [21] spicyR_1.99.42              Statial_1.15.8             </span></span>
 <span><span class="co">#&gt; [23] BiocStyle_2.41.0           </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>

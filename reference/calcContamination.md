@@ -64,4 +64,5 @@ data("kerenSCE")
 singleCellDataDistancesContam <- calcContamination(
   kerenSCE
 )
+#> Growing trees.. Progress: 96%. Estimated remaining time: 1 seconds.
 ```

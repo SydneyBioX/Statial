@@ -382,17 +382,6 @@ survivalResults <- kontextualTest(
 )
 
 topPairs(survivalResults)
-#>                                   intercept coefficient    p.value adj.pvalue
-#> Macrophages__Neutrophils__immune         NA  -1.8533448 0.00460055  0.8498842
-#> Macrophages__Neutrophils__myeloid        NA  -1.5310536 0.02856114  0.8498842
-#> other immune__CD3_Cell__tcells           NA  -0.6822973 0.03408181  0.8498842
-#> other immune__Tumour__tumour             NA  -1.4551809 0.04308263  0.8498842
-#> Endothelial__other immune__immune        NA   0.6276215 0.04633332  0.8498842
-#> CD3_Cell__Endothelial__tissue            NA   0.4882285 0.07411592  0.8498842
-#> Endothelial__Mono/Neu__myeloid           NA          NA 0.07437390  0.8498842
-#> CD8_Cell__Neutrophils__myeloid           NA   0.7352861 0.08174464  0.8498842
-#> Tumour__CD3_Cell__immune                 NA  -0.5220534 0.09322871  0.8498842
-#> CD3_Cell__Tumour__tumour                 NA  -0.8669941 0.09756879  0.8498842
 #>                                           from           to  parent
 #> Macrophages__Neutrophils__immune   Macrophages  Neutrophils  immune
 #> Macrophages__Neutrophils__myeloid  Macrophages  Neutrophils myeloid
@@ -404,6 +393,17 @@ topPairs(survivalResults)
 #> CD8_Cell__Neutrophils__myeloid        CD8_Cell  Neutrophils myeloid
 #> Tumour__CD3_Cell__immune                Tumour     CD3_Cell  immune
 #> CD3_Cell__Tumour__tumour              CD3_Cell       Tumour  tumour
+#>                                   hazard_ratio_sd    p_value     p_adj
+#> Macrophages__Neutrophils__immune        0.1567121 0.00460055 0.8498842
+#> Macrophages__Neutrophils__myeloid       0.2163076 0.02856114 0.8498842
+#> other immune__CD3_Cell__tcells          0.5054545 0.03408181 0.8498842
+#> other immune__Tumour__tumour            0.2333581 0.04308263 0.8498842
+#> Endothelial__other immune__immune       1.8731500 0.04633332 0.8498842
+#> CD3_Cell__Endothelial__tissue           1.6294272 0.07411592 0.8498842
+#> Endothelial__Mono/Neu__myeloid                 NA 0.07437390 0.8498842
+#> CD8_Cell__Neutrophils__myeloid          2.0860787 0.08174464 0.8498842
+#> Tumour__CD3_Cell__immune                0.5933010 0.09322871 0.8498842
+#> CD3_Cell__Tumour__tumour                0.4202128 0.09756879 0.8498842
 ```
 
 The results can also be visualised using the `signifPlot` function, with
@@ -420,10 +420,10 @@ With 10 patients, 0 relationships are significant after correcting for
 the number of relationships tested (BH-adjusted p \< 0.05). The most
 significant is Macrophages\_\_Neutrophils\_\_immune, the relationship
 between Macrophages and Neutrophils relative to the parent population
-immune (p = 0.0046). Its coefficient, the log hazard ratio for a
-standard deviation increase in the Kontextual excess, is -1.9: patients
-whose Macrophages and Neutrophils cells are more localised relative to
-the immune population tend to have better survival.
+immune (p = 0.0046). Its hazard ratio for a standard deviation increase
+in the Kontextual excess is 0.16: patients whose Macrophages and
+Neutrophils cells are more localised relative to the immune population
+tend to have better survival.
 
 The association can be visualised on a Kaplan-Meier curve. The
 Kontextual values of every relationship in every image are in a wide
@@ -1075,7 +1075,7 @@ sessionInfo()
 #> [15] IRanges_2.47.5              MatrixGenerics_1.25.0      
 #> [17] matrixStats_1.5.0           S4Vectors_0.51.10          
 #> [19] BiocGenerics_0.59.12        generics_0.1.4             
-#> [21] spicyR_1.99.41              Statial_1.15.7             
+#> [21] spicyR_1.99.42              Statial_1.15.8             
 #> [23] BiocStyle_2.41.0           
 #> 
 #> loaded via a namespace (and not attached):
